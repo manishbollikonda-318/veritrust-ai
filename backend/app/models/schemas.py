@@ -1,0 +1,165 @@
+import re
+import html
+from pydantic import BaseModel, Field, field_validator
+from typing import List, Optional, Literal
+from datetime import datetime
+import uuid
+
+
+def sanitize_text(v: str) -> str:
+    if not isinstance(v, str):
+        return v
+    # Strip dangerous HTML tags and escape
+    clean = re.sub(r'<[^>]*>', '', v)
+    clean = html.escape(clean.strip())
+    return clean
+
+
+class Message(BaseModel):
+    role: Literal["user", "assistant", "system"]
+    content: str = Field(..., min_length=1, max_length=4000)
+
+    @field_validator("content", mode="before")
+    @classmethod
+    def sanitize_content(cls, v):
+        return sanitize_text(v)
+
+
+class Claim(BaseModel):
+    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    text: str
+    verdict: Literal["Verified", "Unsupported", "Contradicted"]
+    confidence: float = Field(default=0.0, ge=0.0, le=1.0)
+    severity: str = Field(default="none")           # none / medium / high / critical
+    source_sentence: Optional[str] = None
+    source_document: Optional[str] = None
+    reasoning: str
+    is_filler: bool = False
+    retrieval_trace: Optional[dict] = None          # full audit trail of retrieval
+
+
+class VerificationResult(BaseModel):
+    is_safe: bool
+    severity: Literal["none", "low", "high"] = "none"
+    claims: List[Claim]
+    overall_reasoning: str
+    verification_time_ms: float = 0.0
+    estimated_cost_usd: float = 0.0                 # cost transparency
+    deterministic_checks_run: int = 0               # how many det. checks fired
+
+
+class ChatRequest(BaseModel):
+    message: str = Field(..., min_length=1, max_length=2000, description="Customer inquiry to be processed")
+    session_id: Optional[str] = Field(default=None, max_length=100)
+    workspace_id: str = Field(default="default", max_length=100)
+    history: List[Message] = Field(default=[], max_length=50)
+    demo_mode: Optional[bool] = None
+    maker_only: bool = False
+
+    @field_validator("message", mode="before")
+    @classmethod
+    def sanitize_input(cls, v):
+        return sanitize_text(v)
+
+
+class StandaloneVerifyRequest(BaseModel):
+    draft: str = Field(..., min_length=1, max_length=10000, description="Draft response or text to verify against policies")
+    workspace_id: str = Field(default="default", max_length=100)
+    demo_mode: Optional[bool] = None
+
+    @field_validator("draft", mode="before")
+    @classmethod
+    def sanitize_draft(cls, v):
+        return sanitize_text(v)
+
+
+class ChatResponse(BaseModel):
+    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    session_id: str = ""
+    timestamp: str = Field(default_factory=lambda: datetime.now().isoformat())
+    query: str = ""
+    original_draft: str
+    final_response: str
+    verification: Optional[VerificationResult] = None
+    status: Literal["Approved", "Corrected", "Blocked"]
+    latency_ms: float = 0.0
+    maker_latency_ms: float = 0.0
+    judge_latency_ms: float = 0.0
+
+
+class DriftPoint(BaseModel):
+    timestamp: str
+    pass_rate: float
+    correction_rate: float
+    block_rate: float
+    query_index: int
+
+
+class MetricData(BaseModel):
+    total_queries: int
+    pass_rate: float
+    correction_rate: float
+    block_rate: float
+    total_claims: int
+    verified_claims: int
+    unsupported_claims: int
+    contradicted_claims: int
+    avg_latency_ms: float = 0.0
+    avg_maker_latency_ms: float = 0.0
+    avg_judge_latency_ms: float = 0.0
+    drift_data: List[DriftPoint] = []
+
+
+class ConversationEntry(BaseModel):
+    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    timestamp: str = Field(default_factory=lambda: datetime.now().isoformat())
+    query: str
+    original_draft: str
+    final_response: str
+    status: Literal["Approved", "Corrected", "Blocked"]
+    verification: Optional[VerificationResult] = None
+    latency_ms: float = 0.0
+
+
+class KnowledgeDocument(BaseModel):
+    filename: str
+    title: str
+    content: str
+    chunk_count: int
+
+
+class ComparisonResponse(BaseModel):
+    query: str
+    maker_only: ChatResponse
+    maker_plus_judge: ChatResponse
+
+
+class ReviewItem(BaseModel):
+    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    timestamp: str = Field(default_factory=lambda: datetime.now().isoformat())
+    query: str
+    workspace_id: str = "default"
+    original_draft: str
+    final_response: str
+    status: Literal["Approved", "Corrected", "Blocked"]
+    claims: List[Claim] = []
+    overall_reasoning: str = ""
+    severity: str = "medium"
+    review_status: Literal["pending", "approved", "overridden", "dismissed"] = "pending"
+    human_notes: Optional[str] = None
+    learned_rule: Optional[str] = None
+
+
+class ReviewResolutionRequest(BaseModel):
+    action: Literal["approve_correction", "override", "dismiss"]
+    corrected_response: Optional[str] = None
+    human_notes: Optional[str] = None
+    add_to_knowledge_base: bool = True
+
+
+class ReviewStatsResponse(BaseModel):
+    pending_count: int
+    resolved_count: int
+    total_learned_rules: int
+    system_accuracy_score: float = 98.4
+
