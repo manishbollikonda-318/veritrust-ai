@@ -383,13 +383,13 @@ export const api = {
   },
 
   async getWorkspaces(): Promise<Workspace[]> {
+    let customWorkspaces: Workspace[] = [];
     try {
-      const data = await fetchJson<Workspace[]>(`${API_BASE}/workspaces`);
-      if (Array.isArray(data) && data.length > 0) return data;
-    } catch {
-      // Fallback
-    }
-    return [
+      const customStr = localStorage.getItem('veritrust_custom_workspaces');
+      if (customStr) customWorkspaces = JSON.parse(customStr);
+    } catch {}
+
+    const defaultWorkspaces: Workspace[] = [
       {
         id: 'default',
         name: 'NovaMart Retail (Demo)',
@@ -413,34 +413,76 @@ export const api = {
         created_at: new Date().toISOString()
       }
     ];
+
+    try {
+      const data = await fetchJson<Workspace[]>(`${API_BASE}/workspaces`);
+      if (Array.isArray(data) && data.length > 0) {
+        const map = new Map<string, Workspace>();
+        data.forEach(w => map.set(w.id, w));
+        customWorkspaces.forEach(w => {
+          if (!map.has(w.id)) map.set(w.id, w);
+        });
+        return Array.from(map.values());
+      }
+    } catch {
+      // Fallback to local
+    }
+
+    const map = new Map<string, Workspace>();
+    defaultWorkspaces.forEach(w => map.set(w.id, w));
+    customWorkspaces.forEach(w => map.set(w.id, w));
+    return Array.from(map.values());
   },
 
   async createWorkspace(input: WorkspaceCreateInput): Promise<Workspace> {
+    const slug = input.name.toLowerCase().replace(/[^a-z0-9]/g, '_').replace(/_+/g, '_').replace(/^_|_$/g, '') || `ws_${Date.now()}`;
+    const newWs: Workspace = {
+      id: slug,
+      name: input.name,
+      industry: input.industry || 'General Business',
+      description: input.description || `Custom workspace for ${input.name}`,
+      is_demo: false,
+      llm_provider: input.llm_provider || 'shared_default',
+      has_custom_api_key: !!input.api_key,
+      document_count: 1,
+      created_at: new Date().toISOString()
+    };
+
+    // Immediately cache in localStorage so user can access it even if backend is waking up
     try {
-      return await fetchJson<Workspace>(`${API_BASE}/workspaces`, {
+      const storedStr = localStorage.getItem('veritrust_custom_workspaces');
+      const list: Workspace[] = storedStr ? JSON.parse(storedStr) : [];
+      const updated = [...list.filter(w => w.id !== slug), newWs];
+      localStorage.setItem('veritrust_custom_workspaces', JSON.stringify(updated));
+
+      if (input.initial_policy_content) {
+        const docObj: Document = {
+          id: `doc_${Date.now()}`,
+          filename: `${slug}_policy.txt`,
+          title: input.initial_policy_title || `${input.name} Policy`,
+          content: input.initial_policy_content,
+          snippet: input.initial_policy_content.slice(0, 180) + '...',
+          chunkCount: 1,
+          uploadedAt: new Date().toISOString().split('T')[0]
+        };
+        const docListStr = localStorage.getItem(`veritrust_docs_${slug}`);
+        const docList: Document[] = docListStr ? JSON.parse(docListStr) : [];
+        localStorage.setItem(`veritrust_docs_${slug}`, JSON.stringify([...docList, docObj]));
+      }
+    } catch (e) {
+      console.warn('Could not cache workspace in localStorage:', e);
+    }
+
+    try {
+      const backendWs = await fetchJson<Workspace>(`${API_BASE}/workspaces`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(input)
       });
+      return backendWs;
     } catch (err: any) {
-      console.warn('Backend createWorkspace failed, applying client fallback:', err);
-      // If it is a real validation error from server (e.g. 400), propagate it
-      if (err.message && !err.message.includes('502') && !err.message.includes('504') && !err.message.includes('Failed to fetch') && !err.message.includes('NetworkError')) {
-        throw err;
-      }
-      // Create local fallback workspace so user is never blocked
-      const slug = input.name.toLowerCase().replace(/[^a-z0-9]/g, '_').replace(/_+/g, '_').replace(/^_|_$/g, '') || `ws_${Date.now()}`;
-      return {
-        id: slug,
-        name: input.name,
-        industry: input.industry || 'General Business',
-        description: input.description || `Custom workspace for ${input.name}`,
-        is_demo: false,
-        llm_provider: input.llm_provider || 'shared_default',
-        has_custom_api_key: !!input.api_key,
-        document_count: 1,
-        created_at: new Date().toISOString()
-      };
+      console.warn('Backend createWorkspace call failed, returning client-persisted workspace:', err);
+      return newWs;
     }
   },
 
