@@ -103,7 +103,7 @@ export default function ComparisonView() {
                 <p className="text-xs font-bold text-rose-800">Standard single-LLM RAG output</p>
               </div>
             </div>
-            <span className="text-[10px] font-black text-rose-900 bg-rose-100/90 border border-rose-300/80 px-2.5 py-1 rounded-full uppercase tracking-wider shadow-xs">
+            <span className="text-xs font-black text-rose-900 bg-rose-100/90 border border-rose-300/80 px-2.5 py-1 rounded-full uppercase tracking-wider shadow-xs">
               Vulnerable to Hallucination
             </span>
           </div>
@@ -132,7 +132,7 @@ export default function ComparisonView() {
                 </p>
               </div>
 
-              <div className="text-[11px] text-rose-700 font-bold flex items-center gap-1 pt-2">
+              <div className="text-xs text-rose-700 font-bold flex items-center gap-1 pt-2">
                 <Clock size={12} /> Latency: {result.makerOnly.latencyMs || 125}ms (Zero verification)
               </div>
             </div>
@@ -168,7 +168,7 @@ export default function ComparisonView() {
                 onChange={setHighlightDiff}
                 label="Highlight Diff"
               />
-              <span className="text-[10px] font-black text-emerald-900 bg-emerald-100/90 border border-emerald-300/80 px-2.5 py-1 rounded-full uppercase tracking-wider shadow-xs">
+              <span className="text-xs font-black text-emerald-900 bg-emerald-100/90 border border-emerald-300/80 px-2.5 py-1 rounded-full uppercase tracking-wider shadow-xs">
                 Protected
               </span>
             </div>
@@ -193,7 +193,7 @@ export default function ComparisonView() {
 
               {/* Guarded Customer Output */}
               <div className="p-5 bg-white/90 shadow-neu-maker-pressed rounded-2xl border border-indigo-200/60">
-                <span className="text-[10px] font-black text-indigo-700 uppercase tracking-wider block mb-1">
+                <span className="text-xs font-black text-indigo-700 uppercase tracking-wider block mb-1">
                   Customer-Facing Delivery:
                 </span>
                 <p className="text-sm text-slate-900 leading-relaxed font-semibold">
@@ -206,7 +206,7 @@ export default function ComparisonView() {
                 result.makerPlusJudge.originalDraft !== result.makerPlusJudge.content &&
                 highlightDiff && (
                   <div className="p-3 bg-gradient-to-br from-amber-50 to-amber-100/80 rounded-xl border border-amber-300/70 text-xs shadow-xs">
-                    <span className="font-black text-amber-900 uppercase text-[10px] block mb-1">
+                    <span className="font-black text-amber-900 uppercase text-xs block mb-1">
                       Intercepted &amp; Prevented Draft:
                     </span>
                     <p className="line-through text-amber-950 font-medium leading-relaxed">
@@ -218,7 +218,7 @@ export default function ComparisonView() {
               {/* Judge Decision Explanation */}
               {result.makerPlusJudge.overallReasoning && (
                 <div className="p-4 rounded-xl bg-gradient-to-br from-emerald-50/90 to-teal-50/80 border border-teal-300/70 text-xs text-teal-950 leading-relaxed shadow-xs">
-                  <div className="font-black uppercase tracking-wider text-[10px] text-teal-800 mb-1 flex items-center gap-1">
+                  <div className="font-black uppercase tracking-wider text-xs text-teal-800 mb-1 flex items-center gap-1">
                     <CheckCircle2 size={13} className="text-teal-600" /> Judge Interception Summary
                   </div>
                   <p className="font-semibold">{result.makerPlusJudge.overallReasoning}</p>
@@ -228,7 +228,7 @@ export default function ComparisonView() {
               {/* Extracted Claims Pill Grid */}
               {result.makerPlusJudge.claims && result.makerPlusJudge.claims.length > 0 && (
                 <div>
-                  <h4 className="text-[10px] font-black text-slate-700 uppercase tracking-wider mb-2">
+                  <h4 className="text-xs font-black text-slate-700 uppercase tracking-wider mb-2">
                     Claim Verification Breakdown:
                   </h4>
                   <div className="space-y-2">
@@ -240,13 +240,13 @@ export default function ComparisonView() {
                         <div className="flex-1">
                           <p className="font-bold text-slate-900">{c.text}</p>
                           {c.reasoning && (
-                            <p className="text-[11px] text-slate-600 font-medium mt-1 italic">
+                            <p className="text-xs text-slate-600 font-medium mt-1 italic">
                               "{c.reasoning}"
                             </p>
                           )}
                         </div>
                         <span
-                          className={`text-[10px] font-extrabold px-2.5 py-0.5 rounded-full shrink-0 uppercase border ${
+                          className={`text-xs font-extrabold px-2.5 py-0.5 rounded-full shrink-0 uppercase border ${
                             c.verdict === 'Verified'
                               ? 'bg-emerald-100 text-emerald-900 border-emerald-300/60'
                               : c.verdict === 'Unsupported'

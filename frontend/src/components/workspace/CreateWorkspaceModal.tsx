@@ -167,7 +167,7 @@ export default function CreateWorkspaceModal() {
 
           {/* Header */}
           <div className="mb-6">
-            <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[11px] font-bold bg-indigo-50 text-indigo-700 border border-indigo-200/80 mb-2">
+            <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-indigo-50 text-indigo-700 border border-indigo-200/80 mb-2">
               <Sparkles size={12} className="text-indigo-600" />
               <span>Multi-Tenant Enterprise Platform</span>
             </div>
@@ -235,7 +235,7 @@ export default function CreateWorkspaceModal() {
                   <FileText size={14} className="text-indigo-600" />
                   <span>2. Seed Ground-Truth Policy</span>
                 </div>
-                <label className="inline-flex items-center gap-1.5 text-[11px] font-bold text-indigo-600 hover:text-indigo-800 cursor-pointer">
+                <label className="inline-flex items-center gap-1.5 text-xs font-bold text-indigo-600 hover:text-indigo-800 cursor-pointer">
                   <Upload size={13} />
                   <span>Upload .txt/.md file</span>
                   <input
@@ -249,13 +249,13 @@ export default function CreateWorkspaceModal() {
 
               {/* Quick Template Fill Buttons */}
               <div className="flex items-center gap-1.5 flex-wrap">
-                <span className="text-[10px] font-bold text-slate-500 mr-1">Quick Templates:</span>
+                <span className="text-xs font-bold text-slate-500 mr-1">Quick Templates:</span>
                 {INDUSTRY_PRESETS.map((preset) => (
                   <button
                     key={preset.id}
                     type="button"
                     onClick={() => handleSelectPreset(preset)}
-                    className={`text-[10px] font-bold px-2.5 py-1 rounded-lg border transition-all cursor-pointer ${
+                    className={`text-xs font-bold px-2.5 py-1 rounded-lg border transition-all cursor-pointer ${
                       policyTitle === preset.title
                         ? 'bg-indigo-600 text-white border-indigo-600 shadow-xs'
                         : 'bg-slate-100 hover:bg-slate-200 text-slate-700 border-slate-200'
@@ -291,7 +291,7 @@ export default function CreateWorkspaceModal() {
                   onChange={(e) => setPolicyContent(e.target.value)}
                   className="w-full text-xs font-mono p-3 rounded-xl border border-slate-200 bg-slate-50 focus:outline-none focus:ring-2 focus:ring-indigo-500 text-slate-800 leading-relaxed"
                 />
-                <p className="text-[11px] text-slate-500 mt-1 font-medium">
+                <p className="text-xs text-slate-500 mt-1 font-medium">
                   💡 Even a single paragraph with specific numbers or terms is immediately verified by the Judge Agent.
                 </p>
               </div>
@@ -357,7 +357,7 @@ export default function CreateWorkspaceModal() {
                     </div>
                   )}
 
-                  <div className="flex items-start gap-2 pt-1 text-[11px] text-slate-600 font-medium">
+                  <div className="flex items-start gap-2 pt-1 text-xs text-slate-600 font-medium">
                     <ShieldCheck size={14} className="text-emerald-600 shrink-0 mt-0.5" />
                     <span>
                       Keys are stored server-side in your isolated workspace configuration and are never exposed in browser responses.

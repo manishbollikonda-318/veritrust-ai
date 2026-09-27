@@ -285,7 +285,7 @@ export default function KnowledgeBaseView() {
             <div>
               <div className="flex items-center gap-2 mb-0.5">
                 <span className="font-bold text-slate-900">Demo Knowledge Base:</span>
-                <span className="px-2 py-0.5 rounded-md text-[10px] font-extrabold uppercase tracking-wide bg-blue-100 text-blue-800 border border-blue-200">
+                <span className="px-2 py-0.5 rounded-md text-xs font-extrabold uppercase tracking-wide bg-blue-100 text-blue-800 border border-blue-200">
                   Synthetic Sample Data
                 </span>
               </div>
@@ -298,7 +298,7 @@ export default function KnowledgeBaseView() {
             <button
               type="button"
               onClick={() => openDataSourceDisclosure()}
-              className="text-[11px] font-bold text-indigo-700 hover:text-indigo-900 underline cursor-pointer"
+              className="text-xs font-bold text-indigo-700 hover:text-indigo-900 underline cursor-pointer"
             >
               View Disclosure
             </button>
@@ -306,7 +306,7 @@ export default function KnowledgeBaseView() {
             <button
               type="button"
               onClick={handleOpenCreateModal}
-              className="text-[11px] font-bold text-slate-700 hover:text-indigo-600 cursor-pointer"
+              className="text-xs font-bold text-slate-700 hover:text-indigo-600 cursor-pointer"
             >
               + Upload Custom Policy
             </button>
@@ -432,7 +432,7 @@ export default function KnowledgeBaseView() {
             {/* Template Presets Bar */}
             {!editingDoc && (
               <div className="mb-6 p-4 bg-white/70 shadow-neu-maker-pressed rounded-2xl border border-indigo-100">
-                <p className="text-[11px] font-black uppercase tracking-wider text-indigo-800 mb-2 flex items-center gap-1">
+                <p className="text-xs font-black uppercase tracking-wider text-indigo-800 mb-2 flex items-center gap-1">
                   <Sparkles size={12} className="text-amber-500" />
                   Or Quick-Load a Sample Enterprise Policy Template
                 </p>
@@ -484,7 +484,7 @@ export default function KnowledgeBaseView() {
                   <label className="block text-xs font-black text-slate-800 uppercase tracking-wider">
                     Verified Policy Content / Clauses
                   </label>
-                  <label className="inline-flex items-center gap-1 text-[11px] font-bold text-indigo-600 hover:text-indigo-800 cursor-pointer">
+                  <label className="inline-flex items-center gap-1 text-xs font-bold text-indigo-600 hover:text-indigo-800 cursor-pointer">
                     <Upload size={12} />
                     <span>Upload .txt/.md file</span>
                     <input

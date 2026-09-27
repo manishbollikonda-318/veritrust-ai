@@ -106,7 +106,7 @@ export default function ReviewQueueView() {
               <span className="w-2.5 h-2.5 rounded-full bg-amber-500 animate-pulse shadow-sm" />
             </div>
             <div className="text-2xl sm:text-3xl font-black text-amber-900 mt-2">{stats.pending_count}</div>
-            <p className="text-[11px] text-amber-700 font-semibold mt-1">Awaiting supervisor review</p>
+            <p className="text-xs text-amber-700 font-semibold mt-1">Awaiting supervisor review</p>
           </NeuCard>
 
           <NeuCard className="p-4 bg-gradient-to-br from-emerald-50/80 to-emerald-100/60 border border-emerald-200/70 shadow-neu-verified">
@@ -115,7 +115,7 @@ export default function ReviewQueueView() {
               <CheckCircle2 size={16} className="text-emerald-600" />
             </div>
             <div className="text-2xl sm:text-3xl font-black text-emerald-900 mt-2">{stats.resolved_count}</div>
-            <p className="text-[11px] text-emerald-700 font-semibold mt-1">Reviewed by team</p>
+            <p className="text-xs text-emerald-700 font-semibold mt-1">Reviewed by team</p>
           </NeuCard>
 
           <NeuCard className="p-4 bg-gradient-to-br from-indigo-50/80 to-purple-100/60 border border-indigo-200/70 shadow-neu-maker">
@@ -124,7 +124,7 @@ export default function ReviewQueueView() {
               <Sparkles size={16} className="text-indigo-600" />
             </div>
             <div className="text-2xl sm:text-3xl font-black text-indigo-900 mt-2">{stats.total_learned_rules}</div>
-            <p className="text-[11px] text-indigo-700 font-semibold mt-1">Promoted into vector store</p>
+            <p className="text-xs text-indigo-700 font-semibold mt-1">Promoted into vector store</p>
           </NeuCard>
 
           <NeuCard className="p-4 bg-gradient-to-br from-blue-50/80 to-indigo-100/60 border border-blue-200/70 shadow-neu-maker">
@@ -133,7 +133,7 @@ export default function ReviewQueueView() {
               <Layers size={16} className="text-blue-600" />
             </div>
             <div className="text-2xl sm:text-3xl font-black text-blue-900 mt-2">{stats.system_accuracy_score}%</div>
-            <p className="text-[11px] text-blue-700 font-semibold mt-1">Self-improving index</p>
+            <p className="text-xs text-blue-700 font-semibold mt-1">Self-improving index</p>
           </NeuCard>
         </div>
       )}
@@ -151,7 +151,7 @@ export default function ReviewQueueView() {
             <p className="text-xs text-indigo-900 mt-0.5 leading-relaxed font-semibold">
               This human resolution was just automatically embedded into <span className="font-mono font-bold text-indigo-950">golden_rules.txt</span> in workspace <span className="font-bold">"{currentWorkspace}"</span>. Future similar queries will now resolve on the first pass with 100% confidence.
             </p>
-            <div className="mt-2 p-2.5 rounded-xl bg-white/90 border border-indigo-200 text-[11px] font-mono text-slate-900 whitespace-pre-line break-words font-semibold shadow-inner">
+            <div className="mt-2 p-2.5 rounded-xl bg-white/90 border border-indigo-200 text-xs font-mono text-slate-900 whitespace-pre-line break-words font-semibold shadow-inner">
               {recentlyLearnedRule}
             </div>
           </div>
@@ -204,7 +204,7 @@ export default function ReviewQueueView() {
                 {/* Header row */}
                 <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-3 border-b border-amber-200/50 mb-4">
                   <div className="flex items-center gap-2">
-                    <span className={`text-[10px] font-black uppercase px-2.5 py-0.5 rounded-full border shadow-xs ${
+                    <span className={`text-xs font-black uppercase px-2.5 py-0.5 rounded-full border shadow-xs ${
                       item.status === 'Blocked'
                         ? 'bg-rose-100 text-rose-900 border-rose-300/60'
                         : 'bg-amber-100 text-amber-900 border-amber-300/60'
@@ -212,16 +212,16 @@ export default function ReviewQueueView() {
                       {item.status}
                     </span>
                     <span className="text-xs font-black text-slate-800">Case ID: {item.id}</span>
-                    <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-slate-200 text-slate-700">
+                    <span className="text-xs font-bold px-2 py-0.5 rounded-full bg-slate-200 text-slate-700">
                       {item.severity} severity
                     </span>
                   </div>
 
-                  <div className="flex items-center gap-2 text-[11px] text-slate-500 font-semibold">
+                  <div className="flex items-center gap-2 text-xs text-slate-500 font-semibold">
                     <Clock size={12} />
                     <span>{new Date(item.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
                     {item.review_status !== 'pending' && (
-                      <span className="text-[10px] font-black uppercase px-2.5 py-0.5 rounded-full bg-emerald-100 text-emerald-900 border border-emerald-300/60">
+                      <span className="text-xs font-black uppercase px-2.5 py-0.5 rounded-full bg-emerald-100 text-emerald-900 border border-emerald-300/60">
                         ✓ {item.review_status}
                       </span>
                     )}
@@ -230,7 +230,7 @@ export default function ReviewQueueView() {
 
                 {/* Customer Query */}
                 <div className="mb-4">
-                  <span className="text-[10px] font-black uppercase tracking-wider text-slate-500 block mb-1">
+                  <span className="text-xs font-black uppercase tracking-wider text-slate-500 block mb-1">
                     Customer Query
                   </span>
                   <h3 className="text-sm sm:text-base font-black text-slate-900 leading-snug">
@@ -241,7 +241,7 @@ export default function ReviewQueueView() {
                 {/* Diff Box */}
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mb-4 text-xs">
                   <div className="p-3 rounded-xl bg-rose-50/90 border border-rose-200/80 text-rose-950 shadow-xs">
-                    <span className="font-black text-[10px] uppercase text-rose-800 block mb-1">
+                    <span className="font-black text-xs uppercase text-rose-800 block mb-1">
                       Intercepted Maker Hallucination:
                     </span>
                     <p className="line-through opacity-85 leading-relaxed break-words font-medium">
@@ -250,7 +250,7 @@ export default function ReviewQueueView() {
                   </div>
 
                   <div className="p-3 rounded-xl bg-emerald-50/90 border border-emerald-200/80 text-emerald-950 shadow-xs">
-                    <span className="font-black text-[10px] uppercase text-emerald-800 block mb-1">
+                    <span className="font-black text-xs uppercase text-emerald-800 block mb-1">
                       Guardrail Corrected Output:
                     </span>
                     <p className="leading-relaxed font-bold break-words">
@@ -316,7 +316,7 @@ export default function ReviewQueueView() {
                             <XCircle size={16} />
                           </button>
                         </div>
-                        <p className="text-[11px] text-slate-600 font-medium">
+                        <p className="text-xs text-slate-600 font-medium">
                           Type the exact authoritative policy response. This will be embedded as a permanent golden truth in the vector store.
                         </p>
                         <textarea
@@ -353,7 +353,7 @@ export default function ReviewQueueView() {
                   </div>
                 ) : (
                   item.learned_rule && (
-                    <div className="mt-3 p-2.5 rounded-xl bg-indigo-50/90 border border-indigo-200 text-[11px] text-indigo-950 flex items-center gap-2 font-medium">
+                    <div className="mt-3 p-2.5 rounded-xl bg-indigo-50/90 border border-indigo-200 text-xs text-indigo-950 flex items-center gap-2 font-medium">
                       <Sparkles size={13} className="text-indigo-600 shrink-0" />
                       <span><strong>Learned Rule Active:</strong> Indexed into vector store on human supervisor approval.</span>
                     </div>

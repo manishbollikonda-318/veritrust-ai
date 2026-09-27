@@ -56,11 +56,11 @@ export default function JudgePanel({ message, claim: initialClaim, onSelectClaim
              <ShieldAlert size={20} />}
           </div>
           <div>
-            <h3 className="text-base font-black text-slate-900 tracking-tight">Judge Agent Inspection</h3>
-            <p className="text-xs font-bold text-teal-800">Autonomous claim-level verification</p>
+            <h3 className="text-base font-black text-ink tracking-tight">Judge Agent Inspection</h3>
+            <p className="text-xs font-bold text-positive-deep">Autonomous claim-level verification</p>
           </div>
         </div>
-        <NeuButton onClick={onClose} className="!p-2 !rounded-full text-slate-500 hover:text-slate-800">
+        <NeuButton onClick={onClose} className="!p-2 !rounded-full text-ink-subtle hover:text-ink">
           <X size={16} />
         </NeuButton>
       </div>
@@ -69,38 +69,38 @@ export default function JudgePanel({ message, claim: initialClaim, onSelectClaim
       {message && (
         <div className="mb-5 grid grid-cols-2 gap-2.5">
           <div className="p-3 bg-gradient-to-br from-[#EDF7F2] to-[#DFEFE7] shadow-neu-judge-pressed rounded-xl border border-emerald-200/50">
-            <span className="text-[10px] uppercase font-extrabold text-teal-700 flex items-center gap-1">
+            <span className="text-xs uppercase font-extrabold text-positive flex items-center gap-1">
               <Clock size={12} /> Maker
             </span>
-            <span className="text-sm font-black text-slate-800">
+            <span className="text-sm font-black text-ink">
               {message.makerLatencyMs ? `${message.makerLatencyMs}ms` : '120ms'}
             </span>
           </div>
           <div className="p-3 bg-gradient-to-br from-[#EDF7F2] to-[#DFEFE7] shadow-neu-judge-pressed rounded-xl border border-emerald-200/50">
-            <span className="text-[10px] uppercase font-extrabold text-teal-700 flex items-center gap-1">
+            <span className="text-xs uppercase font-extrabold text-positive flex items-center gap-1">
               <ShieldCheck size={12} /> Judge overhead
             </span>
-            <span className="text-sm font-black text-teal-800">
+            <span className="text-sm font-black text-positive-deep">
               {message.judgeLatencyMs ? `+${message.judgeLatencyMs}ms` : '+180ms'}
             </span>
           </div>
           {costStr && (
             <div className="p-3 bg-gradient-to-br from-[#EDF7F2] to-[#DFEFE7] shadow-neu-judge-pressed rounded-xl border border-emerald-200/50">
-              <span className="text-[10px] uppercase font-extrabold text-teal-700 flex items-center gap-1">
+              <span className="text-xs uppercase font-extrabold text-positive flex items-center gap-1">
                 <DollarSign size={12} /> Cost of trust
               </span>
-              <span className="text-sm font-black text-emerald-800">{costStr}</span>
-              <p className="text-[9px] text-teal-600 font-semibold mt-0.5 leading-tight">per response verified</p>
+              <span className="text-sm font-black text-positive-deep">{costStr}</span>
+              <p className="text-xs text-positive font-semibold mt-0.5 leading-tight">per response verified</p>
             </div>
           )}
           <div className="p-3 bg-gradient-to-br from-[#EDF7F2] to-[#DFEFE7] shadow-neu-judge-pressed rounded-xl border border-emerald-200/50">
-            <span className="text-[10px] uppercase font-extrabold text-teal-700 flex items-center gap-1">
+            <span className="text-xs uppercase font-extrabold text-positive flex items-center gap-1">
               <Cpu size={12} /> Det. checks
             </span>
-            <span className={`text-sm font-black ${detChecks > 0 ? 'text-indigo-700' : 'text-slate-600'}`}>
+            <span className={`text-sm font-black ${detChecks > 0 ? 'text-accent' : 'text-ink-muted'}`}>
               {detChecks > 0 ? `${detChecks} fired` : 'None'}
             </span>
-            <p className="text-[9px] text-teal-600 font-semibold mt-0.5 leading-tight">
+            <p className="text-xs text-positive font-semibold mt-0.5 leading-tight">
               {detChecks > 0 ? 'arithmetic, not AI' : 'semantic-only path'}
             </p>
           </div>
@@ -110,20 +110,20 @@ export default function JudgePanel({ message, claim: initialClaim, onSelectClaim
       {/* Intervention Diff: Original Draft vs Final Response */}
       {message && message.originalDraft && message.originalDraft !== message.content && (
         <div className="mb-6 p-4 rounded-2xl bg-gradient-to-br from-amber-50/90 to-amber-100/70 shadow-neu-judge border border-amber-300/60">
-          <h4 className="text-xs font-black text-amber-900 uppercase tracking-wider mb-2 flex items-center gap-2">
-            <ArrowRight size={14} className="text-amber-600" />
+          <h4 className="text-xs font-black text-caution-deep uppercase tracking-wider mb-2 flex items-center gap-2">
+            <ArrowRight size={14} className="text-caution" />
             Intervention Comparison
           </h4>
           <div className="space-y-3 text-xs">
             <div>
-              <span className="font-extrabold text-rose-800 uppercase text-[10px]">Intercepted Maker Draft:</span>
-              <p className="mt-1 p-2.5 bg-rose-100/80 border border-rose-300/60 text-rose-950 rounded-lg line-through font-medium leading-relaxed break-words whitespace-normal shadow-xs">
+              <span className="font-extrabold text-critical-deep uppercase text-xs">Intercepted Maker Draft:</span>
+              <p className="mt-1 p-2.5 bg-rose-100/80 border border-rose-300/60 text-critical-deep rounded-lg line-through font-medium leading-relaxed break-words whitespace-normal shadow-xs">
                 "{message.originalDraft}"
               </p>
             </div>
             <div>
-              <span className="font-extrabold text-emerald-900 uppercase text-[10px]">Customer-Delivered Resolution:</span>
-              <p className="mt-1 p-2.5 bg-emerald-100/80 border border-emerald-300/60 text-emerald-950 rounded-lg leading-relaxed font-bold break-words whitespace-normal shadow-xs">
+              <span className="font-extrabold text-positive-deep uppercase text-xs">Customer-Delivered Resolution:</span>
+              <p className="mt-1 p-2.5 bg-emerald-100/80 border border-emerald-300/60 text-positive-deep rounded-lg leading-relaxed font-bold break-words whitespace-normal shadow-xs">
                 "{message.content}"
               </p>
             </div>
@@ -134,11 +134,11 @@ export default function JudgePanel({ message, claim: initialClaim, onSelectClaim
       {/* Overall Verdict & Reasoning */}
       {message?.overallReasoning && (
         <div className="mb-6">
-          <h4 className="text-xs font-black text-teal-900 uppercase tracking-wider mb-2">Verdict Decision</h4>
+          <h4 className="text-xs font-black text-positive-deep uppercase tracking-wider mb-2">Verdict Decision</h4>
           <div className={`p-4 rounded-2xl text-xs leading-relaxed font-bold border shadow-xs ${
-            status === 'Approved' ? 'bg-emerald-50/90 text-emerald-950 border-emerald-300/70' :
-            status === 'Corrected' ? 'bg-amber-50/90 text-amber-950 border-amber-300/70' :
-            'bg-rose-50/90 text-rose-950 border-rose-300/70'
+            status === 'Approved' ? 'bg-emerald-50/90 text-positive-deep border-emerald-300/70' :
+            status === 'Corrected' ? 'bg-amber-50/90 text-caution-deep border-amber-300/70' :
+            'bg-rose-50/90 text-critical-deep border-rose-300/70'
           }`}>
             {message.overallReasoning}
           </div>
@@ -148,12 +148,12 @@ export default function JudgePanel({ message, claim: initialClaim, onSelectClaim
       {/* LangGraph Multi-Agent Feedback Loop Trace */}
       {message?.loopHistory && message.loopHistory.length > 1 && (
         <div className="mb-6 p-4 rounded-2xl bg-gradient-to-br from-indigo-50/90 to-indigo-100/70 shadow-neu-judge border border-indigo-200/80">
-          <h4 className="text-xs font-black text-indigo-950 uppercase tracking-wider mb-2.5 flex items-center justify-between">
+          <h4 className="text-xs font-black text-accent-strong uppercase tracking-wider mb-2.5 flex items-center justify-between">
             <span className="flex items-center gap-1.5">
               <span className="w-2 h-2 rounded-full bg-indigo-600 animate-pulse" />
               LangGraph Multi-Agent Loop Trace
             </span>
-            <span className="text-[10px] bg-indigo-200/80 text-indigo-900 px-2 py-0.5 rounded-full font-bold">
+            <span className="text-xs bg-indigo-200/80 text-accent-strong px-2 py-0.5 rounded-full font-bold">
               {message.loopHistory.length} Steps
             </span>
           </h4>
@@ -161,17 +161,17 @@ export default function JudgePanel({ message, claim: initialClaim, onSelectClaim
             {message.loopHistory.map((step: any, sIdx: number) => (
               <div key={sIdx} className="p-2.5 rounded-xl bg-white/80 border border-indigo-100 text-xs shadow-xs">
                 <div className="flex items-center justify-between mb-1">
-                  <span className="font-black text-slate-800 flex items-center gap-1.5">
-                    <span className="text-[10px] text-indigo-600 font-extrabold">#{sIdx + 1}</span>
+                  <span className="font-black text-ink flex items-center gap-1.5">
+                    <span className="text-xs text-accent font-extrabold">#{sIdx + 1}</span>
                     {step.agent || step.step}
                   </span>
                   {step.latency_ms && (
-                    <span className="text-[10px] text-slate-500 font-mono font-bold">
+                    <span className="text-xs text-ink-subtle font-mono font-bold">
                       {step.latency_ms}ms
                     </span>
                   )}
                 </div>
-                <p className="text-[11px] text-slate-600 font-medium">
+                <p className="text-xs text-ink-muted font-medium">
                   {step.action || (step.is_safe ? 'Verified safe' : 'Flagged discrepancy')}
                 </p>
               </div>
@@ -183,10 +183,10 @@ export default function JudgePanel({ message, claim: initialClaim, onSelectClaim
       {/* Claims List Tabs */}
       <div className="mb-6">
         <div className="flex justify-between items-center mb-3">
-          <h4 className="text-xs font-black text-teal-900 uppercase tracking-wider">
+          <h4 className="text-xs font-black text-positive-deep uppercase tracking-wider">
             Extracted Claims ({claims.length})
           </h4>
-          <span className="text-[11px] text-teal-700 font-bold">Click to audit</span>
+          <span className="text-xs text-positive font-bold">Click to audit</span>
         </div>
         <div className="space-y-2">
           {claims.map((c, index) => {
@@ -197,12 +197,12 @@ export default function JudgePanel({ message, claim: initialClaim, onSelectClaim
                 onClick={() => handleClaimClick(c)}
                 className={`w-full text-left p-3 rounded-xl transition-all duration-150 flex items-start justify-between gap-3 text-xs cursor-pointer ${
                   isSelected
-                    ? 'shadow-neu-judge-pressed bg-gradient-to-r from-[#DFEFE7] to-[#D4E8DF] border-l-4 border-teal-600 text-slate-900 font-bold'
-                    : 'shadow-neu-judge bg-gradient-to-br from-[#F2FAF6] to-[#E5F3EC] text-slate-700 hover:text-slate-950 border border-emerald-100/60'
+                    ? 'shadow-neu-judge-pressed bg-gradient-to-r from-[#DFEFE7] to-[#D4E8DF] border-l-4 border-teal-600 text-ink font-bold'
+                    : 'shadow-neu-judge bg-gradient-to-br from-[#F2FAF6] to-[#E5F3EC] text-ink-muted hover:text-ink border border-emerald-100/60'
                 }`}
               >
                 <div className="flex-1 truncate pr-2">
-                  <span className="font-mono text-[10px] text-teal-700 mr-2 font-bold">#{index + 1}</span>
+                  <span className="font-mono text-xs text-positive mr-2 font-bold">#{index + 1}</span>
                   <span>{c.text}</span>
                 </div>
                 <div className="shrink-0">
@@ -217,7 +217,7 @@ export default function JudgePanel({ message, claim: initialClaim, onSelectClaim
       {/* Active Claim Deep Dive */}
       {activeClaim && (
         <div className="mb-6">
-          <h4 className="text-xs font-black text-teal-900 uppercase tracking-wider mb-3">
+          <h4 className="text-xs font-black text-positive-deep uppercase tracking-wider mb-3">
             Active Claim Evidence
           </h4>
           <ClaimCard claim={activeClaim} />
@@ -227,7 +227,7 @@ export default function JudgePanel({ message, claim: initialClaim, onSelectClaim
       {/* Verification Flow Timeline */}
       {activeClaim && (
         <div>
-          <h4 className="text-xs font-black text-teal-900 uppercase tracking-wider mb-3">
+          <h4 className="text-xs font-black text-positive-deep uppercase tracking-wider mb-3">
             Verification Pipeline Flow
           </h4>
           <VerificationTimeline verdict={activeClaim.verdict} claim={activeClaim} />

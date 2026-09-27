@@ -88,11 +88,11 @@ export default function VerificationTimeline({ verdict, claim }: VerificationTim
               step.status === 'skipped' ? 'opacity-50' : ''
             }`}>
               <p className={`text-xs font-black leading-tight ${
-                step.status === 'active' ? 'text-slate-900' : 'text-slate-800'
+                step.status === 'active' ? 'text-ink' : 'text-ink'
               }`}>
                 {step.label}
               </p>
-              <p className="text-[10px] text-teal-700 font-bold mt-0.5 break-words leading-snug">
+              <p className="text-xs text-positive font-bold mt-0.5 break-words leading-snug">
                 {step.sublabel}
               </p>
             </div>

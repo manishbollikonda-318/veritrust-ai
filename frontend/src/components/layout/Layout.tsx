@@ -15,7 +15,7 @@ export default function Layout({ children }: LayoutProps) {
   const { isCollapsed } = useSidebar();
 
   return (
-    <div className="min-h-screen bg-canvas flex text-slate-800 antialiased overflow-x-hidden">
+    <div className="min-h-screen bg-canvas flex text-ink antialiased overflow-x-hidden">
       <Sidebar />
       <div
         className={`flex-1 flex flex-col min-h-screen transition-[margin] duration-300 ease-in-out w-full

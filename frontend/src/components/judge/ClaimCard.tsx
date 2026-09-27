@@ -8,10 +8,10 @@ interface ClaimCardProps {
 }
 
 const SEVERITY_CONFIG: Record<string, { label: string; color: string; bg: string; border: string }> = {
-  none:     { label: 'No Risk',  color: 'text-emerald-900', bg: 'bg-emerald-100/90', border: 'border-emerald-300/60' },
-  medium:   { label: 'Medium',   color: 'text-amber-900',   bg: 'bg-amber-100/90',   border: 'border-amber-300/60' },
-  high:     { label: 'High',     color: 'text-orange-900',  bg: 'bg-orange-100/90',  border: 'border-orange-300/60' },
-  critical: { label: 'Critical', color: 'text-rose-900',    bg: 'bg-rose-100/90',    border: 'border-rose-300/60' },
+  none:     { label: 'No Risk',  color: 'text-positive-deep', bg: 'bg-emerald-100/90', border: 'border-emerald-300/60' },
+  medium:   { label: 'Medium',   color: 'text-caution-deep',   bg: 'bg-amber-100/90',   border: 'border-amber-300/60' },
+  high:     { label: 'High',     color: 'text-caution-deep',  bg: 'bg-orange-100/90',  border: 'border-orange-300/60' },
+  critical: { label: 'Critical', color: 'text-critical-deep',    bg: 'bg-rose-100/90',    border: 'border-rose-300/60' },
 };
 
 export default function ClaimCard({ claim }: ClaimCardProps) {
@@ -25,17 +25,17 @@ export default function ClaimCard({ claim }: ClaimCardProps) {
       {/* Header row */}
       <div className="flex justify-between items-start gap-3 mb-3">
         <div className="flex-1 min-w-0">
-          <span className="text-[10px] font-black uppercase tracking-wider text-teal-800 block mb-1">
+          <span className="text-xs font-black uppercase tracking-wider text-positive-deep block mb-1">
             Claim Under Evaluation
           </span>
-          <h4 className="font-extrabold text-slate-900 text-sm sm:text-base leading-snug break-words whitespace-normal">
+          <h4 className="font-extrabold text-ink text-sm sm:text-base leading-snug break-words whitespace-normal">
             {claim.text}
           </h4>
         </div>
         <div className="shrink-0 flex flex-col items-end gap-1.5">
           <NeuBadge type={claim.verdict} />
           {claim.severity && claim.severity !== 'none' && (
-            <span className={`text-[10px] font-black px-2 py-0.5 rounded-full border ${sev.bg} ${sev.color} ${sev.border} shadow-xs`}>
+            <span className={`text-xs font-black px-2 py-0.5 rounded-full border ${sev.bg} ${sev.color} ${sev.border} shadow-xs`}>
               {sev.label} Severity
             </span>
           )}
@@ -45,12 +45,12 @@ export default function ClaimCard({ claim }: ClaimCardProps) {
       {/* Deterministic check badge */}
       {isDeterministic && (
         <div className="mb-3 flex items-center gap-2 p-2.5 rounded-xl bg-gradient-to-r from-purple-50 to-indigo-50 border border-purple-200 shadow-xs">
-          <Cpu size={13} className="text-purple-600 shrink-0" />
+          <Cpu size={13} className="text-accent shrink-0" />
           <div className="min-w-0">
-            <span className="text-[10px] font-black uppercase text-purple-900 tracking-wider">
+            <span className="text-xs font-black uppercase text-accent-strong tracking-wider">
               Deterministic Code-Check Applied
             </span>
-            <p className="text-[11px] text-purple-800 font-bold mt-0.5">
+            <p className="text-xs text-accent-strong font-bold mt-0.5">
               {trace?.deterministic_method?.replace(/_/g, ' ')} — verified with arithmetic, not AI inference
             </p>
           </div>
@@ -60,7 +60,7 @@ export default function ClaimCard({ claim }: ClaimCardProps) {
       {/* Confidence bar */}
       {claim.confidence !== undefined && (
         <div className="mb-3 flex items-center gap-2">
-          <div className="text-[11px] font-bold text-teal-800 w-24 shrink-0">Confidence:</div>
+          <div className="text-xs font-bold text-positive-deep w-24 shrink-0">Confidence:</div>
           <div className="flex-1 bg-emerald-200/60 rounded-full h-2 overflow-hidden shadow-inner">
             <div
               className={`h-full rounded-full transition-all duration-500 shadow-xs ${
@@ -73,7 +73,7 @@ export default function ClaimCard({ claim }: ClaimCardProps) {
               style={{ width: `${Math.round(claim.confidence * 100)}%` }}
             />
           </div>
-          <span className="text-[11px] font-black text-slate-800 w-10 text-right">
+          <span className="text-xs font-black text-ink w-10 text-right">
             {Math.round(claim.confidence * 100)}%
           </span>
         </div>
@@ -83,18 +83,18 @@ export default function ClaimCard({ claim }: ClaimCardProps) {
       {claim.sourceSentence && (
         <div className="mb-3">
           <div className="flex items-center justify-between gap-2 mb-1">
-            <p className="text-[10px] font-black text-teal-800 uppercase tracking-wider flex items-center gap-1">
-              <BookOpen size={11} className="text-teal-600" />
+            <p className="text-xs font-black text-positive-deep uppercase tracking-wider flex items-center gap-1">
+              <BookOpen size={11} className="text-positive" />
               Source KB Ground Truth
             </p>
             {claim.sourceDocument && (
-              <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-teal-100 text-teal-900 border border-teal-300/60 flex items-center gap-1 shadow-xs">
+              <span className="text-xs font-bold px-2 py-0.5 rounded-full bg-teal-100 text-positive-deep border border-teal-300/60 flex items-center gap-1 shadow-xs">
                 <FileText size={9} />
                 {claim.sourceDocument}
               </span>
             )}
           </div>
-          <div className="border-l-4 border-teal-500 pl-3 py-2 text-xs sm:text-sm text-slate-800 font-medium italic bg-white/60 rounded-r-xl break-words leading-relaxed whitespace-normal border border-emerald-100/60 shadow-xs">
+          <div className="border-l-4 border-teal-500 pl-3 py-2 text-xs sm:text-sm text-ink font-medium italic bg-white/60 rounded-r-xl break-words leading-relaxed whitespace-normal border border-emerald-100/60 shadow-xs">
             "{claim.sourceSentence}"
           </div>
         </div>
@@ -102,15 +102,15 @@ export default function ClaimCard({ claim }: ClaimCardProps) {
 
       {/* Judge reasoning */}
       <div className="mb-3">
-        <p className="text-[10px] font-black text-teal-800 uppercase tracking-wider mb-1 flex items-center gap-1">
+        <p className="text-xs font-black text-positive-deep uppercase tracking-wider mb-1 flex items-center gap-1">
           {claim.verdict === 'Verified' ? (
-            <ShieldCheck size={11} className="text-emerald-600" />
+            <ShieldCheck size={11} className="text-positive" />
           ) : (
-            <AlertTriangle size={11} className="text-amber-600" />
+            <AlertTriangle size={11} className="text-caution" />
           )}
           Judge Verification Reasoning
         </p>
-        <p className="text-xs sm:text-sm text-slate-900 font-semibold bg-gradient-to-br from-[#F4FAF6] to-[#E8F4EE] shadow-[3px_3px_7px_rgba(158,192,180,0.4),-3px_-3px_7px_rgba(255,255,255,0.9)] p-3.5 rounded-xl break-words leading-relaxed whitespace-normal border border-emerald-200/60">
+        <p className="text-xs sm:text-sm text-ink font-semibold bg-gradient-to-br from-[#F4FAF6] to-[#E8F4EE] shadow-[3px_3px_7px_rgba(158,192,180,0.4),-3px_-3px_7px_rgba(255,255,255,0.9)] p-3.5 rounded-xl break-words leading-relaxed whitespace-normal border border-emerald-200/60">
           {claim.reasoning}
         </p>
       </div>
@@ -120,7 +120,7 @@ export default function ClaimCard({ claim }: ClaimCardProps) {
         <div>
           <button
             onClick={() => setShowTrace(!showTrace)}
-            className="w-full flex items-center justify-between text-[10px] font-black uppercase tracking-wider text-teal-800 hover:text-teal-950 transition-colors py-1 cursor-pointer"
+            className="w-full flex items-center justify-between text-xs font-black uppercase tracking-wider text-positive-deep hover:text-positive-deep transition-colors py-1 cursor-pointer"
           >
             <span className="flex items-center gap-1.5">
               <Search size={11} />
@@ -130,7 +130,7 @@ export default function ClaimCard({ claim }: ClaimCardProps) {
           </button>
 
           {showTrace && (
-            <div className="mt-2 p-3 rounded-xl bg-slate-900 text-[11px] font-mono space-y-1.5 border border-slate-700 shadow-md">
+            <div className="mt-2 p-3 rounded-xl bg-slate-900 text-xs font-mono space-y-1.5 border border-slate-700 shadow-md">
               <TraceRow label="Docs searched" value={trace.documents_searched?.join(', ') || '—'} />
               <TraceRow label="Candidates retrieved" value={String(trace.candidates_retrieved)} />
               <TraceRow label="Retrieval latency" value={`${trace.retrieval_ms}ms`} />
@@ -148,7 +148,7 @@ export default function ClaimCard({ claim }: ClaimCardProps) {
                 <TraceRow label="Combined score" value={trace.combined_score.toFixed(3)} />
               )}
               {trace.deterministic_applied && (
-                <div className="mt-1.5 pt-1.5 border-t border-slate-700 flex items-center gap-2 text-violet-300">
+                <div className="mt-1.5 pt-1.5 border-t border-slate-700 flex items-center gap-2 text-accent">
                   <Zap size={10} />
                   <span>Deterministic rule fired at rank #{trace.deterministic_hit_at_rank} — overrides semantic scoring</span>
                 </div>
@@ -164,7 +164,7 @@ export default function ClaimCard({ claim }: ClaimCardProps) {
 function TraceRow({ label, value, highlight }: { label: string; value: string; highlight?: boolean }) {
   return (
     <div className="flex justify-between gap-2">
-      <span className="text-slate-400 font-sans">{label}:</span>
+      <span className="text-ink-subtle font-sans">{label}:</span>
       <span className={`text-right break-all ${highlight ? 'text-teal-300 font-bold' : 'text-slate-200'}`}>{value}</span>
     </div>
   );

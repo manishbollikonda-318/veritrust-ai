@@ -33,7 +33,7 @@ export default function MetricTile({ title, value, subtitle, trend, icon, catego
 
       {subtitle && (
         <div className="mt-2 pt-2 border-t border-purple-200/50">
-          <div className={`text-[11px] sm:text-xs font-extrabold px-2.5 py-1 rounded-xl border ${getTrendColor()} leading-snug break-words shadow-xs`}>
+          <div className={`text-xs sm:text-xs font-extrabold px-2.5 py-1 rounded-xl border ${getTrendColor()} leading-snug break-words shadow-xs`}>
             {subtitle}
           </div>
         </div>

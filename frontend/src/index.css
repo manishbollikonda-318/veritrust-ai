@@ -7,6 +7,22 @@
   --color-judge-surface: #EAF4F0;
   --color-metrics-surface: #F2EFF9;
   --color-chrome-surface: #E5EBF5;
+
+  /* Semantic text palette — the only text colours allowed in the product.
+     Components must use these tokens instead of raw slate/indigo/rose/... shades
+     so the whole UI stays within a single, predictable type-colour system. */
+  --color-ink: #0F172A;          /* headings, primary copy            */
+  --color-ink-muted: #475569;    /* body copy, descriptions           */
+  --color-ink-subtle: #64748B;   /* meta, captions, disabled          */
+  --color-accent: #4F46E5;       /* primary interactive accent        */
+  --color-accent-strong: #3730A3;/* accent text on light surfaces     */
+  --color-positive: #047857;     /* verified / success                */
+  --color-positive-deep: #065F46;/* success text on tinted surfaces   */
+  --color-caution: #B45309;      /* unsupported / warning             */
+  --color-caution-deep: #92400E; /* warning text on tinted surfaces   */
+  --color-critical: #BE123C;     /* contradiction / destructive       */
+  --color-critical-deep: #9F1239;/* destructive text on tinted surfaces */
+  --color-onaccent: #FFFFFF;
 }
 
 @layer utilities {

@@ -77,34 +77,34 @@ export default function DataSourceDisclosureModal() {
             <div className="absolute inset-x-0 top-0 h-[1.5px] bg-gradient-to-r from-transparent via-white/80 to-transparent pointer-events-none" />
 
             {/* Approachable pill badge */}
-            <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[11px] font-bold bg-white/15 text-indigo-950 border border-white/30 mb-3 shadow-xs">
-              <Sparkles size={12} className="text-indigo-600" />
+            <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-white/15 text-accent-strong border border-white/30 mb-3 shadow-xs">
+              <Sparkles size={12} className="text-accent" />
               <span>About this demo</span>
             </div>
 
             {/* Header */}
-            <h3 className="text-base sm:text-lg font-black text-slate-950 tracking-tight drop-shadow-xs">
+            <h3 className="text-base sm:text-lg font-black text-ink tracking-tight drop-shadow-xs">
               Data Source &amp; Synthetic Baseline Disclosure
             </h3>
 
             {/* Short, honest body text (2-3 sentences) */}
-            <div className="mt-3 space-y-2.5 text-xs sm:text-[13px] text-slate-900 leading-relaxed font-medium">
+            <div className="mt-3 space-y-2.5 text-xs sm:text-[13px] text-ink leading-relaxed font-medium">
               <p>
-                VeriTrust AI is shown here protecting <strong className="font-bold text-slate-950">NovaMart</strong>, a fictional retail company created specifically for this demonstration. Its return policy, shipping tiers, pricing, warranty, and customer service documents are original sample content written for this project — not real data from an actual retailer.
+                VeriTrust AI is shown here protecting <strong className="font-bold text-ink">NovaMart</strong>, a fictional retail company created specifically for this demonstration. Its return policy, shipping tiers, pricing, warranty, and customer service documents are original sample content written for this project — not real data from an actual retailer.
               </p>
               <p>
-                The dual-agent verification system, claim extraction, and guardrail logic you are seeing are <strong className="font-bold text-indigo-900">fully functional</strong> and work identically with real enterprise documents. In production, NovaMart&apos;s sample policies would simply be replaced with your business&apos;s real knowledge base.
+                The dual-agent verification system, claim extraction, and guardrail logic you are seeing are <strong className="font-bold text-accent-strong">fully functional</strong> and work identically with real enterprise documents. In production, NovaMart&apos;s sample policies would simply be replaced with your business&apos;s real knowledge base.
               </p>
             </div>
 
             {/* Bring-your-own-data prompt with translucent glass styling */}
             <div className="mt-4 rounded-2xl bg-white/10 border border-white/25 p-3.5 flex items-start gap-3 shadow-xs">
-              <div className="p-1.5 rounded-xl bg-indigo-600/15 text-indigo-900 shrink-0 mt-0.5 border border-white/25">
+              <div className="p-1.5 rounded-xl bg-indigo-600/15 text-accent-strong shrink-0 mt-0.5 border border-white/25">
                 <Database size={14} />
               </div>
-              <p className="text-[11px] sm:text-xs text-slate-900 font-medium leading-normal">
-                <strong className="font-bold text-slate-950">Want to test with your own company data?</strong>{' '}
-                Switch to a <span className="font-bold text-indigo-900">Custom Workspace</span> in the Knowledge Base to paste or upload your own corporate policies.
+              <p className="text-xs sm:text-xs text-ink font-medium leading-normal">
+                <strong className="font-bold text-ink">Want to test with your own company data?</strong>{' '}
+                Switch to a <span className="font-bold text-accent-strong">Custom Workspace</span> in the Knowledge Base to paste or upload your own corporate policies.
               </p>
             </div>
 

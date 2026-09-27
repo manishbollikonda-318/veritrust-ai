@@ -28,7 +28,7 @@ export default function DriftChart({ driftData }: DriftChartProps) {
             Real-time monitoring of pass rate vs. hallucination correction & block rates
           </p>
         </div>
-        <span className="text-[11px] font-semibold text-blue-600 bg-blue-50 px-2.5 py-1 rounded-lg border border-blue-100">
+        <span className="text-xs font-semibold text-blue-600 bg-blue-50 px-2.5 py-1 rounded-lg border border-blue-100">
           Live Session Window
         </span>
       </div>

@@ -53,25 +53,33 @@ export default function ChatInput({ onSend, disabled }: ChatInputProps) {
   const isActionDisabled = disabled || isCooldown || !input.trim();
 
   return (
-    <div className="mt-auto space-y-1.5">
+    /* Issue 10: the composer is centred and width-capped so the submit button
+       stays visually attached to the field instead of drifting to the far edge
+       of a very wide feed. */
+    <div className="mt-auto w-full max-w-3xl mx-auto space-y-1.5">
       {error && (
-        <div className="flex items-center gap-1.5 text-xs text-red-600 font-semibold px-2 animate-fade-in">
-          <AlertCircle size={13} />
+        <div role="alert" className="flex items-center gap-1.5 text-xs text-critical font-semibold px-2 animate-fade-in">
+          <AlertCircle size={13} aria-hidden="true" />
           {error}
         </div>
       )}
 
       <form onSubmit={handleSubmit} className="flex items-center gap-3 relative">
-        <div className="flex-1 relative">
+        <div className="flex-1 min-w-0 relative">
           <NeuInput
             value={input}
             onChange={handleChange}
             placeholder="Ask anything about NovaMart returns, shipping, or warranty..."
             disabled={disabled}
-            className="w-full pr-16"
+            className="w-full pr-20"
             aria-label="Customer query input"
+            aria-describedby="chat-input-counter"
           />
-          <span className="absolute right-4 top-1/2 -translate-y-1/2 text-[10px] font-semibold text-gray-400">
+          <span
+            id="chat-input-counter"
+            aria-live="polite"
+            className="absolute right-4 top-1/2 -translate-y-1/2 text-xs font-semibold text-ink-subtle"
+          >
             {input.length}/{MAX_CHAR_COUNT}
           </span>
         </div>
@@ -79,11 +87,13 @@ export default function ChatInput({ onSend, disabled }: ChatInputProps) {
         <NeuButton
           type="submit"
           disabled={isActionDisabled}
-          className="!px-5 !py-3.5 !rounded-2xl flex items-center gap-2 text-xs font-bold text-blue-600 disabled:opacity-40 shrink-0"
+          variant="accent"
+          size="md"
+          className="shrink-0 disabled:opacity-40"
         >
-          <ShieldCheck size={16} />
+          <ShieldCheck size={16} aria-hidden="true" />
           <span>Verify &amp; Send</span>
-          <Send size={14} className={input.trim() ? 'text-blue-600' : 'text-gray-400'} />
+          <Send size={14} aria-hidden="true" className={input.trim() ? '' : 'opacity-50'} />
         </NeuButton>
       </form>
     </div>

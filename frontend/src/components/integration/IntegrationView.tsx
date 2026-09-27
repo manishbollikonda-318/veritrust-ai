@@ -174,7 +174,7 @@ for claim in result['claims']:
                 <ShieldCheck size={20} className="text-indigo-600" />
                 <h3 className="font-black text-slate-900 text-base">Live `POST /api/verify` Test Console</h3>
               </div>
-              <span className="text-[11px] font-mono px-2.5 py-0.5 rounded-full bg-indigo-100 text-indigo-900 font-bold border border-indigo-200">
+              <span className="text-xs font-mono px-2.5 py-0.5 rounded-full bg-indigo-100 text-indigo-900 font-bold border border-indigo-200">
                 workspace: {currentWorkspace}
               </span>
             </div>
@@ -198,7 +198,7 @@ for claim in result['claims']:
                   onClick={() =>
                     setTestDraft('You can return laptops and cameras within 60 days for a 100% full refund.')
                   }
-                  className="text-[11px] font-bold text-indigo-600 hover:underline cursor-pointer"
+                  className="text-xs font-bold text-indigo-600 hover:underline cursor-pointer"
                 >
                   Load 60-day Hallucination
                 </button>
@@ -208,7 +208,7 @@ for claim in result['claims']:
                   onClick={() =>
                     setTestDraft('Most items can be returned within 30 days of delivery in original condition.')
                   }
-                  className="text-[11px] font-bold text-emerald-700 hover:underline cursor-pointer"
+                  className="text-xs font-bold text-emerald-700 hover:underline cursor-pointer"
                 >
                   Load Verified Policy
                 </button>
@@ -247,7 +247,7 @@ for claim in result['claims']:
                       : 'FLAGGED / CORRECTED'}
                   </h4>
                 </div>
-                <span className="text-[11px] font-bold px-2 py-0.5 rounded bg-teal-100 text-teal-900">
+                <span className="text-xs font-bold px-2 py-0.5 rounded bg-teal-100 text-teal-900">
                   {verificationResult.verification_time_ms}ms
                 </span>
               </div>
@@ -258,7 +258,7 @@ for claim in result['claims']:
 
               {/* Claims Breakdown */}
               <div className="space-y-3">
-                <span className="text-[10px] font-black uppercase tracking-wider text-teal-900 block">
+                <span className="text-xs font-black uppercase tracking-wider text-teal-900 block">
                   Atomic Claim Entailment Results ({verificationResult.claims?.length || 0}):
                 </span>
                 {verificationResult.claims?.map((claim: any, idx: number) => (
@@ -271,11 +271,11 @@ for claim in result['claims']:
                       <NeuBadge type={claim.verdict} />
                     </div>
                     {claim.source_sentence && (
-                      <p className="text-[11px] text-teal-950 italic bg-teal-50/80 p-2 rounded border-l-2 border-teal-500 font-medium">
+                      <p className="text-xs text-teal-950 italic bg-teal-50/80 p-2 rounded border-l-2 border-teal-500 font-medium">
                         "{claim.source_sentence}"
                       </p>
                     )}
-                    <p className="text-[10px] text-slate-600 font-medium">{claim.reasoning}</p>
+                    <p className="text-xs text-slate-600 font-medium">{claim.reasoning}</p>
                   </div>
                 ))}
               </div>
@@ -362,7 +362,7 @@ for claim in result['claims']:
             </h4>
             <div className="space-y-3 text-xs text-slate-700 leading-relaxed font-medium">
               <div className="flex items-start gap-2.5">
-                <div className="w-5 h-5 rounded-full bg-indigo-100 text-indigo-700 flex items-center justify-center text-[10px] font-black shrink-0 mt-0.5">
+                <div className="w-5 h-5 rounded-full bg-indigo-100 text-indigo-700 flex items-center justify-center text-xs font-black shrink-0 mt-0.5">
                   1
                 </div>
                 <p>
@@ -370,7 +370,7 @@ for claim in result['claims']:
                 </p>
               </div>
               <div className="flex items-start gap-2.5">
-                <div className="w-5 h-5 rounded-full bg-indigo-100 text-indigo-700 flex items-center justify-center text-[10px] font-bold shrink-0 mt-0.5">
+                <div className="w-5 h-5 rounded-full bg-indigo-100 text-indigo-700 flex items-center justify-center text-xs font-bold shrink-0 mt-0.5">
                   2
                 </div>
                 <p>
@@ -378,7 +378,7 @@ for claim in result['claims']:
                 </p>
               </div>
               <div className="flex items-start gap-2.5">
-                <div className="w-5 h-5 rounded-full bg-indigo-100 text-indigo-700 flex items-center justify-center text-[10px] font-bold shrink-0 mt-0.5">
+                <div className="w-5 h-5 rounded-full bg-indigo-100 text-indigo-700 flex items-center justify-center text-xs font-bold shrink-0 mt-0.5">
                   3
                 </div>
                 <p>
@@ -402,7 +402,7 @@ for claim in result['claims']:
                 </div>
                 <div>
                   <h3 className="text-sm font-black tracking-tight">NovaMart Retail Storefront (Simulated Demo Benchmark)</h3>
-                  <p className="text-[10px] text-slate-400 font-mono">Simulated Origin: https://shop.novamart-demo.internal</p>
+                  <p className="text-xs text-slate-400 font-mono">Simulated Origin: https://shop.novamart-demo.internal</p>
                 </div>
               </div>
 
@@ -419,7 +419,7 @@ for claim in result['claims']:
               {/* Promo Banner */}
               <div className="p-4 rounded-2xl bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600 text-white flex items-center justify-between shadow-md">
                 <div>
-                  <span className="text-[10px] font-black uppercase tracking-wider bg-white/20 px-2.5 py-0.5 rounded-full">
+                  <span className="text-xs font-black uppercase tracking-wider bg-white/20 px-2.5 py-0.5 rounded-full">
                     Protected by VeriTrust AI Guardrail
                   </span>
                   <h4 className="text-base font-black mt-1">NovaMart Online Store (Simulated Retail Environment)</h4>
@@ -446,7 +446,7 @@ for claim in result['claims']:
                       <h5 className="font-black text-xs text-slate-900 leading-snug">{p.name}</h5>
                       <div className="flex items-center justify-between">
                         <span className="text-xs font-black text-indigo-600">{p.price}</span>
-                        <span className="text-[10px] text-slate-500 font-semibold">{p.category}</span>
+                        <span className="text-xs text-slate-500 font-semibold">{p.category}</span>
                       </div>
                     </div>
                   ))}
@@ -455,7 +455,7 @@ for claim in result['claims']:
 
               {/* Quick Attack Prompts inside Simulator */}
               <div className="p-4 rounded-2xl bg-gradient-to-br from-amber-50 to-amber-100/70 border border-amber-300">
-                <span className="text-[10px] font-black uppercase text-amber-900 tracking-wider block mb-1.5">
+                <span className="text-xs font-black uppercase text-amber-900 tracking-wider block mb-1.5">
                   Try Asking the Storefront Widget:
                 </span>
                 <div className="flex flex-wrap gap-2">
@@ -467,7 +467,7 @@ for claim in result['claims']:
                     <button
                       key={idx}
                       onClick={() => handleSimSend(preset)}
-                      className="text-[11px] px-3 py-1 rounded-xl bg-white border border-amber-300 text-amber-900 font-bold hover:bg-amber-100 transition-colors text-left cursor-pointer"
+                      className="text-xs px-3 py-1 rounded-xl bg-white border border-amber-300 text-amber-900 font-bold hover:bg-amber-100 transition-colors text-left cursor-pointer"
                     >
                       "{preset}"
                     </button>
@@ -482,11 +482,11 @@ for claim in result['claims']:
                 <div className="flex items-center gap-2">
                   <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse" />
                   <span className="text-xs font-black text-slate-900">NovaMart Live Assistant</span>
-                  <span className="text-[10px] font-bold px-2.5 py-0.5 rounded-full bg-indigo-100 text-indigo-800">
+                  <span className="text-xs font-bold px-2.5 py-0.5 rounded-full bg-indigo-100 text-indigo-800">
                     VeriTrust Guardrail Active
                   </span>
                 </div>
-                <span className="text-[10px] text-slate-400 font-mono font-bold">Endpoint: /api/chat</span>
+                <span className="text-xs text-slate-400 font-mono font-bold">Endpoint: /api/chat</span>
               </div>
 
               {/* Messages container */}
@@ -513,7 +513,7 @@ for claim in result['claims']:
                   </div>
                 ))}
                 {simLoading && (
-                  <div className="text-[11px] text-slate-500 italic flex items-center gap-2 font-medium">
+                  <div className="text-xs text-slate-500 italic flex items-center gap-2 font-medium">
                     <span className="w-2 h-2 rounded-full bg-indigo-600 animate-bounce" />
                     Maker drafting &amp; Judge verifying...
                   </div>

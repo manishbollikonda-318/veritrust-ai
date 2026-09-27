@@ -9,21 +9,21 @@ interface StatusChipProps {
 const statusConfig: Record<ClaimStatus, { bg: string; text: string; border: string; dot: string; shadow: string }> = {
   Approved: {
     bg: 'bg-emerald-500/15 hover:bg-emerald-500/25',
-    text: 'text-emerald-900',
+    text: 'text-positive-deep',
     border: 'border-emerald-400/50',
     dot: 'bg-emerald-600',
     shadow: 'shadow-[3px_3px_8px_rgba(16,185,129,0.2),-3px_-3px_8px_rgba(255,255,255,0.9)]',
   },
   Corrected: {
     bg: 'bg-amber-500/15 hover:bg-amber-500/25',
-    text: 'text-amber-900',
+    text: 'text-caution-deep',
     border: 'border-amber-400/50',
     dot: 'bg-amber-600',
     shadow: 'shadow-[3px_3px_8px_rgba(245,158,11,0.2),-3px_-3px_8px_rgba(255,255,255,0.9)]',
   },
   Blocked: {
     bg: 'bg-rose-500/15 hover:bg-rose-500/25',
-    text: 'text-rose-900',
+    text: 'text-critical-deep',
     border: 'border-rose-400/50',
     dot: 'bg-rose-600',
     shadow: 'shadow-[3px_3px_8px_rgba(244,63,94,0.2),-3px_-3px_8px_rgba(255,255,255,0.9)]',

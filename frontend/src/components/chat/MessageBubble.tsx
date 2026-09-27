@@ -26,10 +26,10 @@ export default function MessageBubble({
           className={`w-9 h-9 rounded-2xl flex items-center justify-center shrink-0 text-xs font-bold ${
             isUser
               ? 'bg-gradient-to-br from-blue-600 to-indigo-600 text-white shadow-[2px_2px_6px_rgba(79,70,229,0.35),-2px_-2px_6px_rgba(255,255,255,0.8)]'
-              : 'bg-gradient-to-br from-[#F5F8FE] to-[#E5EDFA] shadow-[3px_3px_6px_rgba(165,183,212,0.4),-3px_-3px_6px_rgba(255,255,255,0.9)] text-indigo-700 border border-indigo-100/70'
+              : 'bg-gradient-to-br from-[#F5F8FE] to-[#E5EDFA] shadow-[3px_3px_6px_rgba(165,183,212,0.4),-3px_-3px_6px_rgba(255,255,255,0.9)] text-accent border border-indigo-100/70'
           }`}
         >
-          {isUser ? <User size={18} /> : <Bot size={18} className="text-indigo-600" />}
+          {isUser ? <User size={18} /> : <Bot size={18} className="text-accent" />}
         </div>
 
         {/* Content Box */}
@@ -41,11 +41,11 @@ export default function MessageBubble({
                 <StatusChip status={message.status} onClick={onMessageClick} />
               )}
               {message.latencyMs && (
-                <span className="text-[11px] text-slate-500 font-bold flex items-center gap-1">
-                  <Clock size={11} className="text-slate-400" />
+                <span className="text-xs text-ink-subtle font-bold flex items-center gap-1">
+                  <Clock size={11} className="text-ink-subtle" />
                   {message.latencyMs}ms
                   {message.judgeLatencyMs ? (
-                    <span className="text-indigo-600 font-extrabold">(Judge: +{message.judgeLatencyMs}ms)</span>
+                    <span className="text-accent font-extrabold">(Judge: +{message.judgeLatencyMs}ms)</span>
                   ) : ''}
                 </span>
               )}
@@ -62,7 +62,7 @@ export default function MessageBubble({
                 : 'shadow-neu-maker bg-gradient-to-br from-[#F6F9FE] via-[#EDF3FC] to-[#E3EDFA] hover:border-indigo-200'
             }`}
           >
-            <p className={`text-sm leading-relaxed break-words whitespace-pre-wrap ${isUser ? 'text-white font-medium' : 'text-slate-900 font-medium'}`}>
+            <p className={`text-sm leading-relaxed break-words whitespace-pre-wrap ${isUser ? 'text-white font-medium' : 'text-ink font-medium'}`}>
               {message.content}
             </p>
 
@@ -70,12 +70,12 @@ export default function MessageBubble({
             {!isUser && message.claims && message.claims.length > 0 && (
               <div className="mt-4 pt-3 border-t border-indigo-200/50">
                 <div className="flex justify-between items-center mb-2">
-                  <p className="text-[10px] font-black text-slate-500 uppercase tracking-wider">
+                  <p className="text-xs font-black text-ink-subtle uppercase tracking-wider">
                     Extracted Claims Verified by Judge ({message.claims.length})
                   </p>
                   <button
                     type="button"
-                    className="text-[10px] text-indigo-600 font-black cursor-pointer hover:underline"
+                    className="text-xs text-accent font-black cursor-pointer hover:underline"
                     onClick={onMessageClick}
                   >
                     View deep reasoning &rarr;
@@ -91,15 +91,15 @@ export default function MessageBubble({
                       }}
                       className={`text-left text-xs px-2.5 py-1.5 rounded-xl transition-all flex items-center gap-1.5 cursor-pointer max-w-full font-bold ${
                         claim.verdict === 'Verified'
-                          ? 'bg-emerald-50/90 text-emerald-900 border border-emerald-300/60 hover:bg-emerald-100/90 shadow-[2px_2px_5px_rgba(16,185,129,0.15),-2px_-2px_5px_rgba(255,255,255,0.9)]'
+                          ? 'bg-emerald-50/90 text-positive-deep border border-emerald-300/60 hover:bg-emerald-100/90 shadow-[2px_2px_5px_rgba(16,185,129,0.15),-2px_-2px_5px_rgba(255,255,255,0.9)]'
                           : claim.verdict === 'Unsupported'
-                          ? 'bg-amber-50/90 text-amber-900 border border-amber-300/60 hover:bg-amber-100/90 shadow-[2px_2px_5px_rgba(245,158,11,0.15),-2px_-2px_5px_rgba(255,255,255,0.9)]'
-                          : 'bg-rose-50/90 text-rose-900 border border-rose-300/60 hover:bg-rose-100/90 shadow-[2px_2px_5px_rgba(244,63,94,0.15),-2px_-2px_5px_rgba(255,255,255,0.9)]'
+                          ? 'bg-amber-50/90 text-caution-deep border border-amber-300/60 hover:bg-amber-100/90 shadow-[2px_2px_5px_rgba(245,158,11,0.15),-2px_-2px_5px_rgba(255,255,255,0.9)]'
+                          : 'bg-rose-50/90 text-critical-deep border border-rose-300/60 hover:bg-rose-100/90 shadow-[2px_2px_5px_rgba(244,63,94,0.15),-2px_-2px_5px_rgba(255,255,255,0.9)]'
                       }`}
                     >
-                      {claim.verdict === 'Verified' && <CheckCircle size={12} className="text-emerald-600 shrink-0" />}
-                      {claim.verdict === 'Unsupported' && <AlertCircle size={12} className="text-amber-600 shrink-0" />}
-                      {claim.verdict === 'Contradicted' && <XCircle size={12} className="text-rose-600 shrink-0" />}
+                      {claim.verdict === 'Verified' && <CheckCircle size={12} className="text-positive shrink-0" />}
+                      {claim.verdict === 'Unsupported' && <AlertCircle size={12} className="text-caution shrink-0" />}
+                      {claim.verdict === 'Contradicted' && <XCircle size={12} className="text-critical shrink-0" />}
                       <span className="truncate max-w-[280px] sm:max-w-[340px]">{claim.text}</span>
                     </button>
                   ))}

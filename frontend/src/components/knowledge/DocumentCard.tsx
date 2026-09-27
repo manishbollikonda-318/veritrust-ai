@@ -33,7 +33,7 @@ export default function DocumentCard({ document, onEdit, onDelete, isReadOnly = 
                   </span>
                 )}
               </div>
-              <div className="flex items-center gap-3 text-[11px] text-indigo-700 font-bold mt-1">
+              <div className="flex items-center gap-3 text-xs text-indigo-700 font-bold mt-1">
                 <span className="flex items-center gap-1 truncate max-w-[140px]">
                   <Database size={12} className="text-indigo-400 shrink-0" />
                   {document.filename || 'Source Doc'}
@@ -104,7 +104,7 @@ export default function DocumentCard({ document, onEdit, onDelete, isReadOnly = 
           )}
         </button>
 
-        <span className="text-[10px] text-slate-500 font-bold">
+        <span className="text-xs text-slate-500 font-bold">
           {document.uploadedAt || 'Ground Truth'}
         </span>
       </div>
