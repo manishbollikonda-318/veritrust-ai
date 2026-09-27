@@ -297,7 +297,26 @@ export const api = {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ filename, content, title: title || filename.replace('.txt', '').replace('_', ' ') })
     });
-    if (!res.ok) throw new Error('Failed to upload document');
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}));
+      throw new Error(err.detail || 'Failed to upload document');
+    }
+    return await res.json();
+  },
+
+  async uploadDocumentFile(file: File, title?: string, workspaceId: string = 'default'): Promise<{ message?: string; filename: string; title: string }> {
+    const formData = new FormData();
+    formData.append('file', file);
+    if (title) formData.append('title', title);
+
+    const res = await fetch(`${API_BASE}/knowledge/documents/upload?workspace_id=${encodeURIComponent(workspaceId)}`, {
+      method: 'POST',
+      body: formData
+    });
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}));
+      throw new Error(err.detail || 'Failed to upload file');
+    }
     return await res.json();
   },
 
@@ -307,7 +326,10 @@ export const api = {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ content, title: title || filename.replace('.txt', '').replace('_', ' ') })
     });
-    if (!res.ok) throw new Error('Failed to update document');
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}));
+      throw new Error(err.detail || 'Failed to update document');
+    }
     return await res.json();
   },
 
@@ -315,7 +337,10 @@ export const api = {
     const res = await fetch(`${API_BASE}/knowledge/documents/${encodeURIComponent(filename)}?workspace_id=${encodeURIComponent(workspaceId)}`, {
       method: 'DELETE'
     });
-    if (!res.ok) throw new Error('Failed to delete document');
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}));
+      throw new Error(err.detail || 'Failed to delete document');
+    }
     return await res.json();
   },
 

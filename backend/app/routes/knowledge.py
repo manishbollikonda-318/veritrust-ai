@@ -2,12 +2,13 @@
 Knowledge base API routes — multi-tenant document management, uploads, edits, and re-indexing.
 """
 
-from fastapi import APIRouter, HTTPException, Query
+from fastapi import APIRouter, HTTPException, Query, Request
 from pydantic import BaseModel, Field
 from typing import List, Dict, Any, Optional
 from app.knowledge.vectorstore import vector_store
 from app.knowledge.loader import load_and_embed_documents
 from app.models.schemas import KnowledgeDocument
+from app.services.file_security import sanitize_filename, validate_file_content
 
 router = APIRouter()
 
@@ -52,52 +53,137 @@ async def list_documents(workspace_id: str = Query(default="default")):
 
 @router.post("/knowledge/documents", response_model=KnowledgeDocument)
 async def create_document(req: DocumentCreateRequest, workspace_id: Optional[str] = Query(default=None)):
-    """Upload or paste a new corporate policy document into the workspace."""
+    """Upload or paste a new corporate policy document into the workspace with full security sanitization."""
     target_workspace = workspace_id or req.workspace_id or "default"
-    safe_filename = req.filename or f"{req.title.lower().replace(' ', '_')}.txt"
-    if not safe_filename.endswith(".txt") and not safe_filename.endswith(".md"):
-        safe_filename += ".txt"
+    
+    # 1. Validate content and reject malicious binary/executable payload
+    clean_content = validate_file_content(req.content.encode("utf-8"), req.filename or req.title)
+    
+    # 2. Sanitize filename against directory traversal and dangerous characters
+    safe_filename = sanitize_filename(req.filename or f"{req.title}.txt")
 
-    chunks = [c.strip() for c in req.content.split("\n\n") if c.strip()]
+    chunks = [c.strip() for c in clean_content.split("\n\n") if c.strip()]
     if not chunks:
-        chunks = [req.content.strip()]
+        chunks = [clean_content.strip()]
 
     doc_data = {
         "id": f"doc_{safe_filename}",
         "filename": safe_filename,
-        "title": req.title,
-        "content": req.content,
+        "title": req.title.strip(),
+        "content": clean_content,
         "chunk_count": len(chunks)
     }
 
+    # Stored strictly in isolated, non-executable vector storage partition
     vector_store.store_raw_doc(target_workspace, doc_data)
     vector_store.reindex_workspace(target_workspace)
 
     return KnowledgeDocument(
         filename=safe_filename,
-        title=req.title,
-        content=req.content,
+        title=req.title.strip(),
+        content=clean_content,
+        chunk_count=len(chunks)
+    )
+
+
+@router.post("/knowledge/documents/upload", response_model=KnowledgeDocument)
+async def upload_document_file(
+    request: Request,
+    workspace_id: str = Query(default="default"),
+    title: Optional[str] = Query(default=None),
+    filename: Optional[str] = Query(default=None)
+):
+    """
+    Dedicated multipart file upload endpoint.
+    Enforces strict magic byte detection, size limits (<1MB), UTF-8 decoding,
+    path traversal sanitization, and non-executable memory storage.
+    Uses native streaming parser without fragile external dependencies.
+    """
+    content_type = request.headers.get("content-type", "")
+    raw_body = await request.body()
+    
+    file_bytes = b""
+    detected_filename = filename or "uploaded_policy.txt"
+    detected_title = title
+
+    if "multipart/form-data" in content_type:
+        from email.parser import BytesParser
+        from email.policy import default
+        # Native standard-library multipart parser
+        header_bytes = f"Content-Type: {content_type}\r\n\r\n".encode("latin-1")
+        msg = BytesParser(policy=default).parsebytes(header_bytes + raw_body)
+        for part in msg.iter_parts():
+            cd = part.get("Content-Disposition", "")
+            if 'name="file"' in cd or part.get_filename():
+                file_bytes = part.get_payload(decode=True) or b""
+                if part.get_filename():
+                    detected_filename = part.get_filename()
+            elif 'name="title"' in cd and not detected_title:
+                payload = part.get_payload(decode=True)
+                if payload:
+                    detected_title = payload.decode("utf-8", errors="ignore")
+    else:
+        file_bytes = raw_body
+
+    if not file_bytes:
+        raise HTTPException(
+            status_code=400,
+            detail="No file content detected in upload payload."
+        )
+
+    # 1. Validate content against magic bytes, binary injection, script headers, and size limits
+    clean_content = validate_file_content(file_bytes, detected_filename)
+    
+    # 2. Sanitize filename strictly against path traversal and dangerous characters
+    safe_filename = sanitize_filename(detected_filename)
+    final_title = (detected_title or detected_filename).rsplit(".", 1)[0].replace("_", " ").title().strip()
+
+    chunks = [c.strip() for c in clean_content.split("\n\n") if c.strip()]
+    if not chunks:
+        chunks = [clean_content]
+
+    doc_data = {
+        "id": f"doc_{safe_filename}",
+        "filename": safe_filename,
+        "title": final_title,
+        "content": clean_content,
+        "chunk_count": len(chunks)
+    }
+
+    # Isolated vector storage partition — strictly non-executable
+    vector_store.store_raw_doc(workspace_id, doc_data)
+    vector_store.reindex_workspace(workspace_id)
+
+    return KnowledgeDocument(
+        filename=safe_filename,
+        title=final_title,
+        content=clean_content,
         chunk_count=len(chunks)
     )
 
 
 @router.put("/knowledge/documents/{filename}", response_model=KnowledgeDocument)
 async def update_document(filename: str, req: DocumentUpdateRequest, workspace_id: Optional[str] = Query(default=None)):
-    """Edit an existing policy document and re-index the workspace."""
+    """Edit an existing policy document and re-index the workspace with security checks."""
     target_workspace = workspace_id or req.workspace_id or "default"
+    clean_filename = sanitize_filename(filename)
+    
+    # Validate content against binary, execution tokens, and size
+    clean_content = validate_file_content(req.content.encode("utf-8"), clean_filename)
+    
     raw_docs = vector_store.get_raw_docs(target_workspace)
-    target = next((d for d in raw_docs if d.get("filename") == filename), None)
+    target = next((d for d in raw_docs if d.get("filename") == clean_filename), None)
 
-    title = req.title or (target.get("title") if target else filename)
-    chunks = [c.strip() for c in req.content.split("\n\n") if c.strip()]
+    title = req.title.strip() if req.title else (target.get("title") if target else clean_filename)
+    chunks = [c.strip() for c in clean_content.split("\n\n") if c.strip()]
     if not chunks:
-        chunks = [req.content.strip()]
+        chunks = [clean_content.strip()]
 
     doc_data = {
-        "id": f"doc_{filename}",
-        "filename": filename,
+        "id": f"doc_{clean_filename}",
+        "filename": clean_filename,
         "title": title,
-        "content": req.content,
+        "content": clean_content,
         "chunk_count": len(chunks)
     }
 
@@ -105,9 +191,9 @@ async def update_document(filename: str, req: DocumentUpdateRequest, workspace_i
     vector_store.reindex_workspace(target_workspace)
 
     return KnowledgeDocument(
-        filename=filename,
+        filename=clean_filename,
         title=title,
-        content=req.content,
+        content=clean_content,
         chunk_count=len(chunks)
     )
 

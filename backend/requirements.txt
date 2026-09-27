@@ -8,3 +8,4 @@ langchain-core>=0.1.0
 google-generativeai>=0.3.0
 python-dotenv>=1.0.0
 websockets>=11.0.3
+python-multipart>=0.0.9

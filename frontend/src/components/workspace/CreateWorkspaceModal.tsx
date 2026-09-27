@@ -78,6 +78,22 @@ export default function CreateWorkspaceModal() {
   const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
+
+    // Strict client-side file upload safety
+    const MAX_SIZE = 1024 * 1024; // 1MB
+    if (file.size > MAX_SIZE) {
+      setErrorMessage(`File is too large (${(file.size / 1024).toFixed(1)} KB). Maximum allowed size is 1MB.`);
+      e.target.value = '';
+      return;
+    }
+    const ext = file.name.slice(file.name.lastIndexOf('.')).toLowerCase();
+    if (ext !== '.txt' && ext !== '.md') {
+      setErrorMessage('Invalid file format. Only plain text (.txt) and markdown (.md) documents are allowed.');
+      e.target.value = '';
+      return;
+    }
+
+    setErrorMessage('');
     const reader = new FileReader();
     reader.onload = (event) => {
       const text = event.target?.result as string;

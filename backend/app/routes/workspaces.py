@@ -26,6 +26,8 @@ async def create_workspace(request: WorkspaceCreateRequest):
     """
     try:
         return workspace_service.create_workspace(request)
+    except HTTPException:
+        raise
     except Exception as e:
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,

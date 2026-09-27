@@ -9,6 +9,7 @@ from datetime import datetime
 from typing import List, Optional, Dict, Any
 from app.models.schemas import WorkspaceModel, WorkspaceCreateRequest, WorkspaceSettingsUpdateRequest
 from app.knowledge.vectorstore import vector_store
+from app.services.file_security import sanitize_filename, validate_file_content
 
 
 def mask_key(key: Optional[str]) -> Optional[str]:
@@ -128,18 +129,23 @@ class WorkspaceService:
         if req.api_key and req.api_key.strip():
             self._api_keys[ws_id] = req.api_key.strip()
 
-        # Seed initial policy document if provided
+        # Seed initial policy document if provided (with full file safety validation)
         if req.initial_policy_content and req.initial_policy_content.strip():
             title = req.initial_policy_title or f"{req.name} Company Policy"
-            safe_fname = f"{re.sub(r'[^a-z0-9_]', '_', title.lower().strip())}.txt"
-            content = req.initial_policy_content.strip()
-            chunks = [c.strip() for c in content.split("\n\n") if c.strip()] or [content]
+            safe_fname = sanitize_filename(f"{title}.txt")
+            
+            # Security validation: checks size, magic bytes, script headers, null bytes
+            clean_content = validate_file_content(
+                req.initial_policy_content.encode("utf-8"),
+                safe_fname
+            )
+            chunks = [c.strip() for c in clean_content.split("\n\n") if c.strip()] or [clean_content]
 
             doc_data = {
                 "id": f"doc_{safe_fname}",
                 "filename": safe_fname,
-                "title": title,
-                "content": content,
+                "title": title.strip(),
+                "content": clean_content,
                 "chunk_count": len(chunks)
             }
             vector_store.store_raw_doc(ws_id, doc_data)

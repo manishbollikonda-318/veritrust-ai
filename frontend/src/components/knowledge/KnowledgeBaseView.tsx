@@ -8,7 +8,7 @@ import NeuButton from '../ui/NeuButton';
 import NeuCard from '../ui/NeuCard';
 import {
   Search, Plus, RefreshCw, UploadCloud, CheckCircle2,
-  AlertCircle, Sparkles, Building2, X, Info
+  AlertCircle, Sparkles, Building2, X, Info, Upload
 } from 'lucide-react';
 import { openDataSourceDisclosure } from '../ui/DataSourceDisclosureModal';
 
@@ -115,11 +115,47 @@ export default function KnowledgeBaseView() {
       setIsModalOpen(false);
       await fetchDocuments();
       await refreshWorkspaces();
-    } catch (err) {
-      showToast('error', 'Failed to save document. Please try again.');
+    } catch (err: any) {
+      showToast('error', err.message || 'Failed to save document. Please try again.');
     } finally {
       setIsLoading(false);
     }
+  };
+
+  const handleModalFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    // Strict client-side file upload safety
+    const MAX_SIZE = 1024 * 1024; // 1MB
+    if (file.size > MAX_SIZE) {
+      showToast('error', `File exceeds 1MB limit (${(file.size / 1024).toFixed(1)} KB). Please choose a smaller file.`);
+      e.target.value = '';
+      return;
+    }
+
+    const ext = file.name.slice(file.name.lastIndexOf('.')).toLowerCase();
+    if (ext !== '.txt' && ext !== '.md') {
+      showToast('error', 'Only plain text (.txt) and markdown (.md) documents are allowed.');
+      e.target.value = '';
+      return;
+    }
+
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      const text = event.target?.result as string;
+      if (text) {
+        setDocContent(text);
+        if (!docTitle) {
+          setDocTitle(file.name.replace(/\.[^/.]+$/, '').replace(/[_-]/g, ' '));
+        }
+        if (!docFilename) {
+          setDocFilename(file.name);
+        }
+        showToast('success', `Loaded "${file.name}" into editor.`);
+      }
+    };
+    reader.readAsText(file);
   };
 
   const handleDeleteDocument = async (doc: Document) => {
@@ -444,9 +480,21 @@ export default function KnowledgeBaseView() {
               </div>
 
               <div>
-                <label className="block text-xs font-black text-slate-800 uppercase tracking-wider mb-1.5">
-                  Verified Policy Content / Clauses
-                </label>
+                <div className="flex items-center justify-between mb-1.5">
+                  <label className="block text-xs font-black text-slate-800 uppercase tracking-wider">
+                    Verified Policy Content / Clauses
+                  </label>
+                  <label className="inline-flex items-center gap-1 text-[11px] font-bold text-indigo-600 hover:text-indigo-800 cursor-pointer">
+                    <Upload size={12} />
+                    <span>Upload .txt/.md file</span>
+                    <input
+                      type="file"
+                      accept=".txt,.md"
+                      onChange={handleModalFileUpload}
+                      className="hidden"
+                    />
+                  </label>
+                </div>
                 <textarea
                   required
                   rows={8}
