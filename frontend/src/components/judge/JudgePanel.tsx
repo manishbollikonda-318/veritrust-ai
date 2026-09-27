@@ -145,6 +145,41 @@ export default function JudgePanel({ message, claim: initialClaim, onSelectClaim
         </div>
       )}
 
+      {/* LangGraph Multi-Agent Feedback Loop Trace */}
+      {message?.loopHistory && message.loopHistory.length > 1 && (
+        <div className="mb-6 p-4 rounded-2xl bg-gradient-to-br from-indigo-50/90 to-indigo-100/70 shadow-neu-judge border border-indigo-200/80">
+          <h4 className="text-xs font-black text-indigo-950 uppercase tracking-wider mb-2.5 flex items-center justify-between">
+            <span className="flex items-center gap-1.5">
+              <span className="w-2 h-2 rounded-full bg-indigo-600 animate-pulse" />
+              LangGraph Multi-Agent Loop Trace
+            </span>
+            <span className="text-[10px] bg-indigo-200/80 text-indigo-900 px-2 py-0.5 rounded-full font-bold">
+              {message.loopHistory.length} Steps
+            </span>
+          </h4>
+          <div className="space-y-2">
+            {message.loopHistory.map((step: any, sIdx: number) => (
+              <div key={sIdx} className="p-2.5 rounded-xl bg-white/80 border border-indigo-100 text-xs shadow-xs">
+                <div className="flex items-center justify-between mb-1">
+                  <span className="font-black text-slate-800 flex items-center gap-1.5">
+                    <span className="text-[10px] text-indigo-600 font-extrabold">#{sIdx + 1}</span>
+                    {step.agent || step.step}
+                  </span>
+                  {step.latency_ms && (
+                    <span className="text-[10px] text-slate-500 font-mono font-bold">
+                      {step.latency_ms}ms
+                    </span>
+                  )}
+                </div>
+                <p className="text-[11px] text-slate-600 font-medium">
+                  {step.action || (step.is_safe ? 'Verified safe' : 'Flagged discrepancy')}
+                </p>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
       {/* Claims List Tabs */}
       <div className="mb-6">
         <div className="flex justify-between items-center mb-3">

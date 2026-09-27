@@ -53,6 +53,9 @@ export interface Message {
   latencyMs?: number;
   makerLatencyMs?: number;
   judgeLatencyMs?: number;
+  correctionLatencyMs?: number;
+  correctionAttempts?: number;
+  loopHistory?: any[];
   estimatedCostUsd?: number;
   deterministicChecksRun?: number;
 }
@@ -125,7 +128,7 @@ export interface Workspace {
   industry: string;
   description?: string;
   is_demo: boolean;
-  llm_provider: 'shared_default' | 'gemini' | 'openai' | 'anthropic';
+  llm_provider: 'shared_default' | 'gemini' | 'openai' | 'anthropic' | 'ollama';
   has_custom_api_key: boolean;
   api_key_masked?: string;
   document_count: number;
@@ -138,7 +141,7 @@ export interface WorkspaceCreateInput {
   description?: string;
   initial_policy_title?: string;
   initial_policy_content?: string;
-  llm_provider?: 'shared_default' | 'gemini' | 'openai' | 'anthropic';
+  llm_provider?: 'shared_default' | 'gemini' | 'openai' | 'anthropic' | 'ollama';
   api_key?: string;
 }
 

@@ -1,7 +1,7 @@
 import re
 import html
 from pydantic import BaseModel, Field, field_validator
-from typing import List, Optional, Literal
+from typing import List, Optional, Literal, Dict, Any
 from datetime import datetime
 import uuid
 
@@ -85,6 +85,10 @@ class ChatResponse(BaseModel):
     latency_ms: float = 0.0
     maker_latency_ms: float = 0.0
     judge_latency_ms: float = 0.0
+    correction_latency_ms: float = 0.0
+    correction_attempts: int = 0
+    loop_history: List[Dict[str, Any]] = []
+    llm_provider_used: str = "shared_default"
 
 
 class DriftPoint(BaseModel):
@@ -183,7 +187,7 @@ class WorkspaceCreateRequest(BaseModel):
     description: Optional[str] = Field(default="", max_length=500)
     initial_policy_title: Optional[str] = Field(default=None, max_length=200)
     initial_policy_content: Optional[str] = Field(default=None, max_length=50000)
-    llm_provider: Optional[Literal["gemini", "openai", "anthropic", "shared_default"]] = "shared_default"
+    llm_provider: Optional[Literal["gemini", "openai", "anthropic", "ollama", "shared_default"]] = "shared_default"
     api_key: Optional[str] = Field(default=None, max_length=300)
 
 
@@ -191,6 +195,6 @@ class WorkspaceSettingsUpdateRequest(BaseModel):
     name: Optional[str] = Field(default=None, min_length=2, max_length=100)
     industry: Optional[str] = Field(default=None, max_length=100)
     description: Optional[str] = Field(default=None, max_length=500)
-    llm_provider: Optional[Literal["gemini", "openai", "anthropic", "shared_default"]] = None
+    llm_provider: Optional[Literal["gemini", "openai", "anthropic", "ollama", "shared_default"]] = None
     api_key: Optional[str] = Field(default=None, max_length=300)
 

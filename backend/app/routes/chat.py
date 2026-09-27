@@ -63,8 +63,10 @@ async def chat(request: ChatRequest):
         "status": "",
         "maker_latency_ms": 0.0,
         "judge_latency_ms": 0.0,
+        "correction_latency_ms": 0.0,
         "total_latency_ms": 0.0,
         "correction_attempts": 0,
+        "loop_history": [],
     }
     
     try:
@@ -83,6 +85,9 @@ async def chat(request: ChatRequest):
             latency_ms=round(total_latency, 2),
             maker_latency_ms=final_state.get("maker_latency_ms", 0),
             judge_latency_ms=final_state.get("judge_latency_ms", 0),
+            correction_latency_ms=final_state.get("correction_latency_ms", 0),
+            correction_attempts=final_state.get("correction_attempts", 0),
+            loop_history=final_state.get("loop_history", []),
         )
         
         # Store in conversation history
@@ -189,8 +194,10 @@ async def chat_compare(request: ChatRequest):
         "status": "",
         "maker_latency_ms": 0.0,
         "judge_latency_ms": 0.0,
+        "correction_latency_ms": 0.0,
         "total_latency_ms": 0.0,
         "correction_attempts": 0,
+        "loop_history": [],
     }
     
     final_state = agent_graph.invoke(initial_state)
@@ -205,6 +212,9 @@ async def chat_compare(request: ChatRequest):
         latency_ms=round(pipeline_latency, 2),
         maker_latency_ms=final_state.get("maker_latency_ms", 0),
         judge_latency_ms=final_state.get("judge_latency_ms", 0),
+        correction_latency_ms=final_state.get("correction_latency_ms", 0),
+        correction_attempts=final_state.get("correction_attempts", 0),
+        loop_history=final_state.get("loop_history", []),
     )
     
     return ComparisonResponse(
@@ -260,8 +270,10 @@ async def websocket_endpoint(websocket: WebSocket):
                 "status": "",
                 "maker_latency_ms": 0.0,
                 "judge_latency_ms": 0.0,
+                "correction_latency_ms": 0.0,
                 "total_latency_ms": 0.0,
                 "correction_attempts": 0,
+                "loop_history": [],
             }
             
             final_state = agent_graph.invoke(initial_state)
@@ -275,6 +287,9 @@ async def websocket_endpoint(websocket: WebSocket):
                 status=final_state["status"],
                 maker_latency_ms=final_state.get("maker_latency_ms", 0),
                 judge_latency_ms=final_state.get("judge_latency_ms", 0),
+                correction_latency_ms=final_state.get("correction_latency_ms", 0),
+                correction_attempts=final_state.get("correction_attempts", 0),
+                loop_history=final_state.get("loop_history", []),
             )
             
             await websocket.send_text(json.dumps({

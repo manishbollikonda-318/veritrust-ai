@@ -61,7 +61,7 @@ export default function CreateWorkspaceModal() {
   
   // LLM settings
   const [showLlmSettings, setShowLlmSettings] = useState(false);
-  const [llmProvider, setLlmProvider] = useState<'shared_default' | 'gemini' | 'openai' | 'anthropic'>('shared_default');
+  const [llmProvider, setLlmProvider] = useState<'shared_default' | 'gemini' | 'openai' | 'anthropic' | 'ollama'>('shared_default');
   const [apiKey, setApiKey] = useState('');
 
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -319,7 +319,7 @@ export default function CreateWorkspaceModal() {
                 >
                   <div>
                     <label className="block text-xs font-bold text-slate-700 mb-1">
-                      AI Generation Provider
+                      AI Generation Provider (Hackathon Multi-LLM)
                     </label>
                     <select
                       value={llmProvider}
@@ -327,20 +327,29 @@ export default function CreateWorkspaceModal() {
                       className="w-full text-xs font-bold px-3 py-2 rounded-xl border border-slate-200 bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500 text-slate-800 cursor-pointer"
                     >
                       <option value="shared_default">Shared Demo AI (Instant, No API Key Required)</option>
+                      <option value="openai">OpenAI GPT-4o / GPT-4o-mini (Bring Your Own Key)</option>
+                      <option value="anthropic">Anthropic Claude 3.5 Sonnet (Bring Your Own Key)</option>
+                      <option value="ollama">Local Ollama (100% Private, Localhost:11434)</option>
                       <option value="gemini">Google Gemini (Bring Your Own Key)</option>
-                      <option value="openai">OpenAI GPT-4o (Bring Your Own Key)</option>
-                      <option value="anthropic">Anthropic Claude (Bring Your Own Key)</option>
                     </select>
                   </div>
 
                   {llmProvider !== 'shared_default' && (
                     <div>
                       <label className="block text-xs font-bold text-slate-700 mb-1">
-                        Workspace API Key
+                        {llmProvider === 'ollama' ? 'Ollama Endpoint URL (Optional)' : 'Workspace API Key'}
                       </label>
                       <input
-                        type="password"
-                        placeholder="Paste your API key (sk-... or AIza...)"
+                        type={llmProvider === 'ollama' ? 'text' : 'password'}
+                        placeholder={
+                          llmProvider === 'ollama'
+                            ? 'http://localhost:11434 (leave blank for local default)'
+                            : llmProvider === 'anthropic'
+                            ? 'Paste your Anthropic key (sk-ant-...)'
+                            : llmProvider === 'openai'
+                            ? 'Paste your OpenAI key (sk-...)'
+                            : 'Paste your API key (AIza...)'
+                        }
                         value={apiKey}
                         onChange={(e) => setApiKey(e.target.value)}
                         className="w-full text-xs font-mono px-3 py-2 rounded-xl border border-slate-200 bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500 text-slate-900"

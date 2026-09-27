@@ -18,7 +18,8 @@ FILLER_PATTERNS = [
     r"^(thank you|thanks) (for|so much)",
     r"^(absolutely|of course|certainly|sure|definitely)!?$",
     r"^(let me|i can|i'll) (help|assist|check|look)",
-    r"^(at novamart|here at novamart),? we (want|strive|aim)",
+    r"^(at novamart|here at novamart),? (we|returning|shipping|shopping|our|it is|it's)",
+    r"^(novamart|we) (stands behind|offers several|aims to|strives to)",
     r"^(please|just|simply) (note|remember|keep in mind)",
     r"^(hope this helps|feel free to|don't hesitate)",
     r"^(have a|enjoy your|thank you for choosing)",
@@ -184,9 +185,20 @@ class JudgeAgent:
         source_l = source.lower()
 
         # ── 1. Day-count comparison ──────────────────────────────────────────────
-        claim_days = re.findall(r'(\d+)[‑\-\s]*(?:business\s+)?day', claim_l)
-        source_days = re.findall(r'(\d+)[‑\-\s]*(?:business\s+)?day', source_l)
-        if claim_days and source_days:
+        claim_days = re.findall(r'(\d+)(?:[-–—\s]*\d+)?\s*(?:business\s+)?day', claim_l)
+        source_days = re.findall(r'(\d+)(?:[-–—\s]*\d+)?\s*(?:business\s+)?day', source_l)
+        
+        # Topic keyword alignment
+        shared_kw = set(re.findall(r'\b\w{4,}\b', claim_l)) & set(re.findall(r'\b\w{4,}\b', source_l))
+        topic_kw = shared_kw - {'that', 'this', 'with', 'from', 'have', 'will', 'your', 'our', 'item', 'items', 'order'}
+
+        if claim_days and source_days and len(topic_kw) >= 1:
+            # Check if any day number in claim matches any in source
+            claim_nums = set(re.findall(r'\b\d+\b', claim_l))
+            source_nums = set(re.findall(r'\b\d+\b', source_l))
+            if claim_nums & source_nums:
+                return None  # Matching numbers on shared context -> verified fact
+
             cd, sd = int(claim_days[0]), int(source_days[0])
             if cd != sd:
                 pct_err = abs(cd - sd) / max(sd, 1) * 100
@@ -198,8 +210,8 @@ class JudgeAgent:
                     "method": "deterministic_day_count",
                     "reasoning": (
                         f"[DETERMINISTIC CHECK] Claim states {cd} day(s); source document "
-                        f"specifies {sd} day(s). Difference: {abs(cd - sd)} day(s) "
-                        f"({pct_err:.0f}% error). This is a CODE-level rule check — "
+                        f"specifies {sd} day(s) for the same context ({', '.join(list(topic_kw)[:3])}). "
+                        f"Difference: {abs(cd - sd)} day(s) ({pct_err:.0f}% error). This is a CODE-level rule check — "
                         f"not an AI guess."
                     )
                 }
@@ -312,33 +324,45 @@ class JudgeAgent:
                 retrieval_trace
             )
 
-        best_match = results[0]
+        # Sort candidate results by topic keyword and semantic alignment to this specific claim
+        scored_candidates = []
+        claim_lower = claim_text.lower()
+        claim_words = set(re.findall(r'\b\w{3,}\b', claim_lower))
+        claim_prices = set(re.findall(r'\$[\d,.]+', claim_text))
+        claim_nums = set(re.findall(r'\b\d+\b', claim_text))
+
+        for r in results:
+            r_text = r["text"]
+            r_lower = r_text.lower()
+            r_words = set(re.findall(r'\b\w{3,}\b', r_lower))
+            sim = self._compute_similarity(claim_text, r_text)
+            overlap = len(claim_words & r_words) / max(len(claim_words), 1)
+            
+            # Check if this candidate directly supports all asserted numbers/prices
+            r_prices = set(re.findall(r'\$[\d,.]+', r_text))
+            r_nums = set(re.findall(r'\b\d+\b', r_text))
+            num_match_bonus = 0.5 if (claim_nums and claim_nums.issubset(r_nums)) else 0.0
+            price_match_bonus = 0.5 if (claim_prices and claim_prices.issubset(r_prices)) else 0.0
+
+            total_score = sim + (overlap * 0.4) + num_match_bonus + price_match_bonus
+            scored_candidates.append((total_score, r))
+
+        scored_candidates.sort(key=lambda x: x[0], reverse=True)
+        best_match = scored_candidates[0][1]
         source_text = best_match["text"]
         source_doc = best_match.get("metadata", {}).get("source", "Unknown")
 
-        # ── STEP 1: Deterministic checks (numbers, dates, prices) ─────────────────
-        # Run against ALL retrieved docs, pick first contradiction found
-        det_result = None
-        det_source_text = source_text
-        det_source_doc = source_doc
-        for i, result in enumerate(results):
-            det = self._deterministic_check(claim_text, result["text"])
-            if det:
-                det_result = det
-                det_source_text = result["text"]
-                det_source_doc = result.get("metadata", {}).get("source", "Unknown")
-                retrieval_trace["deterministic_applied"] = True
-                retrieval_trace["deterministic_method"] = det["method"]
-                retrieval_trace["deterministic_hit_at_rank"] = i + 1
-                break
-
+        # ── STEP 1: Check if top candidate matches all facts or has deterministic conflict ──
+        det_result = self._deterministic_check(claim_text, source_text)
         if det_result:
+            retrieval_trace["deterministic_applied"] = True
+            retrieval_trace["deterministic_method"] = det_result["method"]
             retrieval_trace["method"] = det_result["method"]
             return (
                 det_result["verdict"],
                 det_result["confidence"],
-                det_source_text,
-                det_source_doc,
+                source_text,
+                source_doc,
                 det_result["reasoning"],
                 det_result["severity"],
                 retrieval_trace
@@ -346,7 +370,7 @@ class JudgeAgent:
 
         # ── STEP 2: Semantic similarity (non-deterministic path) ─────────────────
         similarity = self._compute_similarity(claim_text, source_text)
-        runner_up_sim = self._compute_similarity(claim_text, results[1]["text"]) if len(results) > 1 else 0.0
+        runner_up_sim = self._compute_similarity(claim_text, scored_candidates[1][1]["text"]) if len(scored_candidates) > 1 else 0.0
         retrieval_trace["winner_score"] = round(similarity, 4)
         retrieval_trace["runner_up_score"] = round(runner_up_sim, 4)
         retrieval_trace["method"] = "semantic_similarity + keyword_jaccard"
@@ -377,25 +401,6 @@ class JudgeAgent:
                 severity,
                 retrieval_trace
             )
-
-        # Check other results for contradictions
-        for result in results[1:]:
-            other_source = result["text"]
-            contradiction = (
-                self._check_numerical_contradiction(claim_text, other_source) or
-                self._check_negation_contradiction(claim_text, other_source)
-            )
-            if contradiction:
-                severity = self._compute_severity(claim_text, "Contradicted")
-                return (
-                    "Contradicted",
-                    0.90,
-                    other_source,
-                    result.get("metadata", {}).get("source", "Unknown"),
-                    contradiction,
-                    severity,
-                    retrieval_trace
-                )
 
         # ── STEP 4: Keyword overlap ───────────────────────────────────────────────
         claim_keywords = set(re.findall(r'\b\w{4,}\b', claim_text.lower()))
@@ -431,8 +436,9 @@ class JudgeAgent:
         retrieval_trace["combined_score"] = round(combined_score, 4)
         retrieval_trace["keyword_overlap"] = round(keyword_overlap, 4)
 
-        if combined_score >= 0.22 or keyword_overlap >= 0.35:
-            confidence = min(combined_score + 0.4, 1.0)
+        # Genuine verification requires meaningful semantic grounding and keyword alignment
+        if (combined_score >= 0.45 and keyword_overlap >= 0.30) or (keyword_overlap >= 0.55) or (similarity >= 0.65):
+            confidence = min(combined_score + 0.3, 1.0)
             return (
                 "Verified",
                 confidence,
@@ -442,13 +448,13 @@ class JudgeAgent:
                 "none",
                 retrieval_trace
             )
-        elif combined_score >= 0.12:
+        elif combined_score >= 0.25 or keyword_overlap >= 0.20:
             return (
                 "Unsupported",
                 0.5,
                 source_text,
                 source_doc,
-                f"Claim has weak support from source documents. Semantic match: {similarity:.0%}. The claim may contain information not found in the workspace knowledge base.",
+                f"Claim has weak support from source documents. Semantic match: {similarity:.0%}, keyword overlap: {keyword_overlap:.0%}. The claim contains unverified information not fully grounded in company policy.",
                 "medium",
                 retrieval_trace
             )
@@ -569,17 +575,15 @@ class JudgeAgent:
     def correct_draft(self, draft: str, verification: VerificationResult) -> str:
         """
         Auto-correct a draft by replacing contradicted/unsupported claims
-        with accurate information from source documents.
+        with accurate, verified information from source documents.
         """
         corrected = draft
         
         for claim in verification.claims:
             if claim.verdict == "Contradicted" and claim.source_sentence:
-                # Replace the problematic claim with source-grounded text
-                # Extract the key correction from the source
                 source = claim.source_sentence
                 
-                # Try to do intelligent substitution
+                # Intelligent day window substitutions
                 if "60 days" in claim.text and "30 days" in source:
                     corrected = corrected.replace("60 days", "30 days")
                     corrected = corrected.replace("60-day", "30-day")
@@ -595,16 +599,12 @@ class JudgeAgent:
                             corrected = corrected.replace(cp, source_prices[0])
                 
             elif claim.verdict == "Unsupported" and not claim.is_filler:
-                # For unsupported claims, soften the language
-                if claim.source_sentence and claim.source_sentence != "No matching documents found in the knowledge base.":
-                    # Replace with qualified version
-                    pass  # Keep the text but the status shows it was flagged
-                else:
-                    # Remove fabricated claims entirely and replace with honest response
-                    corrected = corrected.replace(
-                        claim.text,
-                        "I don't have specific information about that in our current policies. Let me connect you with a team member who can give you an accurate answer."
-                    )
+                # Remove ungrounded claims cleanly from the response
+                corrected = corrected.replace(claim.text, "").strip()
+        
+        # Clean up punctuation and spacing after pruning
+        corrected = re.sub(r'\s{2,}', ' ', corrected).strip()
+        corrected = re.sub(r'\s+([.,!?])', r'\1', corrected).strip()
         
         return corrected
 

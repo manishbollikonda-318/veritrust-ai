@@ -1,11 +1,14 @@
 """
 LangGraph State Graph for VeriTrust AI Pipeline.
 
-Flow:
-  Customer Query → Maker Agent → Judge Agent → Decision Branch
-    ├─ All Verified     → Release (Approved)
-    ├─ Unsupported only → Auto-Correct → Re-verify → Release (Corrected)
-    └─ Contradicted     → Block + Escalate (Blocked)
+Flow (True Cyclic Multi-Agent Loop):
+  Customer Query → Maker Agent → Judge Agent ─┐
+                         ▲                    ▼
+                         │             Decision Branch
+                         │              ├─ All Verified ───► Release (Approved / Corrected) ──► END
+                         │              ├─ High Severity ──► Block + Escalate (Blocked) ──────► END
+                         │              │  (or max retries)
+                         └─ Auto-Correct ┘ (Needs correction: revises draft, loops back to Judge)
 """
 
 import time
@@ -28,100 +31,158 @@ class GraphState(TypedDict):
     status: str
     maker_latency_ms: float
     judge_latency_ms: float
+    correction_latency_ms: float
     total_latency_ms: float
     correction_attempts: int
+    loop_history: List[dict]
 
 
 def generate_draft_node(state: GraphState) -> Dict[str, Any]:
     """Maker Agent: generate a draft response grounded in company docs."""
     start = time.time()
     workspace_id = state.get("workspace_id", "default")
-    draft = maker_agent.generate_draft(
-        query=state["query"],
-        history=state.get("history", []),
-        demo_mode=state.get("demo_mode", True),
-        workspace_id=workspace_id
-    )
+    draft = state.get("draft")
+    if not draft or not draft.strip():
+        draft = maker_agent.generate_draft(
+            query=state["query"],
+            history=state.get("history", []),
+            demo_mode=state.get("demo_mode", True),
+            workspace_id=workspace_id
+        )
     latency = (time.time() - start) * 1000
-    return {"draft": draft, "maker_latency_ms": round(latency, 2)}
+    
+    loop_entry = {
+        "step": "maker_initial_draft",
+        "agent": "Maker Agent",
+        "attempt": 0,
+        "action": "Generated conversational draft from corporate manuals",
+        "draft": draft,
+        "latency_ms": round(latency, 2)
+    }
+    loop_history = list(state.get("loop_history", []))
+    loop_history.append(loop_entry)
+
+    return {
+        "draft": draft,
+        "maker_latency_ms": round(latency, 2),
+        "loop_history": loop_history
+    }
 
 
 def judge_draft_node(state: GraphState) -> Dict[str, Any]:
     """Judge Agent: verify the draft at claim level against source docs."""
     start = time.time()
     workspace_id = state.get("workspace_id", "default")
+    attempts = state.get("correction_attempts", 0)
+    
     verification = judge_agent.verify_draft(
         draft=state["draft"],
         demo_mode=state.get("demo_mode", True),
         workspace_id=workspace_id
     )
     latency = (time.time() - start) * 1000
-    return {"verification": verification, "judge_latency_ms": round(latency, 2)}
+    
+    loop_entry = {
+        "step": "judge_verify",
+        "agent": "Judge Agent",
+        "attempt": attempts,
+        "action": f"Decomposed {len(verification.claims)} claims & audited against corporate KB",
+        "is_safe": verification.is_safe,
+        "severity": verification.severity,
+        "contradicted_count": sum(1 for c in verification.claims if c.verdict == "Contradicted"),
+        "unsupported_count": sum(1 for c in verification.claims if c.verdict == "Unsupported"),
+        "latency_ms": round(latency, 2)
+    }
+    loop_history = list(state.get("loop_history", []))
+    loop_history.append(loop_entry)
+
+    prev_judge_lat = state.get("judge_latency_ms", 0.0)
+    return {
+        "verification": verification,
+        "judge_latency_ms": round(prev_judge_lat + latency, 2),
+        "loop_history": loop_history
+    }
 
 
 def decision_node(state: GraphState) -> str:
-    """Route based on verification result."""
+    """Route based on verification result and multi-agent retry count."""
     verification = state["verification"]
+    attempts = state.get("correction_attempts", 0)
     
     if verification.is_safe:
         return "release"
-    elif verification.severity == "high":
+    elif verification.severity == "high" or attempts >= 2:
         return "block"
     else:
-        # Low severity (unsupported only) — try to auto-correct
-        if state.get("correction_attempts", 0) >= 1:
-            # Already tried correcting once, block to be safe
-            return "block"
+        # Low severity (e.g. unsupported claims or missing qualifiers) — route to agentic correction loop
         return "correct"
 
 
+def correct_node(state: GraphState) -> Dict[str, Any]:
+    """
+    Multi-Agent Feedback Loop:
+    Maker Agent / Corrector revises the draft using Judge feedback and verified source evidence.
+    This node loops directly back to 'judge' for autonomous re-verification.
+    """
+    start = time.time()
+    workspace_id = state.get("workspace_id", "default")
+    verification = state["verification"]
+    attempts = state.get("correction_attempts", 0) + 1
+    
+    flagged = [c for c in verification.claims if c.verdict in ("Unsupported", "Contradicted")]
+    
+    # Revise draft with Maker using Judge critique & ground-truth facts
+    revised_draft = maker_agent.revise_draft(
+        query=state["query"],
+        original_draft=state["draft"],
+        flagged_claims=flagged,
+        workspace_id=workspace_id
+    )
+    
+    latency = (time.time() - start) * 1000
+    loop_entry = {
+        "step": "agent_auto_correct",
+        "agent": "Maker Agent (Revision)",
+        "attempt": attempts,
+        "action": f"Autonomous revision removing {len(flagged)} unverified claim(s)",
+        "revised_draft": revised_draft,
+        "latency_ms": round(latency, 2)
+    }
+    loop_history = list(state.get("loop_history", []))
+    loop_history.append(loop_entry)
+
+    prev_corr_lat = state.get("correction_latency_ms", 0.0)
+    return {
+        "draft": revised_draft,
+        "correction_attempts": attempts,
+        "correction_latency_ms": round(prev_corr_lat + latency, 2),
+        "loop_history": loop_history
+    }
+
+
 def release_node(state: GraphState) -> Dict[str, Any]:
-    """Release the response as Approved."""
+    """Release the response as Approved or Corrected."""
     ws = state.get("workspace_id", "default")
+    attempts = state.get("correction_attempts", 0)
+    status = "Corrected" if attempts > 0 else "Approved"
+    
     metrics_tracker.record_query_result(
-        status="Approved",
+        status=status,
         claims=state["verification"].claims,
         maker_latency=state.get("maker_latency_ms", 0),
         judge_latency=state.get("judge_latency_ms", 0),
         workspace_id=ws
     )
-    total = state.get("maker_latency_ms", 0) + state.get("judge_latency_ms", 0)
+    
+    total = (
+        state.get("maker_latency_ms", 0) +
+        state.get("judge_latency_ms", 0) +
+        state.get("correction_latency_ms", 0)
+    )
     return {
         "final_response": state["draft"],
-        "status": "Approved",
-        "total_latency_ms": round(total, 2)
-    }
-
-
-def correct_node(state: GraphState) -> Dict[str, Any]:
-    """Auto-correct the draft and re-verify."""
-    workspace_id = state.get("workspace_id", "default")
-    corrected_draft = judge_agent.correct_draft(
-        state["draft"],
-        state["verification"]
-    )
-    
-    # Re-verify the corrected draft in workspace context
-    re_verification = judge_agent.verify_draft(corrected_draft, workspace_id=workspace_id)
-    
-    status = "Corrected"
-    if not re_verification.is_safe and re_verification.severity == "high":
-        status = "Blocked"
-    
-    metrics_tracker.record_query_result(
-        status=status,
-        claims=state["verification"].claims,  # Log original claims for metrics
-        maker_latency=state.get("maker_latency_ms", 0),
-        judge_latency=state.get("judge_latency_ms", 0),
-        workspace_id=workspace_id
-    )
-    
-    total = state.get("maker_latency_ms", 0) + state.get("judge_latency_ms", 0)
-    return {
-        "final_response": corrected_draft,
         "status": status,
-        "total_latency_ms": round(total, 2),
-        "correction_attempts": state.get("correction_attempts", 0) + 1
+        "total_latency_ms": round(total, 2)
     }
 
 
@@ -136,9 +197,12 @@ def block_node(state: GraphState) -> Dict[str, Any]:
         workspace_id=ws
     )
     
-    total = state.get("maker_latency_ms", 0) + state.get("judge_latency_ms", 0)
+    total = (
+        state.get("maker_latency_ms", 0) +
+        state.get("judge_latency_ms", 0) +
+        state.get("correction_latency_ms", 0)
+    )
     
-    # Generate a safe fallback response
     safe_response = (
         "I want to make sure I give you the most accurate information. "
         "Let me connect you with a member of our support team who can help you with this. "
@@ -154,20 +218,20 @@ def block_node(state: GraphState) -> Dict[str, Any]:
 
 
 def build_graph():
-    """Build the LangGraph StateGraph for the Maker→Judge pipeline."""
+    """Build the LangGraph StateGraph with a true cyclic multi-agent feedback loop."""
     workflow = StateGraph(GraphState)
     
     # Add nodes
     workflow.add_node("maker", generate_draft_node)
     workflow.add_node("judge", judge_draft_node)
-    workflow.add_node("release", release_node)
     workflow.add_node("correct", correct_node)
+    workflow.add_node("release", release_node)
     workflow.add_node("block", block_node)
     
     # Set entry point
     workflow.set_entry_point("maker")
     
-    # Maker always flows to Judge
+    # Maker flows to Judge
     workflow.add_edge("maker", "judge")
     
     # Judge branches based on verification result
@@ -181,9 +245,12 @@ def build_graph():
         }
     )
     
+    # THE MULTI-AGENT LOOP:
+    # "correct" loops BACK to "judge" for re-verification!
+    workflow.add_edge("correct", "judge")
+    
     # Terminal edges
     workflow.add_edge("release", END)
-    workflow.add_edge("correct", END)
     workflow.add_edge("block", END)
     
     return workflow.compile()
@@ -191,3 +258,4 @@ def build_graph():
 
 # Build the graph at module level for reuse
 agent_graph = build_graph()
+

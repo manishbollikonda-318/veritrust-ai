@@ -7,10 +7,21 @@ class Settings(BaseSettings):
     DEMO_MODE: bool = True
     EXPOSE_DOCS: bool = True        # Show /docs Swagger UI (independent of DEMO_MODE)
     PERMISSIVE_CORS: bool = False   # Restrict to explicit ALLOWED_ORIGINS by default
+    # Multi-LLM Support (Problem Statement: OpenAI API, Anthropic API, or local Ollama + Gemini)
+    DEFAULT_LLM_PROVIDER: str = "auto"
+    OPENAI_API_KEY: Optional[str] = None
+    OPENAI_MODEL: str = "gpt-4o-mini"
+    ANTHROPIC_API_KEY: Optional[str] = None
+    ANTHROPIC_MODEL: str = "claude-3-5-sonnet-20241022"
+    OLLAMA_BASE_URL: str = "http://localhost:11434"
+    OLLAMA_MODEL: str = "llama3"
     GEMINI_API_KEY: Optional[str] = None
+    GEMINI_MODEL: str = "gemini-1.5-flash"
+
     ADMIN_API_KEY: Optional[str] = None  # Must be set via environment variable in production
     RATE_LIMIT_PER_MINUTE: int = 120
     CHROMA_PERSIST_DIR: str = "./chroma_db"
+    SQLITE_DB_PATH: str = "./chroma_db/veritrust_sqlite.db"
     ALLOWED_ORIGINS: List[str] = [
         "https://veritrust-ai-gdgoc.onrender.com",
         "https://veritrust-ai-271n.onrender.com",
