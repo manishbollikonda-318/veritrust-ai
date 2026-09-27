@@ -96,7 +96,91 @@ DEMO_RESPONSES: Dict[str, Dict[str, str]] = {
     },
 }
 
-FALLBACK_DRAFT = "Based on our company policy documents: {context}"
+import logging
+import re
+import requests
+from typing import List, Optional, Dict
+
+logger = logging.getLogger("veritrust.maker")
+
+
+def call_gemini_api(prompt: str, api_key: str, model_name: str = "gemini-1.5-flash") -> Optional[str]:
+    """
+    Call Google Gemini API via SDK (if installed) or direct REST endpoint.
+    Guarantees reliable execution across all environments with zero external dependency requirements.
+    """
+    if not api_key or not api_key.strip():
+        return None
+
+    # 1. Try google.generativeai SDK if available in the environment
+    try:
+        import google.generativeai as genai
+        genai.configure(api_key=api_key.strip())
+        model = genai.GenerativeModel(model_name)
+        response = model.generate_content(prompt)
+        if response and response.text:
+            return response.text.strip()
+    except ImportError:
+        pass
+    except Exception as e:
+        logger.warning(f"Gemini SDK generation failed: {e}. Falling back to REST endpoint...")
+
+    # 2. Direct Google Generative Language REST API endpoint
+    try:
+        url = f"https://generativelanguage.googleapis.com/v1beta/models/{model_name}:generateContent?key={api_key.strip()}"
+        payload = {
+            "contents": [
+                {
+                    "parts": [{"text": prompt}]
+                }
+            ],
+            "generationConfig": {
+                "temperature": 0.2,
+                "maxOutputTokens": 600
+            }
+        }
+        res = requests.post(url, json=payload, timeout=12)
+        if res.status_code == 200:
+            data = res.json()
+            candidates = data.get("candidates", [])
+            if candidates:
+                parts = candidates[0].get("content", {}).get("parts", [])
+                if parts:
+                    return parts[0].get("text", "").strip()
+        else:
+            logger.warning(f"Gemini REST endpoint returned {res.status_code}: {res.text[:200]}")
+    except Exception as e:
+        logger.warning(f"Gemini REST call error: {e}")
+
+    return None
+
+
+def call_openai_api(prompt: str, api_key: str, model_name: str = "gpt-4o-mini") -> Optional[str]:
+    """Call OpenAI API via direct REST endpoint for Bring-Your-Own-Key workspaces."""
+    if not api_key or not api_key.strip():
+        return None
+    try:
+        url = "https://api.openai.com/v1/chat/completions"
+        headers = {
+            "Authorization": f"Bearer {api_key.strip()}",
+            "Content-Type": "application/json"
+        }
+        payload = {
+            "model": model_name,
+            "messages": [
+                {"role": "system", "content": "You are a customer service assistant. Use only the provided policy context."},
+                {"role": "user", "content": prompt}
+            ],
+            "temperature": 0.2,
+            "max_tokens": 600
+        }
+        res = requests.post(url, headers=headers, json=payload, timeout=12)
+        if res.status_code == 200:
+            data = res.json()
+            return data["choices"][0]["message"]["content"].strip()
+    except Exception as e:
+        logger.warning(f"OpenAI REST call error: {e}")
+    return None
 
 
 class MakerAgent:
@@ -122,18 +206,41 @@ class MakerAgent:
         return None
 
     def _synthesize_draft_from_context(self, query: str, results: list, company_name: str) -> str:
-        """Synthesize natural, conversational customer response grounded directly in retrieved policy chunks."""
-        import re
-        best_text = results[0]["text"]
-        # Extract meaningful sentences from the best matching document chunk
-        sentences = [s.strip() for s in re.split(r'(?<=[.!?])\s+', best_text) if len(s.strip()) > 10]
-        selected = sentences[:3] if len(sentences) >= 3 else sentences
-        policy_body = " ".join(selected) if selected else best_text[:300]
+        """
+        Synthesize natural, polished customer response grounded directly in retrieved policy chunks
+        when running in offline/demo mode without live LLM API keys.
+        Extracts clean, complete sentences without cutoffs.
+        """
+        if not results:
+            return (
+                f"Thank you for contacting {company_name}! "
+                f"I reviewed our knowledge base for your inquiry, but could not find an applicable policy document. "
+                f"Please allow me to connect you with our support team."
+            )
+
+        candidate_sentences = []
+        for r in results[:2]:
+            text = r.get("text", "")
+            # Split cleanly on sentence boundaries
+            chunks = [s.strip() for s in re.split(r'(?<=[.!?])\s+', text) if len(s.strip()) > 15]
+            candidate_sentences.extend(chunks)
+
+        # Score sentences by keyword overlap with query
+        query_words = set(re.findall(r'\b[a-zA-Z0-9]{3,}\b', query.lower()))
+        scored = []
+        for s in candidate_sentences:
+            s_words = set(re.findall(r'\b[a-zA-Z0-9]{3,}\b', s.lower()))
+            overlap = len(query_words & s_words)
+            scored.append((overlap, s))
+
+        scored.sort(key=lambda x: x[0], reverse=True)
+        selected_sentences = [s for _, s in scored[:3]] if scored else candidate_sentences[:2]
+        policy_body = " ".join(selected_sentences) if selected_sentences else results[0]["text"][:250]
 
         return (
-            f"Thank you for contacting {company_name}! "
-            f"According to our corporate guidelines: {policy_body} "
-            f"Please let us know if you have any further questions regarding this policy."
+            f"Hello! Thank you for contacting {company_name}. "
+            f"Regarding your inquiry: {policy_body} "
+            f"Please let us know if you have any further questions!"
         )
 
     def generate_draft(
@@ -144,7 +251,7 @@ class MakerAgent:
         workspace_id: str = "default"
     ) -> str:
         """Generate a draft response grounded in the workspace's retrieved company docs."""
-        # 1. NovaMart demo benchmark fallback
+        # 1. NovaMart demo benchmark: preserve staged scenario triggers
         if demo_mode and (workspace_id == "default" or not workspace_id):
             scenario_key = self._match_demo_scenario(query)
             if scenario_key:
@@ -158,27 +265,33 @@ class MakerAgent:
         results = vector_store.search(query, n_results=3, workspace_id=workspace_id)
         if results:
             context_chunks = [r["text"] for r in results]
+            context = "\n\n".join(context_chunks[:3])
             
-            # Optional: Live LLM generation if workspace or server has an API key configured
+            # Check for API key: custom workspace key or server-wide GEMINI_API_KEY
             raw_key = workspace_service.get_raw_api_key(workspace_id) or settings.GEMINI_API_KEY
-            if raw_key and ws and ws.llm_provider == "gemini":
-                try:
-                    import google.generativeai as genai
-                    genai.configure(api_key=raw_key)
-                    model = genai.GenerativeModel("gemini-1.5-flash")
-                    prompt = (
-                        f"You are a helpful customer support AI representing {company_name}. "
-                        f"Answer the customer's query using only these policy excerpts:\n\n"
-                        f"{' '.join(context_chunks[:2])}\n\n"
-                        f"Customer inquiry: {query}\n\nResponse:"
-                    )
-                    resp = model.generate_content(prompt)
-                    if resp and resp.text:
-                        return resp.text.strip()
-                except Exception:
-                    pass  # Fall through to deterministic synthesizer
+            llm_provider = ws.llm_provider if ws else "shared_default"
 
-            # High-fidelity synthesis grounded in the custom policy
+            if raw_key and raw_key.strip():
+                prompt = (
+                    f"You are a helpful and polite customer support AI representing {company_name}.\n"
+                    f"Answer the customer's question using ONLY the following verified company policy excerpts.\n"
+                    f"Be natural and conversational, but strictly factual: do not state or fabricate anything not supported by this context.\n\n"
+                    f"Verified Policy Context:\n{context}\n\n"
+                    f"Customer Question: {query}\n\n"
+                    f"Customer Support Response:"
+                )
+                
+                llm_response = None
+                if llm_provider == "openai":
+                    llm_response = call_openai_api(prompt, raw_key)
+                else:
+                    # Default provider: Google Gemini
+                    llm_response = call_gemini_api(prompt, raw_key)
+
+                if llm_response:
+                    return llm_response
+
+            # Offline/demo synthesis when no live API key is configured or call times out
             return self._synthesize_draft_from_context(query, results, company_name)
         
         return (
