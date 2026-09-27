@@ -8,8 +8,9 @@ import NeuButton from '../ui/NeuButton';
 import NeuCard from '../ui/NeuCard';
 import {
   Search, Plus, RefreshCw, UploadCloud, CheckCircle2,
-  AlertCircle, Sparkles, Building2, X
+  AlertCircle, Sparkles, Building2, X, Info
 } from 'lucide-react';
+import { openDataSourceDisclosure } from '../ui/DataSourceDisclosureModal';
 
 const POLICY_TEMPLATES = [
   {
@@ -233,6 +234,45 @@ export default function KnowledgeBaseView() {
         </div>
       </div>
 
+      {/* Demo Data Source Transparency Banner */}
+      {(currentWorkspace === 'default' || isDemoWorkspace) && (
+        <div className="rounded-2xl p-4 bg-gradient-to-r from-blue-50/90 via-indigo-50/70 to-slate-50/90 border border-blue-200/80 shadow-[2px_2px_8px_rgba(165,183,212,0.3)] flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs">
+          <div className="flex items-start sm:items-center gap-3">
+            <div className="p-2 rounded-xl bg-indigo-600 text-white shrink-0 shadow-xs">
+              <Info size={16} />
+            </div>
+            <div>
+              <div className="flex items-center gap-2 mb-0.5">
+                <span className="font-bold text-slate-900">Demo Knowledge Base:</span>
+                <span className="px-2 py-0.5 rounded-md text-[10px] font-extrabold uppercase tracking-wide bg-blue-100 text-blue-800 border border-blue-200">
+                  Synthetic Sample Data
+                </span>
+              </div>
+              <p className="text-slate-600 font-medium leading-relaxed">
+                "NovaMart" is a fictional retail company created specifically for this demonstration. The return, shipping, and warranty policies below are original synthetic samples — not real retailer data.
+              </p>
+            </div>
+          </div>
+          <div className="flex items-center gap-2 shrink-0 self-end sm:self-center">
+            <button
+              type="button"
+              onClick={() => openDataSourceDisclosure()}
+              className="text-[11px] font-bold text-indigo-700 hover:text-indigo-900 underline cursor-pointer"
+            >
+              View Disclosure
+            </button>
+            <span className="text-slate-300">|</span>
+            <button
+              type="button"
+              onClick={handleOpenCreateModal}
+              className="text-[11px] font-bold text-slate-700 hover:text-indigo-600 cursor-pointer"
+            >
+              + Upload Custom Policy
+            </button>
+          </div>
+        </div>
+      )}
+
       {/* New Workspace Sub-bar */}
       {showWorkspaceCreator && (
         <NeuCard variant="maker" className="p-4 flex items-center gap-3 flex-wrap">
@@ -305,6 +345,7 @@ export default function KnowledgeBaseView() {
               onEdit={handleOpenEditModal}
               onDelete={handleDeleteDocument}
               isReadOnly={isDemoWorkspace && (doc.filename?.startsWith('0') ?? false)}
+              isDemoDoc={isDemoWorkspace || currentWorkspace === 'default'}
             />
           ))}
         </div>

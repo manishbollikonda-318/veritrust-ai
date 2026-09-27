@@ -1,7 +1,8 @@
 import React from 'react';
-import { ShieldCheck, Cpu, Building2, Menu, PanelLeftClose, PanelLeftOpen } from 'lucide-react';
+import { ShieldCheck, Cpu, Building2, Menu, PanelLeftClose, PanelLeftOpen, Sparkles } from 'lucide-react';
 import { useWorkspace } from '../../context/WorkspaceContext';
 import { useSidebar } from '../../context/SidebarContext';
+import { openDataSourceDisclosure } from '../ui/DataSourceDisclosureModal';
 
 export default function Header() {
   const { currentWorkspace, setCurrentWorkspace, workspaces } = useWorkspace();
@@ -41,6 +42,17 @@ export default function Header() {
       </div>
 
       <div className="flex items-center gap-2 sm:gap-3 shrink-0">
+        {/* Demo Disclosure Quick Button */}
+        <button
+          type="button"
+          onClick={() => openDataSourceDisclosure()}
+          className="hidden sm:flex items-center gap-1.5 px-2.5 sm:px-3 py-1.5 rounded-2xl bg-gradient-to-br from-[#F5F8FD] to-[#E6EDF8] shadow-neu-maker hover:shadow-neu-maker-pressed border border-indigo-100/70 text-[11px] font-bold text-slate-700 hover:text-indigo-600 transition-all cursor-pointer"
+          title="Read Data Source & Synthetic Baseline Disclosure"
+        >
+          <Sparkles size={12} className="text-indigo-500" />
+          <span>Demo Info</span>
+        </button>
+
         {/* Workspace Quick Switcher */}
         <div className="bg-gradient-to-br from-[#F4F7FC] to-[#E6EDF7] shadow-[inset_2px_2px_5px_rgba(165,180,205,0.45),inset_-2px_-2px_5px_rgba(255,255,255,0.9)] border border-slate-200/60 px-2.5 sm:px-3 py-1.5 rounded-2xl flex items-center gap-1.5 sm:gap-2">
           <Building2 size={13} className="text-indigo-500 shrink-0" />
@@ -48,9 +60,9 @@ export default function Header() {
             value={currentWorkspace}
             onChange={(e) => setCurrentWorkspace(e.target.value)}
             aria-label="Active Enterprise Workspace"
-            className="bg-transparent text-[11px] sm:text-xs font-bold text-slate-800 focus:outline-none cursor-pointer pr-1 max-w-[110px] sm:max-w-none truncate"
+            className="bg-transparent text-[11px] sm:text-xs font-bold text-slate-800 focus:outline-none cursor-pointer pr-1 max-w-[125px] sm:max-w-none truncate"
           >
-            <option value="default">NovaMart Retail</option>
+            <option value="default">NovaMart Retail (Demo)</option>
             <option value="custom">Custom Company</option>
             {workspaces
               .filter(w => w !== 'default' && w !== 'custom')

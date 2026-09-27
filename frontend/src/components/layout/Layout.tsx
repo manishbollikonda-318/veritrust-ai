@@ -3,6 +3,7 @@ import Sidebar from './Sidebar';
 import Header from './Header';
 import CookieBanner from '../ui/CookieBanner';
 import WelcomeBanner from '../ui/WelcomeBanner';
+import DataSourceDisclosureModal from '../ui/DataSourceDisclosureModal';
 import { useSidebar } from '../../context/SidebarContext';
 
 interface LayoutProps {
@@ -26,6 +27,7 @@ export default function Layout({ children }: LayoutProps) {
           {children}
         </main>
         <CookieBanner />
+        <DataSourceDisclosureModal />
       </div>
     </div>
   );

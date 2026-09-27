@@ -4,9 +4,10 @@ Use this step-by-step walkthrough during presentation or live judging to highlig
 
 ---
 
-### Step 1: The Core Problem (30 seconds)
+### Step 1: The Core Problem & Benchmark Context (30 seconds)
 - *"Large language models hallucinate confidently. In customer support, an ungrounded return promise or price match can create immediate financial losses and legal liability."*
 - Open the dashboard: [`http://127.0.0.1:5173`](http://127.0.0.1:5173).
+- Point out the **Glassmorphism Transparency Disclosure**: *"We benchmark this demo on 'NovaMart' — a fictional sample e-commerce retailer with realistic sample policies created for this hackathon. The dual-agent engine works identically on any enterprise's real documents."*
 - Point out the **Dual-Agent Architecture**: The **Maker Agent** (Periwinkle zone) drafts from manuals, while the **Judge Agent** (Mint/Seafoam zone) intercepts and audits every factual claim before it is ever sent to the customer.
 
 ---
@@ -14,7 +15,7 @@ Use this step-by-step walkthrough during presentation or live judging to highlig
 ### Step 2: Live Hallucination Interception (45 seconds)
 - Click the staged scenario pill: **`🎯 60 vs 30 Days`**.
 - Show what happened:
-  1. **Maker Draft**: Hallucinated that NovaMart has a 60-day return policy.
+  1. **Maker Draft**: Hallucinated that NovaMart (our sample retailer) has a 60-day return policy.
   2. **Judge Agent**: Intercepted the draft in $2.6\text{ ms}$, decomposed it into atomic claims, and ran a **Deterministic Code-Check** on day counts.
   3. **Result**: Flagged as `Contradicted (Critical Severity)` because the official ground truth specifies 30 days ($100\%$ error).
   4. **Customer Resolution**: Replaced with safe fallback support escalation.

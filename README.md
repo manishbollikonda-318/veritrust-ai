@@ -18,6 +18,9 @@ Frontier LLMs have hallucination rates ranging from **22% to 94%** (Stanford 202
    - **Corrected**: Non-critical unsupported claims or pricing errors &rarr; Auto-corrected with verified data & re-verified.
    - **Blocked**: Direct policy contradictions or fabricated promises &rarr; Stopped, escalated to human team with safe fallback.
 
+> [!NOTE]
+> **Data Source & Synthetic Benchmark Disclosure**: VeriTrust AI is demonstrated using "NovaMart" — an original, synthetic retail company with sample return, shipping, warranty, and pricing policies written specifically for this hackathon evaluation. It is not real data from an actual third-party retailer. The dual-agent verification engine is fully functional and supports dropping in any enterprise's real corporate policy documents via the multi-tenant workspace switcher.
+
 ---
 
 ## 2. System Architecture
@@ -26,7 +29,7 @@ Frontier LLMs have hallucination rates ranging from **22% to 94%** (Stanford 202
 flowchart TD
     subgraph Client["Client Tier"]
         UI["React Neumorphic Dashboard\n(Vite + Tailwind)"]
-        Store["External Storefront Widget\n(NovaMart Simulator)"]
+        Store["External Storefront Widget\n(NovaMart Demo Simulator)"]
         API_Client["Direct API Gateway\n(cURL / Python / Node)"]
     end
 

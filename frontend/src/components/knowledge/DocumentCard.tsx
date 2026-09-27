@@ -8,9 +8,10 @@ interface DocumentCardProps {
   onEdit?: (document: Document) => void;
   onDelete?: (document: Document) => void;
   isReadOnly?: boolean;
+  isDemoDoc?: boolean;
 }
 
-export default function DocumentCard({ document, onEdit, onDelete, isReadOnly = false }: DocumentCardProps) {
+export default function DocumentCard({ document, onEdit, onDelete, isReadOnly = false, isDemoDoc = false }: DocumentCardProps) {
   const [expanded, setExpanded] = useState(false);
 
   return (
@@ -24,7 +25,14 @@ export default function DocumentCard({ document, onEdit, onDelete, isReadOnly = 
               <FileText size={22} />
             </div>
             <div className="min-w-0">
-              <h3 className="font-black text-slate-900 text-base truncate">{document.title}</h3>
+              <div className="flex items-center gap-2">
+                <h3 className="font-black text-slate-900 text-base truncate">{document.title}</h3>
+                {isDemoDoc && (
+                  <span className="px-2 py-0.5 rounded-md text-[9px] font-extrabold uppercase tracking-wider bg-blue-100/90 text-blue-700 border border-blue-200/80 shrink-0">
+                    Sample Data
+                  </span>
+                )}
+              </div>
               <div className="flex items-center gap-3 text-[11px] text-indigo-700 font-bold mt-1">
                 <span className="flex items-center gap-1 truncate max-w-[140px]">
                   <Database size={12} className="text-indigo-400 shrink-0" />

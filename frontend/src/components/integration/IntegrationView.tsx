@@ -401,8 +401,8 @@ for claim in result['claims']:
                   N
                 </div>
                 <div>
-                  <h3 className="text-sm font-black tracking-tight">NovaMart Retail Storefront (Mock Live Site)</h3>
-                  <p className="text-[10px] text-slate-400 font-mono">External Origin: https://shop.novamart.com</p>
+                  <h3 className="text-sm font-black tracking-tight">NovaMart Retail Storefront (Simulated Demo Benchmark)</h3>
+                  <p className="text-[10px] text-slate-400 font-mono">Simulated Origin: https://shop.novamart-demo.internal</p>
                 </div>
               </div>
 
@@ -422,7 +422,7 @@ for claim in result['claims']:
                   <span className="text-[10px] font-black uppercase tracking-wider bg-white/20 px-2.5 py-0.5 rounded-full">
                     Protected by VeriTrust AI Guardrail
                   </span>
-                  <h4 className="text-base font-black mt-1">Official NovaMart Online Store</h4>
+                  <h4 className="text-base font-black mt-1">NovaMart Online Store (Simulated Retail Environment)</h4>
                   <p className="text-xs text-blue-100 mt-0.5 font-medium">
                     Customer support chat widget in the bottom right corner is intercepted in real-time by your backend `/api/verify` gateway.
                   </p>
