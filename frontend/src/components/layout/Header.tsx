@@ -1,5 +1,5 @@
 import React from 'react';
-import { ShieldCheck, Cpu, Building2, Menu, PanelLeftClose, PanelLeftOpen, Sparkles, Plus } from 'lucide-react';
+import { Cpu, Building2, Menu, PanelLeftClose, PanelLeftOpen, Sparkles, Plus } from 'lucide-react';
 import { useWorkspace } from '../../context/WorkspaceContext';
 import { useSidebar } from '../../context/SidebarContext';
 import { openDataSourceDisclosure } from '../ui/DataSourceDisclosureModal';
@@ -36,12 +36,12 @@ export default function Header() {
           {isCollapsed ? <PanelLeftOpen size={18} /> : <PanelLeftClose size={18} />}
         </button>
 
-        {/* min-w-0 + wrapping instead of truncate: the title is never clipped. */}
-        <h2 className="text-sm sm:text-xl lg:text-2xl font-black text-ink tracking-tight leading-tight min-w-0">
+        {/* Title without clipping or overlap */}
+        <h2 className="text-base sm:text-xl lg:text-2xl font-black text-ink tracking-tight leading-none whitespace-nowrap shrink-0">
           VeriTrust Guardrail
         </h2>
 
-        <span className="hidden sm:inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-extrabold bg-gradient-to-r from-blue-50 to-indigo-50 text-accent-strong border border-indigo-200/80 shadow-[2px_2px_6px_rgba(99,102,241,0.15),-2px_-2px_6px_rgba(255,255,255,0.9)] shrink-0">
+        <span className="hidden lg:inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-extrabold bg-gradient-to-r from-blue-50 to-indigo-50 text-accent-strong border border-indigo-200/80 shadow-[2px_2px_6px_rgba(99,102,241,0.15),-2px_-2px_6px_rgba(255,255,255,0.9)] shrink-0">
           <Cpu size={12} className="text-accent" aria-hidden="true" />
           Maker &amp; Judge Engine
         </span>
@@ -54,7 +54,7 @@ export default function Header() {
           variant="neutral"
           size="sm"
           onClick={() => openDataSourceDisclosure()}
-          className="hidden sm:flex"
+          className="hidden md:flex"
           title="Read Data Source & Synthetic Baseline Disclosure"
         >
           <Sparkles size={12} className="text-accent" aria-hidden="true" />
@@ -76,17 +76,19 @@ export default function Header() {
             aria-label="Active Enterprise Workspace"
             className="bg-transparent text-xs font-bold text-ink focus:outline-none cursor-pointer pr-1 max-w-[130px] sm:max-w-none truncate"
           >
-            {workspaces.map((w) => (
-              <option key={w.id} value={w.id}>
-                {w.name} {w.is_demo ? '(Demo)' : ''}
-              </option>
-            ))}
+            {workspaces.map((w) => {
+              const displayName = w.name.includes('(Demo)') ? w.name : `${w.name}${w.is_demo ? ' (Demo)' : ''}`;
+              return (
+                <option key={w.id} value={w.id}>
+                  {displayName}
+                </option>
+              );
+            })}
             <option value="__add_new__">+ Add New Company...</option>
           </select>
         </div>
 
-        {/* Secondary action: onboarding a company is not the page's primary task,
-            so it uses the shared secondary button style instead of a solid accent fill. */}
+        {/* Secondary action: onboarding a company */}
         <NeuButton
           type="button"
           variant="subtle"
@@ -99,12 +101,6 @@ export default function Header() {
           <span className="hidden md:inline">New Company</span>
           <span className="sr-only md:hidden">New Company</span>
         </NeuButton>
-
-        {/* System Health Status Badge */}
-        <div className="hidden xl:flex items-center gap-2 px-3.5 py-1.5 rounded-2xl bg-gradient-to-br from-[#F4F9F6] to-[#E4F2EC] shadow-[3px_3px_8px_rgba(158,192,180,0.4),-3px_-3px_8px_rgba(255,255,255,0.9)] border border-emerald-200/60 text-xs font-extrabold text-positive-deep shrink-0">
-          <ShieldCheck size={15} className="text-positive" aria-hidden="true" />
-          <span>Interception Active</span>
-        </div>
       </div>
     </header>
   );
