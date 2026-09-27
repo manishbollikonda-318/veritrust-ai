@@ -161,6 +161,10 @@ export const mockMetrics: MetricData = {
   avgLatencyMs: 312,
   avgMakerLatencyMs: 135,
   avgJudgeLatencyMs: 177,
+  avgCorrectionLatencyMs: 88,
+  approvedCount: 108,
+  correctedCount: 22,
+  blockedCount: 12,
   driftData: [
     { time: '10:00', passRate: 88.0, correctionRate: 8.0, blockRate: 4.0, queryIndex: 20 },
     { time: '10:30', passRate: 84.5, correctionRate: 10.5, blockRate: 5.0, queryIndex: 50 },

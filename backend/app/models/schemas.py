@@ -111,6 +111,10 @@ class MetricData(BaseModel):
     avg_latency_ms: float = 0.0
     avg_maker_latency_ms: float = 0.0
     avg_judge_latency_ms: float = 0.0
+    avg_correction_latency_ms: float = 0.0
+    approved_count: int = 0
+    corrected_count: int = 0
+    blocked_count: int = 0
     drift_data: List[DriftPoint] = []
 
 

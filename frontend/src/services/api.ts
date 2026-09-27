@@ -277,6 +277,10 @@ export const api = {
         avgLatencyMs: data.avg_latency_ms,
         avgMakerLatencyMs: data.avg_maker_latency_ms,
         avgJudgeLatencyMs: data.avg_judge_latency_ms,
+        avgCorrectionLatencyMs: data.avg_correction_latency_ms || 0,
+        approvedCount: data.approved_count || 0,
+        correctedCount: data.corrected_count || 0,
+        blockedCount: data.blocked_count || 0,
         driftData: (data.drift_data || []).map((d: any) => ({
           time: new Date(d.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
           passRate: d.pass_rate,

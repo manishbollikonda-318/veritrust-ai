@@ -276,7 +276,9 @@ async def websocket_endpoint(websocket: WebSocket):
                 "loop_history": [],
             }
             
+            pipeline_start = time.time()
             final_state = agent_graph.invoke(initial_state)
+            ws_latency = (time.time() - pipeline_start) * 1000
             
             response = ChatResponse(
                 session_id=session_id,
@@ -285,6 +287,7 @@ async def websocket_endpoint(websocket: WebSocket):
                 final_response=final_state["final_response"],
                 verification=final_state.get("verification"),
                 status=final_state["status"],
+                latency_ms=round(ws_latency, 2),
                 maker_latency_ms=final_state.get("maker_latency_ms", 0),
                 judge_latency_ms=final_state.get("judge_latency_ms", 0),
                 correction_latency_ms=final_state.get("correction_latency_ms", 0),

@@ -3,7 +3,7 @@ import MetricTile from './MetricTile';
 import DriftChart from './DriftChart';
 import ClaimBreakdownChart from './ClaimBreakdownChart';
 import NeuCard from '../ui/NeuCard';
-import { ShieldCheck, Layers, Zap } from 'lucide-react';
+import { ShieldCheck, Layers, Zap, Timer, CheckCircle2, AlertTriangle, Ban } from 'lucide-react';
 
 export default function MetricsDashboard() {
   const { metrics, loading } = useMetrics();
@@ -28,6 +28,10 @@ export default function MetricsDashboard() {
     avgLatencyMs: 312,
     avgMakerLatencyMs: 135,
     avgJudgeLatencyMs: 177,
+    avgCorrectionLatencyMs: 88,
+    approvedCount: 108,
+    correctedCount: 22,
+    blockedCount: 12,
     driftData: []
   };
 
@@ -47,7 +51,7 @@ export default function MetricsDashboard() {
         </div>
       </div>
 
-      {/* Top Hero KPI Row (Blue-to-Violet Soft UI Zone) */}
+      {/* Top Hero KPI Row */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
         <MetricTile
           title="Pass Rate (Approved)"
@@ -59,7 +63,7 @@ export default function MetricsDashboard() {
         <MetricTile
           title="Auto-Correction Rate"
           value={`${m.correctionRate.toFixed(1)}%`}
-          subtitle="Unsupported claims pruned / fixed"
+          subtitle={`Avg correction speed: ${Math.round(m.avgCorrectionLatencyMs || 88)}ms`}
           trend="neutral"
           category="rate"
         />
@@ -79,18 +83,51 @@ export default function MetricsDashboard() {
         />
       </div>
 
-      {/* Secondary Quick Stats */}
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 sm:gap-6">
+      {/* Query Outcome Counts — explicitly shows blocked vs approved vs corrected raw numbers */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
         <NeuCard variant="metrics" className="p-4 flex items-center gap-4">
           <div className="p-3 bg-gradient-to-br from-indigo-100 to-indigo-200 text-indigo-700 rounded-2xl shadow-xs">
             <Layers size={20} />
           </div>
           <div>
             <div className="text-xl font-black text-slate-900">{m.totalQueries}</div>
-            <div className="text-xs font-bold text-slate-500">Evaluated Customer Queries</div>
+            <div className="text-xs font-bold text-slate-500">Total Evaluated Queries</div>
           </div>
         </NeuCard>
 
+        <NeuCard variant="metrics" className="p-4 flex items-center gap-4">
+          <div className="p-3 bg-gradient-to-br from-emerald-100 to-emerald-200 text-emerald-700 rounded-2xl shadow-xs">
+            <CheckCircle2 size={20} />
+          </div>
+          <div>
+            <div className="text-xl font-black text-emerald-900">{m.approvedCount || m.totalQueries - (m.correctedCount || 0) - (m.blockedCount || 0)}</div>
+            <div className="text-xs font-bold text-slate-500">Approved Responses</div>
+          </div>
+        </NeuCard>
+
+        <NeuCard variant="metrics" className="p-4 flex items-center gap-4">
+          <div className="p-3 bg-gradient-to-br from-amber-100 to-amber-200 text-amber-700 rounded-2xl shadow-xs">
+            <AlertTriangle size={20} />
+          </div>
+          <div>
+            <div className="text-xl font-black text-amber-900">{m.correctedCount || 0}</div>
+            <div className="text-xs font-bold text-slate-500">Auto-Corrected Responses</div>
+          </div>
+        </NeuCard>
+
+        <NeuCard variant="metrics" className="p-4 flex items-center gap-4">
+          <div className="p-3 bg-gradient-to-br from-rose-100 to-rose-200 text-rose-700 rounded-2xl shadow-xs">
+            <Ban size={20} />
+          </div>
+          <div>
+            <div className="text-xl font-black text-rose-900">{m.blockedCount || 0}</div>
+            <div className="text-xs font-bold text-slate-500">Blocked & Escalated</div>
+          </div>
+        </NeuCard>
+      </div>
+
+      {/* Claim-Level Verification Stats */}
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 sm:gap-6">
         <NeuCard variant="metrics" className="p-4 flex items-center gap-4">
           <div className="p-3 bg-gradient-to-br from-emerald-100 to-emerald-200 text-emerald-700 rounded-2xl shadow-xs">
             <ShieldCheck size={20} />
@@ -108,6 +145,16 @@ export default function MetricsDashboard() {
           <div>
             <div className="text-xl font-black text-rose-900">{m.contradictedClaims || 34}</div>
             <div className="text-xs font-bold text-slate-500">Severe Hallucinations Intercepted</div>
+          </div>
+        </NeuCard>
+
+        <NeuCard variant="metrics" className="p-4 flex items-center gap-4">
+          <div className="p-3 bg-gradient-to-br from-blue-100 to-blue-200 text-blue-700 rounded-2xl shadow-xs">
+            <Timer size={20} />
+          </div>
+          <div>
+            <div className="text-xl font-black text-blue-900">{Math.round(m.avgCorrectionLatencyMs || 88)}ms</div>
+            <div className="text-xs font-bold text-slate-500">Avg Correction Speed</div>
           </div>
         </NeuCard>
       </div>

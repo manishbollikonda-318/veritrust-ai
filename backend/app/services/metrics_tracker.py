@@ -24,6 +24,7 @@ class MetricsTracker:
         self.latencies: List[float] = [290.0, 310.0, 340.0, 280.0, 320.0]
         self.maker_latencies: List[float] = [120.0, 130.0, 145.0, 115.0, 135.0]
         self.judge_latencies: List[float] = [170.0, 180.0, 195.0, 165.0, 185.0]
+        self.correction_latencies: List[float] = [0.0, 85.0, 0.0, 92.0, 0.0]
         
         self.drift_data: List[DriftPoint] = [
             DriftPoint(timestamp="10:00", pass_rate=88.0, correction_rate=8.0, block_rate=4.0, query_index=20),
@@ -40,14 +41,16 @@ class MetricsTracker:
         claims: List[Claim],
         maker_latency: float = 0.0,
         judge_latency: float = 0.0,
+        correction_latency: float = 0.0,
         workspace_id: str = "default"
     ):
         """Record the result of a single query through the pipeline with reconciliation."""
         self.total_queries += 1
-        total_latency = maker_latency + judge_latency
+        total_latency = maker_latency + judge_latency + correction_latency
         self.latencies.append(total_latency)
         self.maker_latencies.append(maker_latency)
         self.judge_latencies.append(judge_latency)
+        self.correction_latencies.append(correction_latency)
 
         if status == "Approved":
             self.passed_queries += 1
@@ -154,6 +157,7 @@ class MetricsTracker:
         avg_latency = sum(self.latencies[-50:]) / len(self.latencies[-50:]) if self.latencies else 0
         avg_maker = sum(self.maker_latencies[-50:]) / len(self.maker_latencies[-50:]) if self.maker_latencies else 0
         avg_judge = sum(self.judge_latencies[-50:]) / len(self.judge_latencies[-50:]) if self.judge_latencies else 0
+        avg_correction = sum(self.correction_latencies[-50:]) / len(self.correction_latencies[-50:]) if self.correction_latencies else 0
 
         return MetricData(
             total_queries=self.total_queries,
@@ -167,6 +171,10 @@ class MetricsTracker:
             avg_latency_ms=round(avg_latency, 2),
             avg_maker_latency_ms=round(avg_maker, 2),
             avg_judge_latency_ms=round(avg_judge, 2),
+            avg_correction_latency_ms=round(avg_correction, 2),
+            approved_count=self.passed_queries,
+            corrected_count=self.corrected_queries,
+            blocked_count=self.blocked_queries,
             drift_data=self.drift_data
         )
 

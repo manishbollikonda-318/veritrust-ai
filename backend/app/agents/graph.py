@@ -171,6 +171,7 @@ def release_node(state: GraphState) -> Dict[str, Any]:
         claims=state["verification"].claims,
         maker_latency=state.get("maker_latency_ms", 0),
         judge_latency=state.get("judge_latency_ms", 0),
+        correction_latency=state.get("correction_latency_ms", 0),
         workspace_id=ws
     )
     
@@ -194,6 +195,7 @@ def block_node(state: GraphState) -> Dict[str, Any]:
         claims=state["verification"].claims,
         maker_latency=state.get("maker_latency_ms", 0),
         judge_latency=state.get("judge_latency_ms", 0),
+        correction_latency=state.get("correction_latency_ms", 0),
         workspace_id=ws
     )
     

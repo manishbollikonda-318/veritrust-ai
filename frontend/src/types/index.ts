@@ -80,6 +80,10 @@ export interface MetricData {
   avgLatencyMs: number;
   avgMakerLatencyMs?: number;
   avgJudgeLatencyMs?: number;
+  avgCorrectionLatencyMs?: number;
+  approvedCount?: number;
+  correctedCount?: number;
+  blockedCount?: number;
   driftData?: DriftDataPoint[];
 }
 
