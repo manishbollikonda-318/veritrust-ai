@@ -2,26 +2,50 @@ import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Sparkles, ArrowRight, Database } from 'lucide-react';
 
-const STORAGE_KEY = 'veritrust_data_source_disclosed_v1';
+const SESSION_SEEN_KEY = 'veritrust_disclosure_seen_in_session';
 
 export default function DataSourceDisclosureModal() {
   const [isOpen, setIsOpen] = useState(false);
 
   useEffect(() => {
-    // Check if user has already acknowledged the disclosure
-    const hasSeen = localStorage.getItem(STORAGE_KEY);
-    if (!hasSeen) {
+    // 1. Detect if the current page load is a browser refresh / reload
+    const isReload = (() => {
+      try {
+        const navEntries = performance.getEntriesByType('navigation');
+        if (navEntries.length > 0) {
+          return (navEntries[0] as PerformanceNavigationTiming).type === 'reload';
+        }
+        return (performance as any).navigation?.type === 1;
+      } catch {
+        return false;
+      }
+    })();
+
+    // 2. Check if already acknowledged in this browsing session/tab
+    const seenInSession = sessionStorage.getItem(SESSION_SEEN_KEY);
+
+    // If page was refreshed (F5 / Cmd+R / reload), DO NOT ask
+    if (isReload) {
+      setIsOpen(false);
+    } else if (!seenInSession) {
+      // Fresh navigation via link (new tab / new session) -> Prompt every time!
       setIsOpen(true);
     }
 
-    // Allow other components (like Knowledge Base or Header) to trigger the modal
+    // Mark as visited for this session so subsequent in-tab reloads or route changes won't re-prompt
+    sessionStorage.setItem(SESSION_SEEN_KEY, 'true');
+
+    // Clean up old permanent localStorage key so future link visits aren't blocked
+    localStorage.removeItem('veritrust_data_source_disclosed_v1');
+
+    // Allow other components (like Header "Demo Info" button) to manually open modal
     const handleOpen = () => setIsOpen(true);
     window.addEventListener('veritrust:open-data-disclosure', handleOpen);
     return () => window.removeEventListener('veritrust:open-data-disclosure', handleOpen);
   }, []);
 
   const handleDismiss = () => {
-    localStorage.setItem(STORAGE_KEY, 'true');
+    sessionStorage.setItem(SESSION_SEEN_KEY, 'true');
     setIsOpen(false);
   };
 
@@ -41,12 +65,12 @@ export default function DataSourceDisclosureModal() {
             onClick={(e) => e.stopPropagation()}
             className="disclosure-glass-panel relative z-10 w-full max-w-lg overflow-hidden p-6 sm:p-7"
             style={{
-              background: 'rgba(255, 255, 255, 0.14)',
-              backdropFilter: 'blur(16px) saturate(180%)',
-              WebkitBackdropFilter: 'blur(16px) saturate(180%)',
-              border: '1px solid rgba(255, 255, 255, 0.3)',
+              background: 'rgba(255, 255, 255, 0.52)',
+              backdropFilter: 'blur(8px) saturate(160%)',
+              WebkitBackdropFilter: 'blur(8px) saturate(160%)',
+              border: '1px solid rgba(255, 255, 255, 0.65)',
               borderRadius: '24px',
-              boxShadow: '0 8px 32px rgba(0, 0, 0, 0.15)',
+              boxShadow: '0 12px 36px rgba(0, 0, 0, 0.12), inset 0 1px 1px rgba(255, 255, 255, 0.7)',
             }}
           >
             {/* Top light reflection highlight */}

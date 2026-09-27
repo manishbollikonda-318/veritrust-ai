@@ -62,12 +62,12 @@
 
 /* Real Glassmorphism for Disclosure Modal */
 .disclosure-glass-panel {
-  background: rgba(255, 255, 255, 0.14) !important;
-  backdrop-filter: blur(16px) saturate(180%) !important;
-  -webkit-backdrop-filter: blur(16px) saturate(180%) !important;
-  border: 1px solid rgba(255, 255, 255, 0.3) !important;
+  background: rgba(255, 255, 255, 0.52) !important;
+  backdrop-filter: blur(8px) saturate(160%) !important;
+  -webkit-backdrop-filter: blur(8px) saturate(160%) !important;
+  border: 1px solid rgba(255, 255, 255, 0.65) !important;
   border-radius: 24px !important;
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.15) !important;
+  box-shadow: 0 12px 36px rgba(0, 0, 0, 0.12), inset 0 1px 1px rgba(255, 255, 255, 0.7) !important;
 }
 
 body {
