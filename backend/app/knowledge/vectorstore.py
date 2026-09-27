@@ -126,15 +126,24 @@ class MultiTenantVectorStore:
         self.engines: Dict[str, LightweightEmbeddingEngine] = defaultdict(LightweightEmbeddingEngine)
         self.workspace_raw_docs: Dict[str, List[Dict[str, Any]]] = defaultdict(list)
         self.use_chroma = HAS_CHROMADB
-        
-        if self.use_chroma:
-            try:
-                os.makedirs(settings.CHROMA_PERSIST_DIR, exist_ok=True)
-                self.client = chromadb.PersistentClient(path=settings.CHROMA_PERSIST_DIR)
-                self.embedding_model = SentenceTransformer("all-MiniLM-L6-v2")
-            except Exception as e:
-                print(f"Warning: ChromaDB initialization fallback: {e}")
-                self.use_chroma = False
+        self.client = None
+        self.embedding_model = None
+
+    def _ensure_chroma(self) -> bool:
+        """Lazy initialization of ChromaDB and embedding model, never blocking startup."""
+        if not self.use_chroma:
+            return False
+        if self.embedding_model is not None and self.client is not None:
+            return True
+        try:
+            os.makedirs(settings.CHROMA_PERSIST_DIR, exist_ok=True)
+            self.client = chromadb.PersistentClient(path=settings.CHROMA_PERSIST_DIR)
+            self.embedding_model = SentenceTransformer("all-MiniLM-L6-v2")
+            return True
+        except Exception as e:
+            print(f"Warning: ChromaDB lazy initialization failed: {e}")
+            self.use_chroma = False
+            return False
 
     def _get_engine(self, workspace_id: str = "default") -> LightweightEmbeddingEngine:
         ws = workspace_id or "default"
@@ -152,10 +161,10 @@ class MultiTenantVectorStore:
         ws = workspace_id or "default"
         engine = self._get_engine(ws)
         
-        # Merge or replace in engine
+        # Merge or replace in pure-Python engine
         engine.fit_and_index(documents, metadatas, ids)
 
-        if self.use_chroma:
+        if self.use_chroma and self._ensure_chroma():
             try:
                 collection = self.client.get_or_create_collection(
                     name=f"ws_{ws.replace('-', '_')}",
@@ -170,7 +179,7 @@ class MultiTenantVectorStore:
         ws = workspace_id or "default"
         engine = self._get_engine(ws)
         
-        if self.use_chroma:
+        if self.use_chroma and self._ensure_chroma():
             try:
                 collection = self.client.get_collection(name=f"ws_{ws.replace('-', '_')}")
                 query_embedding = self.embedding_model.encode([query]).tolist()
