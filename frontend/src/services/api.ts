@@ -1,4 +1,4 @@
-import { Message, MetricData, Document, ComparisonResponse, ReviewItem, ReviewStats } from '../types';
+import { Message, MetricData, Document, ComparisonResponse, ReviewItem, ReviewStats, Workspace, WorkspaceCreateInput } from '../types';
 import { mockMessages, mockMetrics, mockDocuments } from './mockData';
 
 const API_BASE = '/api';
@@ -46,9 +46,9 @@ function mapVerification(v: any) {
 }
 
 export const api = {
-  async getMessages(): Promise<Message[]> {
+  async getMessages(workspaceId: string = 'default'): Promise<Message[]> {
     try {
-      const res = await fetch(`${API_BASE}/chat/history/default`);
+      const res = await fetch(`${API_BASE}/chat/history/${encodeURIComponent(workspaceId)}`);
       if (res.ok) {
         const data = await res.json();
         if (Array.isArray(data) && data.length > 0) {
@@ -74,7 +74,8 @@ export const api = {
     } catch {
       // Fallback to mock
     }
-    return [...mockMessages];
+    // Only return mock baseline messages for default demo workspace
+    return workspaceId === 'default' ? [...mockMessages] : [];
   },
 
   async sendMessage(content: string, demoMode: boolean = true, workspaceId: string = 'default'): Promise<{ userMessage: Message; botMessage: Message }> {
@@ -92,8 +93,8 @@ export const api = {
         body: JSON.stringify({
           message: content,
           demo_mode: demoMode,
-          session_id: 'default',
-          workspace_id: workspaceId
+          session_id: workspaceId || 'default',
+          workspace_id: workspaceId || 'default'
         })
       });
 
@@ -235,9 +236,10 @@ export const api = {
     return { userMessage, botMessage };
   },
 
-  async getMetrics(): Promise<MetricData> {
+  async getMetrics(workspaceId?: string): Promise<MetricData> {
     try {
-      const res = await fetch(`${API_BASE}/metrics`);
+      const url = `${API_BASE}/metrics${workspaceId && workspaceId !== 'all' ? `?workspace_id=${encodeURIComponent(workspaceId)}` : ''}`;
+      const res = await fetch(url);
       if (res.ok) {
         const data = await res.json();
         return {
@@ -325,14 +327,66 @@ export const api = {
     return await res.json();
   },
 
-  async getWorkspaces(): Promise<{ workspaces: string[] }> {
+  async getWorkspaces(): Promise<Workspace[]> {
     try {
-      const res = await fetch(`${API_BASE}/knowledge/workspaces`);
-      if (res.ok) return await res.json();
+      const res = await fetch(`${API_BASE}/workspaces`);
+      if (res.ok) {
+        const data = await res.json();
+        if (Array.isArray(data)) return data;
+      }
     } catch {
       // Fallback
     }
-    return { workspaces: ['default', 'custom'] };
+    return [
+      {
+        id: 'default',
+        name: 'NovaMart Retail (Demo)',
+        industry: 'Retail & E-Commerce',
+        description: 'Default retail benchmark dataset',
+        is_demo: true,
+        llm_provider: 'shared_default',
+        has_custom_api_key: false,
+        document_count: 5,
+        created_at: new Date().toISOString()
+      },
+      {
+        id: 'acme-health',
+        name: 'Acme Health & Pharma (Demo)',
+        industry: 'Healthcare & Telehealth',
+        description: 'Clinical compliance benchmark dataset',
+        is_demo: true,
+        llm_provider: 'shared_default',
+        has_custom_api_key: false,
+        document_count: 2,
+        created_at: new Date().toISOString()
+      }
+    ];
+  },
+
+  async createWorkspace(input: WorkspaceCreateInput): Promise<Workspace> {
+    const res = await fetch(`${API_BASE}/workspaces`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(input)
+    });
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}));
+      throw new Error(err.detail || `Failed to create company workspace: ${res.statusText}`);
+    }
+    return await res.json();
+  },
+
+  async updateWorkspaceSettings(id: string, input: Partial<WorkspaceCreateInput>): Promise<Workspace> {
+    const res = await fetch(`${API_BASE}/workspaces/${encodeURIComponent(id)}/settings`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(input)
+    });
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}));
+      throw new Error(err.detail || `Failed to update workspace settings: ${res.statusText}`);
+    }
+    return await res.json();
   },
 
   async verifyDraft(draft: string, workspaceId: string = 'default'): Promise<any> {

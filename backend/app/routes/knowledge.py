@@ -148,26 +148,9 @@ async def search_knowledge(query: SearchQuery) -> List[Dict[str, Any]]:
     return results
 
 
+from app.services.workspace_service import workspace_service
+
 @router.get("/knowledge/workspaces")
 async def list_workspaces():
     """List available workspaces."""
-    return [
-        {
-            "id": "default",
-            "name": "NovaMart E-Commerce (Demo)",
-            "description": "Retail, return windows, shipping tiers, warranties, and pricing",
-            "is_demo": True
-        },
-        {
-            "id": "acme-health",
-            "name": "Acme Health & Pharma (Demo)",
-            "description": "Prescription refills, telehealth policies, and HIPAA compliance",
-            "is_demo": True
-        },
-        {
-            "id": "custom",
-            "name": "My Enterprise Workspace",
-            "description": "Custom business manuals and policies",
-            "is_demo": False
-        }
-    ]
+    return workspace_service.list_workspaces()

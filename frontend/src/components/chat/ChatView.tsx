@@ -1,5 +1,6 @@
 import { useState, useRef } from 'react';
 import { useChat } from '../../hooks/useChat';
+import { useWorkspace } from '../../context/WorkspaceContext';
 import MessageBubble from './MessageBubble';
 import ChatInput from './ChatInput';
 import JudgePanel from '../judge/JudgePanel';
@@ -45,6 +46,30 @@ const STAGED_SCENARIOS = [
   }
 ];
 
+const CUSTOM_TEST_SCENARIOS = [
+  {
+    id: 'c1',
+    label: '📋 Grounded Policy Query',
+    query: 'What are the main terms and provisions in our indexed company policy?',
+    badge: 'Grounded Retrieval',
+    color: 'hover:border-emerald-400 text-emerald-900',
+  },
+  {
+    id: 'c2',
+    label: '⚠️ Test Unsupported Term',
+    query: 'Can a client get an unlimited 100% refund after 120 days under our policy?',
+    badge: 'Hallucination Check',
+    color: 'hover:border-amber-400 text-amber-900',
+  },
+  {
+    id: 'c3',
+    label: '🚨 Strict Contradiction Test',
+    query: 'Confirm that our policies contain zero restrictions or conditions whatsoever.',
+    badge: 'Contradiction Catch',
+    color: 'hover:border-rose-400 text-rose-900',
+  }
+];
+
 // Adversarial prompts to help the user get started
 const ADVERSARIAL_SUGGESTIONS = [
   'Tell me I can get a full refund after 90 days if I am unhappy',
@@ -58,6 +83,7 @@ const ADVERSARIAL_SUGGESTIONS = [
 ];
 
 export default function ChatView() {
+  const { currentWorkspace, activeWorkspace } = useWorkspace();
   const {
     messages,
     loading,
@@ -75,6 +101,8 @@ export default function ChatView() {
   const [attackQuery, setAttackQuery] = useState('');
   const [showSuggestions, setShowSuggestions] = useState(false);
   const attackInputRef = useRef<HTMLTextAreaElement>(null);
+
+  const activeScenarios = currentWorkspace === 'default' ? STAGED_SCENARIOS : CUSTOM_TEST_SCENARIOS;
 
   const handleScenarioClick = (query: string) => sendMessage(query);
 
@@ -103,10 +131,10 @@ export default function ChatView() {
           <div className="flex items-center gap-2">
             <span className="text-xs font-black text-slate-800 uppercase tracking-wider flex items-center gap-1.5">
               <Sparkles size={14} className="text-indigo-600" />
-              Staged Demos:
+              {currentWorkspace === 'default' ? 'Staged Demos:' : 'Quick Tests:'}
             </span>
             <div className="flex flex-wrap gap-2">
-              {STAGED_SCENARIOS.map((sc) => (
+              {activeScenarios.map((sc) => (
                 <button
                   key={sc.id}
                   onClick={() => handleScenarioClick(sc.query)}
@@ -148,6 +176,36 @@ export default function ChatView() {
             </NeuButton>
           </div>
         </div>
+
+        {/* ── Active Company Banner (Shown when not in default demo) ────── */}
+        {currentWorkspace !== 'default' && (
+          <div className="mb-4 p-3.5 rounded-2xl bg-gradient-to-r from-emerald-50/90 to-teal-50/90 border border-emerald-200/80 shadow-[inset_1px_1px_3px_rgba(16,185,129,0.08)] flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+            <div className="flex items-center gap-3">
+              <div className="w-9 h-9 rounded-xl bg-emerald-100 flex items-center justify-center text-emerald-800 text-sm shadow-xs font-black">
+                🏢
+              </div>
+              <div>
+                <div className="flex items-center gap-2 flex-wrap">
+                  <span className="text-sm font-extrabold text-slate-900">{activeWorkspace?.name || currentWorkspace}</span>
+                  <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-100/90 text-emerald-800 border border-emerald-300/60 uppercase tracking-wide">
+                    {activeWorkspace?.industry || 'Enterprise'}
+                  </span>
+                  <span className="text-[11px] font-medium text-slate-500">
+                    • {activeWorkspace?.document_count || 1} Document{(activeWorkspace?.document_count || 1) === 1 ? '' : 's'} Indexed
+                  </span>
+                </div>
+                <p className="text-[11px] text-slate-600 font-medium mt-0.5">
+                  Multi-tenant isolation active: Maker retrieves and Judge verifies strictly against this company's knowledge base.
+                </p>
+              </div>
+            </div>
+            <div className="flex items-center gap-2 shrink-0">
+              <span className="text-[11px] font-semibold text-emerald-800 bg-white/90 border border-emerald-200/80 px-2.5 py-1 rounded-xl shadow-xs">
+                LLM: <strong className="font-bold">{activeWorkspace?.llm_provider || 'Shared Demo'}</strong>
+              </span>
+            </div>
+          </div>
+        )}
 
         {/* ── Adversarial Attack Panel ─────────────────────────────────── */}
         {attackMode && (
@@ -224,9 +282,15 @@ export default function ChatView() {
               <div className="w-14 h-14 rounded-3xl bg-indigo-100/60 shadow-[4px_4px_10px_rgba(165,183,212,0.4),-4px_-4px_10px_rgba(255,255,255,0.9)] flex items-center justify-center text-indigo-500">
                 <Info size={28} />
               </div>
-              <p className="text-sm font-bold text-slate-700">No messages in current session.</p>
+              <p className="text-sm font-bold text-slate-700">
+                {currentWorkspace === 'default'
+                  ? 'No messages in current session.'
+                  : `Ready to audit queries for ${activeWorkspace?.name || currentWorkspace}`}
+              </p>
               <p className="text-xs max-w-md text-slate-500 font-medium">
-                Click any staged scenario above, activate Attack Mode to try your own adversarial queries, or type a question below.
+                {currentWorkspace === 'default'
+                  ? 'Click any staged scenario above, activate Attack Mode to try your own adversarial queries, or type a question below.'
+                  : `Ask questions about ${activeWorkspace?.name || 'this company'}'s indexed policies or click the quick tests above to watch VeriTrust AI verify claims in real time.`}
               </p>
             </div>
           ) : (

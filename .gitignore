@@ -17,6 +17,7 @@ secrets/
 # Build artifacts
 dist/
 build/
+*.tsbuildinfo
 *.egg-info/
 chroma_db/
 .DS_Store

@@ -163,3 +163,34 @@ class ReviewStatsResponse(BaseModel):
     total_learned_rules: int
     system_accuracy_score: float = 98.4
 
+
+class WorkspaceModel(BaseModel):
+    id: str
+    name: str
+    industry: str = "Retail"
+    description: str = ""
+    is_demo: bool = False
+    llm_provider: str = "shared_default"
+    has_custom_api_key: bool = False
+    api_key_masked: Optional[str] = None
+    document_count: int = 0
+    created_at: str = Field(default_factory=lambda: datetime.now().isoformat())
+
+
+class WorkspaceCreateRequest(BaseModel):
+    name: str = Field(..., min_length=2, max_length=100)
+    industry: Optional[str] = Field(default="Retail", max_length=100)
+    description: Optional[str] = Field(default="", max_length=500)
+    initial_policy_title: Optional[str] = Field(default=None, max_length=200)
+    initial_policy_content: Optional[str] = Field(default=None, max_length=50000)
+    llm_provider: Optional[Literal["gemini", "openai", "anthropic", "shared_default"]] = "shared_default"
+    api_key: Optional[str] = Field(default=None, max_length=300)
+
+
+class WorkspaceSettingsUpdateRequest(BaseModel):
+    name: Optional[str] = Field(default=None, min_length=2, max_length=100)
+    industry: Optional[str] = Field(default=None, max_length=100)
+    description: Optional[str] = Field(default=None, max_length=500)
+    llm_provider: Optional[Literal["gemini", "openai", "anthropic", "shared_default"]] = None
+    api_key: Optional[str] = Field(default=None, max_length=300)
+

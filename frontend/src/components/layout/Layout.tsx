@@ -4,6 +4,7 @@ import Header from './Header';
 import CookieBanner from '../ui/CookieBanner';
 import WelcomeBanner from '../ui/WelcomeBanner';
 import DataSourceDisclosureModal from '../ui/DataSourceDisclosureModal';
+import CreateWorkspaceModal from '../workspace/CreateWorkspaceModal';
 import { useSidebar } from '../../context/SidebarContext';
 
 interface LayoutProps {
@@ -28,6 +29,7 @@ export default function Layout({ children }: LayoutProps) {
         </main>
         <CookieBanner />
         <DataSourceDisclosureModal />
+        <CreateWorkspaceModal />
       </div>
     </div>
   );

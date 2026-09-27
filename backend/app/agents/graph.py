@@ -77,11 +77,13 @@ def decision_node(state: GraphState) -> str:
 
 def release_node(state: GraphState) -> Dict[str, Any]:
     """Release the response as Approved."""
+    ws = state.get("workspace_id", "default")
     metrics_tracker.record_query_result(
         status="Approved",
         claims=state["verification"].claims,
         maker_latency=state.get("maker_latency_ms", 0),
-        judge_latency=state.get("judge_latency_ms", 0)
+        judge_latency=state.get("judge_latency_ms", 0),
+        workspace_id=ws
     )
     total = state.get("maker_latency_ms", 0) + state.get("judge_latency_ms", 0)
     return {
@@ -110,7 +112,8 @@ def correct_node(state: GraphState) -> Dict[str, Any]:
         status=status,
         claims=state["verification"].claims,  # Log original claims for metrics
         maker_latency=state.get("maker_latency_ms", 0),
-        judge_latency=state.get("judge_latency_ms", 0)
+        judge_latency=state.get("judge_latency_ms", 0),
+        workspace_id=workspace_id
     )
     
     total = state.get("maker_latency_ms", 0) + state.get("judge_latency_ms", 0)
@@ -124,11 +127,13 @@ def correct_node(state: GraphState) -> Dict[str, Any]:
 
 def block_node(state: GraphState) -> Dict[str, Any]:
     """Block the response and escalate to human."""
+    ws = state.get("workspace_id", "default")
     metrics_tracker.record_query_result(
         status="Blocked",
         claims=state["verification"].claims,
         maker_latency=state.get("maker_latency_ms", 0),
-        judge_latency=state.get("judge_latency_ms", 0)
+        judge_latency=state.get("judge_latency_ms", 0),
+        workspace_id=ws
     )
     
     total = state.get("maker_latency_ms", 0) + state.get("judge_latency_ms", 0)

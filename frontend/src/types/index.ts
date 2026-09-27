@@ -119,3 +119,27 @@ export interface ReviewStats {
   system_accuracy_score: number;
 }
 
+export interface Workspace {
+  id: string;
+  name: string;
+  industry: string;
+  description?: string;
+  is_demo: boolean;
+  llm_provider: 'shared_default' | 'gemini' | 'openai' | 'anthropic';
+  has_custom_api_key: boolean;
+  api_key_masked?: string;
+  document_count: number;
+  created_at: string;
+}
+
+export interface WorkspaceCreateInput {
+  name: string;
+  industry?: string;
+  description?: string;
+  initial_policy_title?: string;
+  initial_policy_content?: string;
+  llm_provider?: 'shared_default' | 'gemini' | 'openai' | 'anthropic';
+  api_key?: string;
+}
+
+

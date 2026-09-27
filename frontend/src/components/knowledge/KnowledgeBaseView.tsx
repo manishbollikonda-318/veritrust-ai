@@ -36,7 +36,7 @@ const POLICY_TEMPLATES = [
 ];
 
 export default function KnowledgeBaseView() {
-  const { currentWorkspace, setCurrentWorkspace, workspaces, refreshWorkspaces, isDemoWorkspace } = useWorkspace();
+  const { currentWorkspace, setCurrentWorkspace, workspaces, refreshWorkspaces, isDemoWorkspace, openCreateModal } = useWorkspace();
   const [documents, setDocuments] = useState<Document[]>([]);
   const [search, setSearch] = useState('');
   const [isLoading, setIsLoading] = useState(false);
@@ -209,27 +209,32 @@ export default function KnowledgeBaseView() {
             <span className="text-xs font-extrabold text-slate-600 mr-1">Workspace:</span>
             <select
               value={currentWorkspace}
-              onChange={(e) => setCurrentWorkspace(e.target.value)}
+              onChange={(e) => {
+                if (e.target.value === '__add_new__') {
+                  openCreateModal();
+                } else {
+                  setCurrentWorkspace(e.target.value);
+                }
+              }}
               className="bg-transparent text-xs font-black text-slate-800 focus:outline-none cursor-pointer py-1 pr-2"
             >
-              <option value="default">NovaMart Retail (Demo Baseline)</option>
-              <option value="custom">Custom Company Workspace</option>
-              {workspaces
-                .filter(w => w !== 'default' && w !== 'custom')
-                .map(w => (
-                  <option key={w} value={w}>
-                    {w}
-                  </option>
-                ))}
+              {workspaces.map((w) => (
+                <option key={w.id} value={w.id}>
+                  {w.name} {w.is_demo ? '(Demo)' : `(${w.industry || 'Custom'})`}
+                </option>
+              ))}
+              <option value="__add_new__">+ Onboard New Company...</option>
             </select>
           </div>
 
           <button
             type="button"
-            onClick={() => setShowWorkspaceCreator(!showWorkspaceCreator)}
-            className="text-xs font-black px-3 py-2 rounded-xl bg-gradient-to-br from-[#F5F8FD] to-[#E7EFF9] shadow-neu-maker hover:shadow-neu-maker-pressed text-indigo-700 transition-all cursor-pointer border border-indigo-100"
+            onClick={openCreateModal}
+            className="text-xs font-black px-3.5 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white shadow-sm shadow-indigo-600/30 transition-all cursor-pointer flex items-center gap-1.5"
+            title="Onboard a new company workspace"
           >
-            + New
+            <Plus size={14} />
+            <span>Onboard Company</span>
           </button>
         </div>
       </div>

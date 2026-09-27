@@ -14,7 +14,7 @@ from fastapi.staticfiles import StaticFiles
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.security.api_key import APIKeyHeader
 from app.config import settings
-from app.routes import chat, metrics, knowledge, review
+from app.routes import chat, metrics, knowledge, review, workspaces
 import app.knowledge.loader as loader
 
 # Setup logging
@@ -120,6 +120,7 @@ app.add_middleware(
 )
 
 # Route Mounting
+app.include_router(workspaces.router, prefix="/api", tags=["Workspaces"])
 app.include_router(chat.router, prefix="/api", tags=["Chat"])
 app.include_router(metrics.router, prefix="/api", tags=["Metrics"])
 app.include_router(knowledge.router, prefix="/api", tags=["Knowledge Base"])

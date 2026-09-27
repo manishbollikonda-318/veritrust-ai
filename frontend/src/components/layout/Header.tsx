@@ -1,11 +1,11 @@
 import React from 'react';
-import { ShieldCheck, Cpu, Building2, Menu, PanelLeftClose, PanelLeftOpen, Sparkles } from 'lucide-react';
+import { ShieldCheck, Cpu, Building2, Menu, PanelLeftClose, PanelLeftOpen, Sparkles, Plus } from 'lucide-react';
 import { useWorkspace } from '../../context/WorkspaceContext';
 import { useSidebar } from '../../context/SidebarContext';
 import { openDataSourceDisclosure } from '../ui/DataSourceDisclosureModal';
 
 export default function Header() {
-  const { currentWorkspace, setCurrentWorkspace, workspaces } = useWorkspace();
+  const { currentWorkspace, setCurrentWorkspace, workspaces, openCreateModal } = useWorkspace();
   const { isCollapsed, toggleSidebar, toggleMobile } = useSidebar();
 
   return (
@@ -58,24 +58,38 @@ export default function Header() {
           <Building2 size={13} className="text-indigo-500 shrink-0" />
           <select
             value={currentWorkspace}
-            onChange={(e) => setCurrentWorkspace(e.target.value)}
+            onChange={(e) => {
+              if (e.target.value === '__add_new__') {
+                openCreateModal();
+              } else {
+                setCurrentWorkspace(e.target.value);
+              }
+            }}
             aria-label="Active Enterprise Workspace"
-            className="bg-transparent text-[11px] sm:text-xs font-bold text-slate-800 focus:outline-none cursor-pointer pr-1 max-w-[125px] sm:max-w-none truncate"
+            className="bg-transparent text-[11px] sm:text-xs font-bold text-slate-800 focus:outline-none cursor-pointer pr-1 max-w-[130px] sm:max-w-none truncate"
           >
-            <option value="default">NovaMart Retail (Demo)</option>
-            <option value="custom">Custom Company</option>
-            {workspaces
-              .filter(w => w !== 'default' && w !== 'custom')
-              .map(w => (
-                <option key={w} value={w}>
-                  {w}
-                </option>
-              ))}
+            {workspaces.map((w) => (
+              <option key={w.id} value={w.id}>
+                {w.name} {w.is_demo ? '(Demo)' : ''}
+              </option>
+            ))}
+            <option value="__add_new__">+ Add New Company...</option>
           </select>
         </div>
 
+        {/* Add Company Quick Button */}
+        <button
+          type="button"
+          onClick={openCreateModal}
+          className="flex items-center gap-1 px-2.5 sm:px-3 py-1.5 rounded-2xl bg-indigo-600 hover:bg-indigo-700 active:bg-indigo-800 text-white text-[11px] font-bold shadow-sm shadow-indigo-600/30 cursor-pointer transition-all shrink-0"
+          title="Onboard a new company workspace"
+        >
+          <Plus size={13} />
+          <span className="hidden md:inline">New Company</span>
+        </button>
+
         {/* System Health Status Badge */}
-        <div className="hidden lg:flex items-center gap-2 px-3.5 py-1.5 rounded-2xl bg-gradient-to-br from-[#F4F9F6] to-[#E4F2EC] shadow-[3px_3px_8px_rgba(158,192,180,0.4),-3px_-3px_8px_rgba(255,255,255,0.9)] border border-emerald-200/60 text-xs font-extrabold text-emerald-900 shrink-0">
+        <div className="hidden xl:flex items-center gap-2 px-3.5 py-1.5 rounded-2xl bg-gradient-to-br from-[#F4F9F6] to-[#E4F2EC] shadow-[3px_3px_8px_rgba(158,192,180,0.4),-3px_-3px_8px_rgba(255,255,255,0.9)] border border-emerald-200/60 text-xs font-extrabold text-emerald-900 shrink-0">
           <ShieldCheck size={15} className="text-emerald-600" />
           <span>Interception Active</span>
         </div>

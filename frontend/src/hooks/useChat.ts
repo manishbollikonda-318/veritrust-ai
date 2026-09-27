@@ -12,7 +12,7 @@ export function useChat() {
   const [demoMode, setDemoMode] = useState<boolean>(true);
 
   useEffect(() => {
-    api.getMessages().then((msgs) => {
+    api.getMessages(currentWorkspace).then((msgs) => {
       setMessages(msgs);
       // Auto-select the first assistant message that has claims for instant visual feedback
       const firstWithClaims = msgs.find(m => m.claims && m.claims.length > 0);
@@ -23,6 +23,9 @@ export function useChat() {
           const flagged = firstWithClaims.claims.find(c => c.verdict !== 'Verified') || firstWithClaims.claims[0];
           setSelectedClaim(flagged);
         }
+      } else {
+        setSelectedMessage(null);
+        setSelectedClaim(null);
       }
     });
   }, [currentWorkspace]);
