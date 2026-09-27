@@ -1,6 +1,10 @@
 #!/bin/bash
 set -e
 
+# Ensure local loopback health checks bypass any proxy settings
+unset http_proxy https_proxy all_proxy HTTP_PROXY HTTPS_PROXY ALL_PROXY
+export no_proxy="*" NO_PROXY="*"
+
 DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
 BACKEND_LOG="/tmp/veritrust-backend.log"
 FRONTEND_LOG="/tmp/veritrust-frontend.log"
@@ -46,7 +50,7 @@ for i in $(seq 1 15); do
         echo "─────────────────────────────────────────────────"
         exit 1
     fi
-    if curl -sf http://127.0.0.1:8000/docs > /dev/null 2>&1; then
+    if curl -sf --noproxy "*" http://127.0.0.1:8000/docs > /dev/null 2>&1; then
         echo -e " ✅  (${i}s)"
         break
     fi
@@ -55,7 +59,7 @@ for i in $(seq 1 15); do
 done
 
 # Final check — did it actually answer?
-if ! curl -sf http://127.0.0.1:8000/docs > /dev/null 2>&1; then
+if ! curl -sf --noproxy "*" http://127.0.0.1:8000/docs > /dev/null 2>&1; then
     echo -e "\n\n❌  Backend started but never responded to HTTP after 15 s."
     echo "────────────────── backend log ──────────────────"
     cat "$BACKEND_LOG"
@@ -86,7 +90,7 @@ for i in $(seq 1 15); do
         kill "$BACKEND_PID" 2>/dev/null
         exit 1
     fi
-    if curl -sf http://127.0.0.1:5173/ > /dev/null 2>&1; then
+    if curl -sf --noproxy "*" http://127.0.0.1:5173/ > /dev/null 2>&1; then
         echo -e " ✅  (${i}s)"
         break
     fi
@@ -95,7 +99,7 @@ for i in $(seq 1 15); do
 done
 
 # Final check — did it actually answer?
-if ! curl -sf http://127.0.0.1:5173/ > /dev/null 2>&1; then
+if ! curl -sf --noproxy "*" http://127.0.0.1:5173/ > /dev/null 2>&1; then
     echo -e "\n\n❌  Frontend started but never responded to HTTP after 15 s."
     echo "────────────────── frontend log ──────────────────"
     cat "$FRONTEND_LOG"
