@@ -48,10 +48,17 @@ app = FastAPI(
 )
 
 
-# 1. Rate Limiting Middleware
+# 1. Rate Limiting Middleware (Proxy & Cloudflare aware)
 @app.middleware("http")
 async def rate_limiting_middleware(request: Request, call_next):
-    client_ip = request.client.host if request.client else "127.0.0.1"
+    forwarded = request.headers.get("X-Forwarded-For")
+    if forwarded:
+        client_ip = forwarded.split(",")[0].strip()
+    elif request.headers.get("CF-Connecting-IP"):
+        client_ip = request.headers.get("CF-Connecting-IP")
+    else:
+        client_ip = request.client.host if request.client else "127.0.0.1"
+
     now = time.time()
     window = 60.0  # 1 minute sliding window
 
@@ -66,7 +73,7 @@ async def rate_limiting_middleware(request: Request, call_next):
             status_code=429,
             content={
                 "error": "Too Many Requests",
-                "message": "Rate limit exceeded. Maximum 120 requests per minute allowed."
+                "message": f"Rate limit exceeded. Maximum {settings.RATE_LIMIT_PER_MINUTE} requests per minute allowed."
             }
         )
 
@@ -75,7 +82,7 @@ async def rate_limiting_middleware(request: Request, call_next):
     return response
 
 
-# 2. Security Headers Middleware
+# 2. Security Headers Middleware (Strict CSP, Clickjacking & MIME Protection)
 @app.middleware("http")
 async def security_headers_middleware(request: Request, call_next):
     response = await call_next(request)
@@ -86,12 +93,12 @@ async def security_headers_middleware(request: Request, call_next):
     response.headers["Permissions-Policy"] = "camera=(), microphone=(), geolocation=()"
     response.headers["Strict-Transport-Security"] = "max-age=31536000; includeSubDomains"
     response.headers["Content-Security-Policy"] = (
-        "default-src 'self' 'unsafe-inline' 'unsafe-eval' data: blob: https:; "
+        "default-src 'self'; "
         "font-src 'self' https://fonts.gstatic.com data:; "
-        "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://cdn.jsdelivr.net; "
-        "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://cdn.jsdelivr.net; "
-        "img-src 'self' data: https: blob:; "
-        "connect-src 'self' ws: wss: http: https:;"
+        "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; "
+        "script-src 'self'; "
+        "img-src 'self' data:; "
+        "connect-src 'self' https://veritrust-ai-271n.onrender.com wss://veritrust-ai-271n.onrender.com;"
     )
     return response
 
@@ -111,11 +118,14 @@ async def global_exception_handler(request: Request, exc: Exception):
 
 
 # 4. CORS Configuration
+cors_origins = settings.ALLOWED_ORIGINS if not settings.PERMISSIVE_CORS else ["*"]
+allow_creds = not settings.PERMISSIVE_CORS
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=settings.ALLOWED_ORIGINS if not settings.PERMISSIVE_CORS else ["*"],
-    allow_credentials=True,
-    allow_methods=["GET", "POST", "OPTIONS"],
+    allow_origins=cors_origins,
+    allow_credentials=allow_creds,
+    allow_methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"],
     allow_headers=["*"],
 )
 
@@ -129,7 +139,14 @@ app.include_router(review.router, prefix="/api", tags=["Human Review"])
 
 # Admin security verification helper
 async def verify_admin_key(api_key: str = Security(API_KEY_HEADER)):
-    if api_key != settings.ADMIN_API_KEY and not settings.DEMO_MODE:
+    if not settings.ADMIN_API_KEY:
+        if settings.DEMO_MODE:
+            return True
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Admin access disabled: ADMIN_API_KEY environment variable is not configured."
+        )
+    if not api_key or api_key != settings.ADMIN_API_KEY:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Invalid or missing Admin API Key."

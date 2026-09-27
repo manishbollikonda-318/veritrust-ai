@@ -6,12 +6,14 @@ class Settings(BaseSettings):
     DEBUG: bool = False
     DEMO_MODE: bool = True
     EXPOSE_DOCS: bool = True        # Show /docs Swagger UI (independent of DEMO_MODE)
-    PERMISSIVE_CORS: bool = True    # Allow all origins (independent of DEMO_MODE)
+    PERMISSIVE_CORS: bool = False   # Restrict to explicit ALLOWED_ORIGINS by default
     GEMINI_API_KEY: Optional[str] = None
-    ADMIN_API_KEY: str = "veritrust-admin-key-2026"
+    ADMIN_API_KEY: Optional[str] = None  # Must be set via environment variable in production
     RATE_LIMIT_PER_MINUTE: int = 120
     CHROMA_PERSIST_DIR: str = "./chroma_db"
     ALLOWED_ORIGINS: List[str] = [
+        "https://veritrust-ai-gdgoc.onrender.com",
+        "https://veritrust-ai-271n.onrender.com",
         "http://127.0.0.1:5173",
         "http://localhost:5173",
         "http://127.0.0.1:8000",
