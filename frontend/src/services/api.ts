@@ -1,7 +1,20 @@
 import { Message, MetricData, Document, ComparisonResponse, ReviewItem, ReviewStats, Workspace, WorkspaceCreateInput } from '../types';
 import { mockMessages, mockMetrics, mockDocuments } from './mockData';
 
-const API_BASE = '/api';
+function getApiBase(): string {
+  // If explicitly specified in environment
+  if (typeof import.meta !== 'undefined' && (import.meta as any).env?.VITE_API_URL) {
+    return ((import.meta as any).env.VITE_API_URL as string).replace(/\/+$/, '');
+  }
+  // When running on Render static deployment (veritrust-ai-gdgoc.onrender.com)
+  if (typeof window !== 'undefined' && window.location.hostname.includes('veritrust-ai-gdgoc.onrender.com')) {
+    return 'https://veritrust-ai-271n.onrender.com/api';
+  }
+  // Standard relative API path for local Vite proxy and unified hosting
+  return '/api';
+}
+
+const API_BASE = getApiBase();
 
 // Helper to map a raw backend claim object → frontend Claim
 function mapClaim(c: any) {
@@ -48,13 +61,20 @@ function mapVerification(v: any) {
 // Universal crash-proof JSON fetcher: handles empty responses, HTML error pages, and stream consumption safely
 async function fetchJson<T = any>(url: string, options?: RequestInit): Promise<T> {
   const res = await fetch(url, options);
+  const contentType = res.headers.get('content-type') || '';
   const text = await res.text();
+
+  // If response is HTML (such as SPA 404 rewrite returning index.html), throw so fallback triggers
+  if (contentType.includes('text/html') || text.trim().startsWith('<!doctype') || text.trim().startsWith('<html')) {
+    throw new Error(`API endpoint ${url} returned HTML instead of JSON (status ${res.status}).`);
+  }
+
   let data: any = {};
   if (text && text.trim()) {
     try {
       data = JSON.parse(text);
     } catch {
-      data = { message: text, detail: text };
+      throw new Error(`Invalid JSON returned from ${url}: ${text.slice(0, 100)}`);
     }
   }
   if (!res.ok) {
@@ -281,13 +301,21 @@ export const api = {
         approvedCount: data.approved_count || 0,
         correctedCount: data.corrected_count || 0,
         blockedCount: data.blocked_count || 0,
-        driftData: (data.drift_data || []).map((d: any) => ({
-          time: new Date(d.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-          passRate: d.pass_rate,
-          correctionRate: d.correction_rate,
-          blockRate: d.block_rate,
-          queryIndex: d.query_index
-        }))
+        driftData: (data.drift_data || []).map((d: any) => {
+          let timeStr = d.timestamp || '12:00';
+          if (timeStr.includes('T')) {
+            try {
+              timeStr = new Date(timeStr).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+            } catch {}
+          }
+          return {
+            time: timeStr,
+            passRate: d.pass_rate,
+            correctionRate: d.correction_rate,
+            blockRate: d.block_rate,
+            queryIndex: d.query_index
+          };
+        })
       };
     } catch {
       // Fallback

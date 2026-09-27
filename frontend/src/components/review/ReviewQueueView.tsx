@@ -27,10 +27,11 @@ export default function ReviewQueueView() {
         api.getReviewQueue(currentWorkspace),
         api.getReviewStats()
       ]);
-      setItems(queueData);
+      setItems(Array.isArray(queueData) ? queueData : []);
       setStats(statsData);
     } catch (err) {
       console.error('Failed to load review queue:', err);
+      setItems([]);
     } finally {
       setLoading(false);
     }
@@ -68,7 +69,8 @@ export default function ReviewQueueView() {
     }
   };
 
-  const filteredItems = items.filter((it) => {
+  const safeItems = Array.isArray(items) ? items : [];
+  const filteredItems = safeItems.filter((it) => {
     if (filterStatus === 'pending') return it.review_status === 'pending';
     if (filterStatus === 'resolved') return it.review_status !== 'pending';
     return true;

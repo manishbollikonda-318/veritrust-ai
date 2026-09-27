@@ -56,9 +56,10 @@ export default function KnowledgeBaseView() {
     setIsLoading(true);
     try {
       const docs = await api.getDocuments(currentWorkspace);
-      setDocuments(docs);
+      setDocuments(Array.isArray(docs) ? docs : []);
     } catch (err) {
       console.error('Failed to load documents:', err);
+      setDocuments([]);
     } finally {
       setIsLoading(false);
     }
@@ -202,7 +203,8 @@ export default function KnowledgeBaseView() {
     showToast('success', `Switched to new workspace "${trimmed}". Upload your policies below!`);
   };
 
-  const filtered = documents.filter(doc =>
+  const safeDocs = Array.isArray(documents) ? documents : [];
+  const filtered = safeDocs.filter(doc =>
     doc.title.toLowerCase().includes(search.toLowerCase()) ||
     (doc.snippet && doc.snippet.toLowerCase().includes(search.toLowerCase())) ||
     (doc.content && doc.content.toLowerCase().includes(search.toLowerCase()))

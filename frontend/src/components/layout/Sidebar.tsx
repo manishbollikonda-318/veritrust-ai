@@ -102,6 +102,9 @@ export default function Sidebar() {
                   }`
                 }
               >
+                {/* Navigation item icon */}
+                <item.icon size={18} className="shrink-0" aria-hidden="true" />
+
                 {(!isCollapsed || isMobileOpen) && (
                   <span className="truncate flex-1">{item.label}</span>
                 )}

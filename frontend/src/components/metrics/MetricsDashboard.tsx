@@ -16,23 +16,23 @@ export default function MetricsDashboard() {
     );
   }
 
-  const m = metrics || {
-    passRate: 76.5,
-    correctionRate: 15.3,
-    blockRate: 8.2,
-    totalQueries: 142,
-    totalClaims: 486,
-    verifiedClaims: 388,
-    unsupportedClaims: 64,
-    contradictedClaims: 34,
-    avgLatencyMs: 312,
-    avgMakerLatencyMs: 135,
-    avgJudgeLatencyMs: 177,
-    avgCorrectionLatencyMs: 88,
-    approvedCount: 108,
-    correctedCount: 22,
-    blockedCount: 12,
-    driftData: []
+  const m = {
+    passRate: typeof metrics?.passRate === 'number' ? metrics.passRate : 76.5,
+    correctionRate: typeof metrics?.correctionRate === 'number' ? metrics.correctionRate : 15.3,
+    blockRate: typeof metrics?.blockRate === 'number' ? metrics.blockRate : 8.2,
+    totalQueries: typeof metrics?.totalQueries === 'number' ? metrics.totalQueries : 142,
+    totalClaims: typeof metrics?.totalClaims === 'number' ? metrics.totalClaims : 486,
+    verifiedClaims: typeof metrics?.verifiedClaims === 'number' ? metrics.verifiedClaims : 388,
+    unsupportedClaims: typeof metrics?.unsupportedClaims === 'number' ? metrics.unsupportedClaims : 64,
+    contradictedClaims: typeof metrics?.contradictedClaims === 'number' ? metrics.contradictedClaims : 34,
+    avgLatencyMs: typeof metrics?.avgLatencyMs === 'number' ? metrics.avgLatencyMs : 312,
+    avgMakerLatencyMs: typeof metrics?.avgMakerLatencyMs === 'number' ? metrics.avgMakerLatencyMs : 135,
+    avgJudgeLatencyMs: typeof metrics?.avgJudgeLatencyMs === 'number' ? metrics.avgJudgeLatencyMs : 177,
+    avgCorrectionLatencyMs: typeof metrics?.avgCorrectionLatencyMs === 'number' ? metrics.avgCorrectionLatencyMs : 88,
+    approvedCount: typeof metrics?.approvedCount === 'number' ? metrics.approvedCount : 108,
+    correctedCount: typeof metrics?.correctedCount === 'number' ? metrics.correctedCount : 22,
+    blockedCount: typeof metrics?.blockedCount === 'number' ? metrics.blockedCount : 12,
+    driftData: Array.isArray(metrics?.driftData) ? metrics.driftData : []
   };
 
   return (
