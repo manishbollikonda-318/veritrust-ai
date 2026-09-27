@@ -45,33 +45,55 @@ function mapVerification(v: any) {
   };
 }
 
+// Universal crash-proof JSON fetcher: handles empty responses, HTML error pages, and stream consumption safely
+async function fetchJson<T = any>(url: string, options?: RequestInit): Promise<T> {
+  const res = await fetch(url, options);
+  const text = await res.text();
+  let data: any = {};
+  if (text && text.trim()) {
+    try {
+      data = JSON.parse(text);
+    } catch {
+      data = { message: text, detail: text };
+    }
+  }
+  if (!res.ok) {
+    const errorMsg = data.detail || data.error || data.message || `Server returned ${res.status}: ${res.statusText || 'Unknown Error'}`;
+    throw new Error(errorMsg);
+  }
+  return data as T;
+}
+
 export const api = {
   async getMessages(workspaceId: string = 'default'): Promise<Message[]> {
     try {
       const res = await fetch(`${API_BASE}/chat/history/${encodeURIComponent(workspaceId)}`);
       if (res.ok) {
-        const data = await res.json();
-        if (Array.isArray(data) && data.length > 0) {
-          return data.map((item: any) => ({
-            id: item.id || Date.now().toString(),
-            role: 'assistant',
-            content: item.final_response || item.original_draft,
-            originalDraft: item.original_draft,
-            finalResponse: item.final_response,
-            timestamp: item.timestamp || new Date().toISOString(),
-            status: item.status,
-            latencyMs: item.latency_ms,
-            makerLatencyMs: item.maker_latency_ms,
-            judgeLatencyMs: item.judge_latency_ms,
-            correctionLatencyMs: item.correction_latency_ms,
-            correctionAttempts: item.correction_attempts,
-            loopHistory: item.loop_history,
-            severity: item.verification?.severity,
-            overallReasoning: item.verification?.overall_reasoning,
-            estimatedCostUsd: item.verification?.estimated_cost_usd,
-            deterministicChecksRun: item.verification?.deterministic_checks_run,
-            claims: (item.verification?.claims || []).map(mapClaim)
-          }));
+        const text = await res.text();
+        if (text && text.trim()) {
+          const data = JSON.parse(text);
+          if (Array.isArray(data) && data.length > 0) {
+            return data.map((item: any) => ({
+              id: item.id || Date.now().toString(),
+              role: 'assistant',
+              content: item.final_response || item.original_draft,
+              originalDraft: item.original_draft,
+              finalResponse: item.final_response,
+              timestamp: item.timestamp || new Date().toISOString(),
+              status: item.status,
+              latencyMs: item.latency_ms,
+              makerLatencyMs: item.maker_latency_ms,
+              judgeLatencyMs: item.judge_latency_ms,
+              correctionLatencyMs: item.correction_latency_ms,
+              correctionAttempts: item.correction_attempts,
+              loopHistory: item.loop_history,
+              severity: item.verification?.severity,
+              overallReasoning: item.verification?.overall_reasoning,
+              estimatedCostUsd: item.verification?.estimated_cost_usd,
+              deterministicChecksRun: item.verification?.deterministic_checks_run,
+              claims: (item.verification?.claims || []).map(mapClaim)
+            }));
+          }
         }
       }
     } catch {
@@ -90,7 +112,7 @@ export const api = {
     };
 
     try {
-      const res = await fetch(`${API_BASE}/chat`, {
+      const data = await fetchJson<any>(`${API_BASE}/chat`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -101,30 +123,27 @@ export const api = {
         })
       });
 
-      if (res.ok) {
-        const data = await res.json();
-        const botMessage: Message = {
-          id: data.id || 'bot-' + Date.now(),
-          role: 'assistant',
-          content: data.final_response,
-          originalDraft: data.original_draft,
-          finalResponse: data.final_response,
-          timestamp: data.timestamp || new Date().toISOString(),
-          status: data.status,
-          latencyMs: data.latency_ms,
-          makerLatencyMs: data.maker_latency_ms,
-          judgeLatencyMs: data.judge_latency_ms,
-          correctionLatencyMs: data.correction_latency_ms,
-          correctionAttempts: data.correction_attempts,
-          loopHistory: data.loop_history,
-          severity: data.verification?.severity || 'none',
-          overallReasoning: data.verification?.overall_reasoning || '',
-          estimatedCostUsd: data.verification?.estimated_cost_usd,
-          deterministicChecksRun: data.verification?.deterministic_checks_run,
-          claims: (data.verification?.claims || []).map(mapClaim)
-        };
-        return { userMessage, botMessage };
-      }
+      const botMessage: Message = {
+        id: data.id || 'bot-' + Date.now(),
+        role: 'assistant',
+        content: data.final_response,
+        originalDraft: data.original_draft,
+        finalResponse: data.final_response,
+        timestamp: data.timestamp || new Date().toISOString(),
+        status: data.status,
+        latencyMs: data.latency_ms,
+        makerLatencyMs: data.maker_latency_ms,
+        judgeLatencyMs: data.judge_latency_ms,
+        correctionLatencyMs: data.correction_latency_ms,
+        correctionAttempts: data.correction_attempts,
+        loopHistory: data.loop_history,
+        severity: data.verification?.severity || 'none',
+        overallReasoning: data.verification?.overall_reasoning || '',
+        estimatedCostUsd: data.verification?.estimated_cost_usd,
+        deterministicChecksRun: data.verification?.deterministic_checks_run,
+        claims: (data.verification?.claims || []).map(mapClaim)
+      };
+      return { userMessage, botMessage };
     } catch (err) {
       console.warn('Backend fetch failed, utilizing client simulation fallback:', err);
     }
@@ -245,51 +264,46 @@ export const api = {
   async getMetrics(workspaceId?: string): Promise<MetricData> {
     try {
       const url = `${API_BASE}/metrics${workspaceId && workspaceId !== 'all' ? `?workspace_id=${encodeURIComponent(workspaceId)}` : ''}`;
-      const res = await fetch(url);
-      if (res.ok) {
-        const data = await res.json();
-        return {
-          passRate: data.pass_rate,
-          correctionRate: data.correction_rate,
-          blockRate: data.block_rate,
-          totalQueries: data.total_queries,
-          totalClaims: data.total_claims,
-          verifiedClaims: data.verified_claims,
-          unsupportedClaims: data.unsupported_claims,
-          contradictedClaims: data.contradicted_claims,
-          avgLatencyMs: data.avg_latency_ms,
-          avgMakerLatencyMs: data.avg_maker_latency_ms,
-          avgJudgeLatencyMs: data.avg_judge_latency_ms,
-          driftData: (data.drift_data || []).map((d: any) => ({
-            time: new Date(d.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-            passRate: d.pass_rate,
-            correctionRate: d.correction_rate,
-            blockRate: d.block_rate,
-            queryIndex: d.query_index
-          }))
-        };
-      }
+      const data = await fetchJson<any>(url);
+      return {
+        passRate: data.pass_rate,
+        correctionRate: data.correction_rate,
+        blockRate: data.block_rate,
+        totalQueries: data.total_queries,
+        totalClaims: data.total_claims,
+        verifiedClaims: data.verified_claims,
+        unsupportedClaims: data.unsupported_claims,
+        contradictedClaims: data.contradicted_claims,
+        avgLatencyMs: data.avg_latency_ms,
+        avgMakerLatencyMs: data.avg_maker_latency_ms,
+        avgJudgeLatencyMs: data.avg_judge_latency_ms,
+        driftData: (data.drift_data || []).map((d: any) => ({
+          time: new Date(d.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+          passRate: d.pass_rate,
+          correctionRate: d.correction_rate,
+          blockRate: d.block_rate,
+          queryIndex: d.query_index
+        }))
+      };
     } catch {
       // Fallback
     }
     return mockMetrics;
   },
+
   async getDocuments(workspaceId: string = 'default'): Promise<Document[]> {
     try {
-      const res = await fetch(`${API_BASE}/knowledge/documents?workspace_id=${encodeURIComponent(workspaceId)}`);
-      if (res.ok) {
-        const data = await res.json();
-        if (Array.isArray(data) && data.length > 0) {
-          return data.map((doc: any, i: number) => ({
-            id: `doc-${i + 1}`,
-            filename: doc.filename,
-            title: doc.title,
-            chunkCount: doc.chunk_count,
-            snippet: doc.content.slice(0, 180) + '...',
-            content: doc.content,
-            uploadedAt: '2026-09-20'
-          }));
-        }
+      const data = await fetchJson<any[]>(`${API_BASE}/knowledge/documents?workspace_id=${encodeURIComponent(workspaceId)}`);
+      if (Array.isArray(data) && data.length > 0) {
+        return data.map((doc: any, i: number) => ({
+          id: `doc-${i + 1}`,
+          filename: doc.filename,
+          title: doc.title,
+          chunkCount: doc.chunk_count,
+          snippet: doc.content.slice(0, 180) + '...',
+          content: doc.content,
+          uploadedAt: '2026-09-20'
+        }));
       }
     } catch {
       // Fallback
@@ -298,16 +312,11 @@ export const api = {
   },
 
   async uploadDocument(filename: string, content: string, title?: string, workspaceId: string = 'default'): Promise<{ message: string; filename: string; chunks: number }> {
-    const res = await fetch(`${API_BASE}/knowledge/documents?workspace_id=${encodeURIComponent(workspaceId)}`, {
+    return await fetchJson(`${API_BASE}/knowledge/documents?workspace_id=${encodeURIComponent(workspaceId)}`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ filename, content, title: title || filename.replace('.txt', '').replace('_', ' ') })
     });
-    if (!res.ok) {
-      const err = await res.json().catch(() => ({}));
-      throw new Error(err.detail || 'Failed to upload document');
-    }
-    return await res.json();
   },
 
   async uploadDocumentFile(file: File, title?: string, workspaceId: string = 'default'): Promise<{ message?: string; filename: string; title: string }> {
@@ -315,56 +324,36 @@ export const api = {
     formData.append('file', file);
     if (title) formData.append('title', title);
 
-    const res = await fetch(`${API_BASE}/knowledge/documents/upload?workspace_id=${encodeURIComponent(workspaceId)}`, {
+    return await fetchJson(`${API_BASE}/knowledge/documents/upload?workspace_id=${encodeURIComponent(workspaceId)}`, {
       method: 'POST',
       body: formData
     });
-    if (!res.ok) {
-      const err = await res.json().catch(() => ({}));
-      throw new Error(err.detail || 'Failed to upload file');
-    }
-    return await res.json();
   },
 
   async updateDocument(filename: string, content: string, title?: string, workspaceId: string = 'default'): Promise<{ message: string; filename: string; chunks: number }> {
-    const res = await fetch(`${API_BASE}/knowledge/documents/${encodeURIComponent(filename)}?workspace_id=${encodeURIComponent(workspaceId)}`, {
+    return await fetchJson(`${API_BASE}/knowledge/documents/${encodeURIComponent(filename)}?workspace_id=${encodeURIComponent(workspaceId)}`, {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ content, title: title || filename.replace('.txt', '').replace('_', ' ') })
     });
-    if (!res.ok) {
-      const err = await res.json().catch(() => ({}));
-      throw new Error(err.detail || 'Failed to update document');
-    }
-    return await res.json();
   },
 
   async deleteDocument(filename: string, workspaceId: string = 'default'): Promise<{ message: string }> {
-    const res = await fetch(`${API_BASE}/knowledge/documents/${encodeURIComponent(filename)}?workspace_id=${encodeURIComponent(workspaceId)}`, {
+    return await fetchJson(`${API_BASE}/knowledge/documents/${encodeURIComponent(filename)}?workspace_id=${encodeURIComponent(workspaceId)}`, {
       method: 'DELETE'
     });
-    if (!res.ok) {
-      const err = await res.json().catch(() => ({}));
-      throw new Error(err.detail || 'Failed to delete document');
-    }
-    return await res.json();
   },
 
   async reindexWorkspace(workspaceId: string = 'default'): Promise<{ message: string; documents_indexed: number }> {
-    const res = await fetch(`${API_BASE}/knowledge/reindex?workspace_id=${encodeURIComponent(workspaceId)}`, {
+    return await fetchJson(`${API_BASE}/knowledge/reindex?workspace_id=${encodeURIComponent(workspaceId)}`, {
       method: 'POST'
     });
-    if (!res.ok) throw new Error('Failed to reindex workspace');
-    return await res.json();
   },
 
   async getWorkspaces(): Promise<Workspace[]> {
     try {
-      const res = await fetch(`${API_BASE}/workspaces`);
-      if (res.ok) {
-        const data = await res.json();
-        if (Array.isArray(data)) return data;
-      }
+      const data = await fetchJson<Workspace[]>(`${API_BASE}/workspaces`);
+      if (Array.isArray(data) && data.length > 0) return data;
     } catch {
       // Fallback
     }
@@ -395,39 +384,54 @@ export const api = {
   },
 
   async createWorkspace(input: WorkspaceCreateInput): Promise<Workspace> {
-    const res = await fetch(`${API_BASE}/workspaces`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(input)
-    });
-    if (!res.ok) {
-      const err = await res.json().catch(() => ({}));
-      throw new Error(err.detail || `Failed to create company workspace: ${res.statusText}`);
+    try {
+      return await fetchJson<Workspace>(`${API_BASE}/workspaces`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(input)
+      });
+    } catch (err: any) {
+      console.warn('Backend createWorkspace failed, applying client fallback:', err);
+      // If it is a real validation error from server (e.g. 400), propagate it
+      if (err.message && !err.message.includes('502') && !err.message.includes('504') && !err.message.includes('Failed to fetch') && !err.message.includes('NetworkError')) {
+        throw err;
+      }
+      // Create local fallback workspace so user is never blocked
+      const slug = input.name.toLowerCase().replace(/[^a-z0-9]/g, '_').replace(/_+/g, '_').replace(/^_|_$/g, '') || `ws_${Date.now()}`;
+      return {
+        id: slug,
+        name: input.name,
+        industry: input.industry || 'General Business',
+        description: input.description || `Custom workspace for ${input.name}`,
+        is_demo: false,
+        llm_provider: input.llm_provider || 'shared_default',
+        has_custom_api_key: !!input.api_key,
+        document_count: 1,
+        created_at: new Date().toISOString()
+      };
     }
-    return await res.json();
   },
 
   async updateWorkspaceSettings(id: string, input: Partial<WorkspaceCreateInput>): Promise<Workspace> {
-    const res = await fetch(`${API_BASE}/workspaces/${encodeURIComponent(id)}/settings`, {
-      method: 'PUT',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(input)
-    });
-    if (!res.ok) {
-      const err = await res.json().catch(() => ({}));
-      throw new Error(err.detail || `Failed to update workspace settings: ${res.statusText}`);
+    try {
+      return await fetchJson<Workspace>(`${API_BASE}/workspaces/${encodeURIComponent(id)}/settings`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(input)
+      });
+    } catch (err: any) {
+      console.warn('Backend updateWorkspaceSettings failed:', err);
+      throw err;
     }
-    return await res.json();
   },
 
   async verifyDraft(draft: string, workspaceId: string = 'default'): Promise<any> {
     try {
-      const res = await fetch(`${API_BASE}/verify`, {
+      return await fetchJson(`${API_BASE}/verify`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ draft, workspace_id: workspaceId })
       });
-      if (res.ok) return await res.json();
     } catch (err) {
       console.warn('Verify call failed:', err);
     }
@@ -453,55 +457,52 @@ export const api = {
 
   async compare(message: string, workspaceId: string = 'default'): Promise<ComparisonResponse> {
     try {
-      const res = await fetch(`${API_BASE}/chat/compare`, {
+      const data = await fetchJson<any>(`${API_BASE}/chat/compare`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ message, workspace_id: workspaceId })
       });
-      if (res.ok) {
-        const data = await res.json();
-        return {
-          query: data.query,
-          makerOnly: {
-            id: 'mo-' + Date.now(),
-            role: 'assistant',
-            content: data.maker_only.final_response,
-            originalDraft: data.maker_only.original_draft,
-            timestamp: new Date().toISOString(),
-            status: 'Approved',
-            latencyMs: data.maker_only.latency_ms
-          },
-          makerPlusJudge: {
-            id: 'mpj-' + Date.now(),
-            role: 'assistant',
-            content: data.maker_plus_judge.final_response,
-            originalDraft: data.maker_plus_judge.original_draft,
-            finalResponse: data.maker_plus_judge.final_response,
-            timestamp: data.maker_plus_judge.timestamp || new Date().toISOString(),
-            status: data.maker_plus_judge.status,
-            latencyMs: data.maker_plus_judge.latency_ms,
-            makerLatencyMs: data.maker_plus_judge.maker_latency_ms,
-            judgeLatencyMs: data.maker_plus_judge.judge_latency_ms,
-            severity: data.maker_plus_judge.verification?.severity,
-            overallReasoning: data.maker_plus_judge.verification?.overall_reasoning,
-            claims: (data.maker_plus_judge.verification?.claims || []).map((c: any) => ({
-              id: c.id,
-              text: c.text,
-              verdict: c.verdict,
-              confidence: c.confidence,
-              sourceSentence: c.source_sentence,
-              sourceDocument: c.source_document,
-              reasoning: c.reasoning,
-              isFiller: c.is_filler
-            }))
-          }
-        };
-      }
+      return {
+        query: data.query,
+        makerOnly: {
+          id: 'mo-' + Date.now(),
+          role: 'assistant',
+          content: data.maker_only.final_response,
+          originalDraft: data.maker_only.original_draft,
+          timestamp: new Date().toISOString(),
+          status: 'Approved',
+          latencyMs: data.maker_only.latency_ms
+        },
+        makerPlusJudge: {
+          id: 'mpj-' + Date.now(),
+          role: 'assistant',
+          content: data.maker_plus_judge.final_response,
+          originalDraft: data.maker_plus_judge.original_draft,
+          finalResponse: data.maker_plus_judge.final_response,
+          timestamp: data.maker_plus_judge.timestamp || new Date().toISOString(),
+          status: data.maker_plus_judge.status,
+          latencyMs: data.maker_plus_judge.latency_ms,
+          makerLatencyMs: data.maker_plus_judge.maker_latency_ms,
+          judgeLatencyMs: data.maker_plus_judge.judge_latency_ms,
+          severity: data.maker_plus_judge.verification?.severity,
+          overallReasoning: data.maker_plus_judge.verification?.overall_reasoning,
+          claims: (data.maker_plus_judge.verification?.claims || []).map((c: any) => ({
+            id: c.id,
+            text: c.text,
+            verdict: c.verdict,
+            confidence: c.confidence,
+            sourceSentence: c.source_sentence,
+            sourceDocument: c.source_document,
+            reasoning: c.reasoning,
+            isFiller: c.is_filler
+          }))
+        }
+      };
     } catch {
       // Simulation
     }
 
-    const { botMessage } = await this.sendMessage(message, true);
+    const { botMessage } = await this.sendMessage(message, true, workspaceId);
     return {
       query: message,
       makerOnly: {
@@ -522,10 +523,7 @@ export const api = {
       if (workspaceId && workspaceId !== 'all') params.append('workspace_id', workspaceId);
       if (status) params.append('status', status);
 
-      const res = await fetch(`${API_BASE}/review/queue?${params.toString()}`);
-      if (res.ok) {
-        return await res.json();
-      }
+      return await fetchJson<ReviewItem[]>(`${API_BASE}/review/queue?${params.toString()}`);
     } catch (err) {
       console.warn('Failed to fetch review queue from backend:', err);
     }
@@ -536,23 +534,16 @@ export const api = {
     itemId: string,
     data: { action: 'approve_correction' | 'override' | 'dismiss'; corrected_response?: string; human_notes?: string; add_to_knowledge_base?: boolean }
   ): Promise<ReviewItem> {
-    const res = await fetch(`${API_BASE}/review/${itemId}/resolve`, {
+    return await fetchJson<ReviewItem>(`${API_BASE}/review/${itemId}/resolve`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(data)
     });
-    if (!res.ok) {
-      throw new Error(`Failed to resolve review item: ${res.statusText}`);
-    }
-    return await res.json();
   },
 
   async getReviewStats(): Promise<ReviewStats> {
     try {
-      const res = await fetch(`${API_BASE}/review/stats`);
-      if (res.ok) {
-        return await res.json();
-      }
+      return await fetchJson<ReviewStats>(`${API_BASE}/review/stats`);
     } catch {
       // fallback
     }

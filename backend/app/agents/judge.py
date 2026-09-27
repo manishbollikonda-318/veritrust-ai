@@ -20,9 +20,10 @@ FILLER_PATTERNS = [
     r"^(let me|i can|i'll) (help|assist|check|look)",
     r"^(at novamart|here at novamart),? (we|returning|shipping|shopping|our|it is|it's)",
     r"^(novamart|we) (stands behind|offers several|aims to|strives to)",
-    r"^(please|just|simply) (note|remember|keep in mind)",
+    r"^(please|just|simply) (note|remember|keep in mind|let us know|contact us|reach out)",
     r"^(hope this helps|feel free to|don't hesitate)",
-    r"^(have a|enjoy your|thank you for choosing)",
+    r"^(have a|enjoy your|thank you for choosing|thank you for contacting)",
+    r"^(regarding your inquiry|hello|hi|hey)",
 ]
 
 
@@ -163,12 +164,12 @@ class JudgeAgent:
             claim_prices = [p.rstrip('.,;:') for p in re.findall(r'\$[\d,.]+', claim)]
             source_prices = [p.rstrip('.,;:') for p in re.findall(r'\$[\d,.]+', source)]
             if claim_prices and source_prices:
-                for cp in claim_prices:
-                    for sp in source_prices:
-                        shared_keywords = set(claim_lower.split()) & set(source_lower.split())
-                        topic_words = shared_keywords - {"the", "a", "an", "is", "are", "for", "and", "or", "of", "to", "in", "at", "with"}
-                        if len(topic_words) >= 2 and cp != sp and cp != "$50" and sp != "$50":
-                            return f"Claim states {cp} but source document says {sp} for the same item/service."
+                unmatched = [cp for cp in claim_prices if cp not in source_prices and cp != "$50"]
+                if unmatched:
+                    shared_keywords = set(claim_lower.split()) & set(source_lower.split())
+                    topic_words = shared_keywords - {"the", "a", "an", "is", "are", "for", "and", "or", "of", "to", "in", "at", "with"}
+                    if len(topic_words) >= 2:
+                        return f"Claim states {unmatched[0]} but source document specifies alternative prices for the same item/service."
         
         return None
 
@@ -224,27 +225,28 @@ class JudgeAgent:
         claim_prices = parse_prices(claim)
         source_prices = parse_prices(source)
         if claim_prices and source_prices:
-            # Find matching context by nearest keyword proximity
-            shared_kw = set(re.findall(r'\b\w{4,}\b', claim_l)) & set(re.findall(r'\b\w{4,}\b', source_l))
-            topic_kw = shared_kw - {'that', 'this', 'with', 'from', 'have', 'will', 'your', 'our', 'item', 'order', 'cost', 'price', 'free'}
-            if len(topic_kw) >= 1:
-                for cp in claim_prices:
-                    for sp in source_prices:
-                        if cp != sp and abs(cp - sp) > 0.01:
-                            pct_err = abs(cp - sp) / max(sp, 0.01) * 100
-                            severity = "critical" if pct_err > 50 else "high" if pct_err > 10 else "medium"
-                            return {
-                                "verdict": "Contradicted",
-                                "confidence": 0.97,
-                                "severity": severity,
-                                "method": "deterministic_price_check",
-                                "reasoning": (
-                                    f"[DETERMINISTIC CHECK] Claim states ${cp:.2f}; "
-                                    f"source document specifies ${sp:.2f} for the same "
-                                    f"context (shared topic: {', '.join(list(topic_kw)[:3])}). "
-                                    f"Price error: {pct_err:.0f}%. Verified with arithmetic — no model involved."
-                                )
-                            }
+            # Check if all prices asserted in the claim exist in the source document
+            unmatched_claim_prices = [cp for cp in claim_prices if not any(abs(cp - sp) <= 0.01 for sp in source_prices)]
+            if unmatched_claim_prices:
+                shared_kw = set(re.findall(r'\b\w{4,}\b', claim_l)) & set(re.findall(r'\b\w{4,}\b', source_l))
+                topic_kw = shared_kw - {'that', 'this', 'with', 'from', 'have', 'will', 'your', 'our', 'item', 'order', 'cost', 'price', 'free'}
+                if len(topic_kw) >= 1:
+                    cp = unmatched_claim_prices[0]
+                    closest_sp = min(source_prices, key=lambda s: abs(s - cp))
+                    pct_err = abs(cp - closest_sp) / max(closest_sp, 0.01) * 100
+                    severity = "critical" if pct_err > 50 else "high" if pct_err > 10 else "medium"
+                    return {
+                        "verdict": "Contradicted",
+                        "confidence": 0.97,
+                        "severity": severity,
+                        "method": "deterministic_price_check",
+                        "reasoning": (
+                            f"[DETERMINISTIC CHECK] Claim states ${cp:.2f}; "
+                            f"source document specifies ${closest_sp:.2f} for the same "
+                            f"context (shared topic: {', '.join(list(topic_kw)[:3])}). "
+                            f"Price error: {pct_err:.0f}%. Verified with arithmetic — no model involved."
+                        )
+                    }
 
         # ── 3. Percentage contradiction ──────────────────────────────────────────
         claim_pcts = [float(p) for p in re.findall(r'(\d+(?:\.\d+)?)\s*%', claim)]
