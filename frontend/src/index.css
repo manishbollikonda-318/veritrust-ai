@@ -58,16 +58,16 @@
   .shadow-neu-contradicted {
     box-shadow: 4px 4px 10px rgba(239, 68, 68, 0.15), -4px -4px 10px rgba(255, 255, 255, 0.9);
   }
+}
 
-  /* Real Glassmorphism for Disclosure Modal */
-  .disclosure-glass-panel {
-    background: rgba(255, 255, 255, 0.14);
-    backdrop-filter: blur(16px) saturate(180%);
-    -webkit-backdrop-filter: blur(16px) saturate(180%);
-    border: 1px solid rgba(255, 255, 255, 0.3);
-    border-radius: 24px;
-    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.15);
-  }
+/* Real Glassmorphism for Disclosure Modal */
+.disclosure-glass-panel {
+  background: rgba(255, 255, 255, 0.14) !important;
+  backdrop-filter: blur(16px) saturate(180%) !important;
+  -webkit-backdrop-filter: blur(16px) saturate(180%) !important;
+  border: 1px solid rgba(255, 255, 255, 0.3) !important;
+  border-radius: 24px !important;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.15) !important;
 }
 
 body {

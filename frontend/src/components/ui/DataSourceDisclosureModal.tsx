@@ -28,23 +28,17 @@ export default function DataSourceDisclosureModal() {
   return (
     <AnimatePresence>
       {isOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6">
-          {/* Subtle light click-away overlay — NEVER blur or darken heavily so the colorful dashboard behind remains vibrant and directly blurred through the glass card */}
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            transition={{ duration: 0.2 }}
-            className="fixed inset-0 bg-slate-900/10 cursor-pointer"
-            onClick={handleDismiss}
-          />
-
-          {/* Genuine Glassmorphism Disclosure Panel */}
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6"
+          onClick={handleDismiss}
+        >
+          {/* Real Glassmorphism Disclosure Panel — Directly atop dashboard with NO intermediate scrim */}
           <motion.div
             initial={{ opacity: 0, scale: 0.94, y: 12 }}
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.94, y: 12 }}
             transition={{ duration: 0.24, ease: [0.16, 1, 0.3, 1] }}
+            onClick={(e) => e.stopPropagation()}
             className="disclosure-glass-panel relative z-10 w-full max-w-lg overflow-hidden p-6 sm:p-7"
             style={{
               background: 'rgba(255, 255, 255, 0.14)',
@@ -59,7 +53,7 @@ export default function DataSourceDisclosureModal() {
             <div className="absolute inset-x-0 top-0 h-[1.5px] bg-gradient-to-r from-transparent via-white/80 to-transparent pointer-events-none" />
 
             {/* Approachable pill badge */}
-            <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[11px] font-bold bg-white/25 text-indigo-950 border border-white/40 mb-3 shadow-xs backdrop-blur-sm">
+            <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[11px] font-bold bg-white/15 text-indigo-950 border border-white/30 mb-3 shadow-xs">
               <Sparkles size={12} className="text-indigo-600" />
               <span>About this demo</span>
             </div>
@@ -80,8 +74,8 @@ export default function DataSourceDisclosureModal() {
             </div>
 
             {/* Bring-your-own-data prompt with translucent glass styling */}
-            <div className="mt-4 rounded-2xl bg-white/20 border border-white/35 p-3.5 flex items-start gap-3 backdrop-blur-sm shadow-xs">
-              <div className="p-1.5 rounded-xl bg-indigo-600/15 text-indigo-900 shrink-0 mt-0.5 border border-white/30">
+            <div className="mt-4 rounded-2xl bg-white/10 border border-white/25 p-3.5 flex items-start gap-3 shadow-xs">
+              <div className="p-1.5 rounded-xl bg-indigo-600/15 text-indigo-900 shrink-0 mt-0.5 border border-white/25">
                 <Database size={14} />
               </div>
               <p className="text-[11px] sm:text-xs text-slate-900 font-medium leading-normal">
