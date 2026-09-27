@@ -6,8 +6,8 @@ unset http_proxy https_proxy all_proxy HTTP_PROXY HTTPS_PROXY ALL_PROXY
 export no_proxy="*" NO_PROXY="*"
 
 DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
-BACKEND_LOG="/tmp/veritrust-backend.log"
-FRONTEND_LOG="/tmp/veritrust-frontend.log"
+BACKEND_LOG="$DIR/backend.log"
+FRONTEND_LOG="$DIR/frontend.log"
 
 echo "================================================================="
 echo "  🛡️  VeriTrust AI — Dual-Agent Hallucination Guardrail System  "
