@@ -300,8 +300,8 @@ def dispatch_llm_generation(
         elif key.startswith("http"):
             out = call_ollama_api(prompt, key, getattr(settings, "OLLAMA_MODEL", "llama3"))
             if out: return out, "Local Ollama"
-        elif key.startswith("AIza") or len(key) >= 20:
-            out = call_gemini_api(prompt, key, getattr(settings, "GEMINI_MODEL", "gemini-1.5-flash"))
+        elif key.startswith("AIza") or key.startswith("AQ.") or len(key) >= 20:
+            out = call_gemini_api(prompt, key, getattr(settings, "GEMINI_MODEL", "gemini-3.8-flash"))
             if out: return out, "Google Gemini"
 
     # 3. Server-wide environment fallback chain
