@@ -89,6 +89,7 @@ class ChatResponse(BaseModel):
     correction_attempts: int = 0
     loop_history: List[Dict[str, Any]] = []
     llm_provider_used: str = "shared_default"
+    generation_method: str = ""
 
 
 class DriftPoint(BaseModel):

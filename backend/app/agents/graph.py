@@ -35,6 +35,7 @@ class GraphState(TypedDict):
     total_latency_ms: float
     correction_attempts: int
     loop_history: List[dict]
+    generation_method: str
 
 
 def generate_draft_node(state: GraphState) -> Dict[str, Any]:
@@ -42,6 +43,7 @@ def generate_draft_node(state: GraphState) -> Dict[str, Any]:
     start = time.time()
     workspace_id = state.get("workspace_id", "default")
     draft = state.get("draft")
+    gen_method = state.get("generation_method", "")
     if not draft or not draft.strip():
         draft_result = maker_agent.generate_draft(
             query=state["query"],
@@ -49,11 +51,10 @@ def generate_draft_node(state: GraphState) -> Dict[str, Any]:
             demo_mode=state.get("demo_mode", True),
             workspace_id=workspace_id
         )
-        # Handle both tuple return (draft, method) and legacy string return
         if isinstance(draft_result, tuple):
-            draft = draft_result[0]
+            draft, gen_method = draft_result
         else:
-            draft = draft_result
+            draft, gen_method = draft_result, "unknown"
     latency = (time.time() - start) * 1000
     
     loop_entry = {
@@ -62,7 +63,8 @@ def generate_draft_node(state: GraphState) -> Dict[str, Any]:
         "attempt": 0,
         "action": "Generated conversational draft from corporate manuals",
         "draft": draft,
-        "latency_ms": round(latency, 2)
+        "latency_ms": round(latency, 2),
+        "generation_method": gen_method
     }
     loop_history = list(state.get("loop_history", []))
     loop_history.append(loop_entry)
@@ -70,7 +72,8 @@ def generate_draft_node(state: GraphState) -> Dict[str, Any]:
     return {
         "draft": draft,
         "maker_latency_ms": round(latency, 2),
-        "loop_history": loop_history
+        "loop_history": loop_history,
+        "generation_method": gen_method
     }
 
 
@@ -137,12 +140,16 @@ def correct_node(state: GraphState) -> Dict[str, Any]:
     flagged = [c for c in verification.claims if c.verdict in ("Unsupported", "Contradicted")]
     
     # Revise draft with Maker using Judge critique & ground-truth facts
-    revised_draft = maker_agent.revise_draft(
+    revise_result = maker_agent.revise_draft(
         query=state["query"],
         original_draft=state["draft"],
         flagged_claims=flagged,
         workspace_id=workspace_id
     )
+    if isinstance(revise_result, tuple):
+        revised_draft, gen_method = revise_result
+    else:
+        revised_draft, gen_method = revise_result, "unknown"
     
     latency = (time.time() - start) * 1000
     loop_entry = {
@@ -151,7 +158,8 @@ def correct_node(state: GraphState) -> Dict[str, Any]:
         "attempt": attempts,
         "action": f"Autonomous revision removing {len(flagged)} unverified claim(s)",
         "revised_draft": revised_draft,
-        "latency_ms": round(latency, 2)
+        "latency_ms": round(latency, 2),
+        "generation_method": gen_method
     }
     loop_history = list(state.get("loop_history", []))
     loop_history.append(loop_entry)
@@ -161,7 +169,8 @@ def correct_node(state: GraphState) -> Dict[str, Any]:
         "draft": revised_draft,
         "correction_attempts": attempts,
         "correction_latency_ms": round(prev_corr_lat + latency, 2),
-        "loop_history": loop_history
+        "loop_history": loop_history,
+        "generation_method": gen_method
     }
 
 

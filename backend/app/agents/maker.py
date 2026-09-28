@@ -437,7 +437,7 @@ class MakerAgent:
         original_draft: str,
         flagged_claims: list,
         workspace_id: str = "default"
-    ) -> str:
+    ) -> tuple:
         """
         Multi-agent feedback loop:
         Maker receives Judge feedback with flagged claims and verified source evidence.
@@ -469,14 +469,14 @@ class MakerAgent:
             f"Corrected Response:"
         )
 
-        revised, _ = dispatch_llm_generation(prompt=prompt, provider=llm_provider, custom_api_key=raw_key)
+        revised, provider_used = dispatch_llm_generation(prompt=prompt, provider=llm_provider, custom_api_key=raw_key)
         if revised:
-            return revised
+            return revised, f"llm_live:{provider_used}"
 
         # Deterministic / rule-based fallback revision
         from app.agents.judge import judge_agent
         dummy_vr = type("DummyVR", (), {"claims": flagged_claims})()
-        return judge_agent.correct_draft(original_draft, dummy_vr)
+        return judge_agent.correct_draft(original_draft, dummy_vr), "offline_fallback"
 
 
 maker_agent = MakerAgent()

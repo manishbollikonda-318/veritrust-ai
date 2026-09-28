@@ -288,16 +288,25 @@ async def llm_health():
     # Check Gemini
     if settings.GEMINI_API_KEY:
         try:
-            async with httpx.AsyncClient(timeout=5.0) as client:
-                resp = await client.get(
-                    f"https://generativelanguage.googleapis.com/v1beta/models/{settings.GEMINI_MODEL}:generateContent",
-                    params={"key": settings.GEMINI_API_KEY}
-                )
-                results["gemini"] = {
-                    "available": resp.status_code in (200, 400),  # 400 means key works but payload issue
-                    "model": settings.GEMINI_MODEL,
-                    "status": "configured" if resp.status_code in (200, 400) else f"error: {resp.status_code}"
+            async with httpx.AsyncClient(timeout=6.0) as client:
+                url = f"https://generativelanguage.googleapis.com/v1beta/models/{settings.GEMINI_MODEL}:generateContent?key={settings.GEMINI_API_KEY}"
+                payload = {
+                    "contents": [{"parts": [{"text": "Say OK"}]}],
+                    "generationConfig": {"maxOutputTokens": 10}
                 }
+                resp = await client.post(url, json=payload)
+                if resp.status_code == 200:
+                    results["gemini"] = {
+                        "available": True,
+                        "model": settings.GEMINI_MODEL,
+                        "status": "online_verified"
+                    }
+                else:
+                    results["gemini"] = {
+                        "available": False,
+                        "model": settings.GEMINI_MODEL,
+                        "status": f"api_error: {resp.status_code}"
+                    }
         except Exception as e:
             results["gemini"] = {
                 "available": False,

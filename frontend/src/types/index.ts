@@ -58,6 +58,7 @@ export interface Message {
   loopHistory?: any[];
   estimatedCostUsd?: number;
   deterministicChecksRun?: number;
+  generationMethod?: string;
 }
 
 export interface DriftDataPoint {

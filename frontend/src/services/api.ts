@@ -125,11 +125,10 @@ export const api = {
     const res = await fetch(`${API_BASE}/chat/history/${encodeURIComponent(workspaceId)}`, {
       headers: getAuthHeaders(workspaceId)
     });
-    if (!res.ok) {
-      const errorText = await res.text();
-      throw new Error(`Failed to load chat history: ${res.status} ${errorText}`);
-    }
     const text = await res.text();
+    if (!res.ok) {
+      throw new Error(`Failed to load chat history: ${res.status} ${text}`);
+    }
     if (!text || !text.trim()) {
       return [];
     }
@@ -154,6 +153,7 @@ export const api = {
           overallReasoning: item.verification?.overall_reasoning,
           estimatedCostUsd: item.verification?.estimated_cost_usd,
           deterministicChecksRun: item.verification?.deterministic_checks_run,
+          generationMethod: item.generation_method,
           claims: (item.verification?.claims || []).map(mapClaim)
         }));
       }
@@ -163,7 +163,7 @@ export const api = {
     return [];
   },
 
-async sendMessage(content: string, demoMode: boolean = true, workspaceId: string = 'default'): Promise<{ userMessage: Message; botMessage: Message }> {
+  async sendMessage(content: string, demoMode: boolean = true, workspaceId: string = 'default'): Promise<{ userMessage: Message; botMessage: Message }> {
     const userMessage: Message = {
       id: 'usr-' + Date.now(),
       role: 'user',
@@ -202,6 +202,7 @@ async sendMessage(content: string, demoMode: boolean = true, workspaceId: string
       overallReasoning: data.verification?.overall_reasoning || '',
       estimatedCostUsd: data.verification?.estimated_cost_usd,
       deterministicChecksRun: data.verification?.deterministic_checks_run,
+      generationMethod: data.generation_method,
       claims: (data.verification?.claims || []).map(mapClaim)
     };
     return { userMessage, botMessage };

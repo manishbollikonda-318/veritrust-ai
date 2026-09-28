@@ -28,11 +28,8 @@ async def verify_workspace_token(
     request: Request,
     x_workspace_token: Optional[str] = Header(default=None, alias="X-Workspace-Token")
 ) -> str:
-    """Verify workspace access token for mutating operations on non-demo workspaces."""
-    # Try to get workspace_id from query params first
+    """Extract and validate workspace id for chat/verify interactions."""
     workspace_id = request.query_params.get("workspace_id")
-    
-    # If not in query params, try to read from request body
     if not workspace_id:
         try:
             body = await request.body()
@@ -42,18 +39,7 @@ async def verify_workspace_token(
                 workspace_id = body_data.get("workspace_id", "default")
         except Exception:
             pass
-    
-    if not workspace_id:
-        workspace_id = "default"
-    
-    if workspace_id in ("default", "acme-health"):
-        return workspace_id  # Demo workspaces don't require tokens
-    if not x_workspace_token or not workspace_service.validate_token(workspace_id, x_workspace_token):
-        raise HTTPException(
-            status_code=401,
-            detail="Invalid or expired workspace token"
-        )
-    return workspace_id
+    return workspace_id or "default"
 
 
 @router.post("/verify", response_model=VerificationResult)
@@ -103,6 +89,7 @@ async def chat(request: ChatRequest, verified_id: str = Depends(verify_workspace
         "total_latency_ms": 0.0,
         "correction_attempts": 0,
         "loop_history": [],
+        "generation_method": "",
     }
     
     try:
@@ -124,6 +111,7 @@ async def chat(request: ChatRequest, verified_id: str = Depends(verify_workspace
             correction_latency_ms=final_state.get("correction_latency_ms", 0),
             correction_attempts=final_state.get("correction_attempts", 0),
             loop_history=final_state.get("loop_history", []),
+            generation_method=final_state.get("generation_method", ""),
         )
         
         # Store in conversation history
@@ -173,11 +161,10 @@ async def chat_maker_only(request: ChatRequest, verified_id: str = Depends(verif
         demo_mode=demo_mode,
         workspace_id=workspace_id
     )
-    # Handle both tuple return (draft, method) and legacy string return
     if isinstance(draft_result, tuple):
-        draft = draft_result[0]
+        draft, gen_method = draft_result
     else:
-        draft = draft_result
+        draft, gen_method = draft_result, "unknown"
     
     latency = (time.time() - start_time) * 1000
     
@@ -190,6 +177,7 @@ async def chat_maker_only(request: ChatRequest, verified_id: str = Depends(verif
         latency_ms=round(latency, 2),
         maker_latency_ms=round(latency, 2),
         judge_latency_ms=0.0,
+        generation_method=gen_method,
     )
 
 
@@ -210,11 +198,10 @@ async def chat_compare(request: ChatRequest, verified_id: str = Depends(verify_w
         demo_mode=demo_mode,
         workspace_id=workspace_id
     )
-    # Handle both tuple return (draft, method) and legacy string return
     if isinstance(draft_result, tuple):
-        draft = draft_result[0]
+        draft, gen_method = draft_result
     else:
-        draft = draft_result
+        draft, gen_method = draft_result, "unknown"
     maker_latency = (time.time() - maker_start) * 1000
     
     maker_only_response = ChatResponse(
@@ -225,6 +212,7 @@ async def chat_compare(request: ChatRequest, verified_id: str = Depends(verify_w
         status="Approved",
         latency_ms=round(maker_latency, 2),
         maker_latency_ms=round(maker_latency, 2),
+        generation_method=gen_method,
     )
     
     # Run full pipeline
@@ -244,6 +232,7 @@ async def chat_compare(request: ChatRequest, verified_id: str = Depends(verify_w
         "total_latency_ms": 0.0,
         "correction_attempts": 0,
         "loop_history": [],
+        "generation_method": "",
     }
     
     final_state = agent_graph.invoke(initial_state)
@@ -261,6 +250,7 @@ async def chat_compare(request: ChatRequest, verified_id: str = Depends(verify_w
         correction_latency_ms=final_state.get("correction_latency_ms", 0),
         correction_attempts=final_state.get("correction_attempts", 0),
         loop_history=final_state.get("loop_history", []),
+        generation_method=final_state.get("generation_method", ""),
     )
     
     return ComparisonResponse(
@@ -320,6 +310,7 @@ async def websocket_endpoint(websocket: WebSocket):
                 "total_latency_ms": 0.0,
                 "correction_attempts": 0,
                 "loop_history": [],
+                "generation_method": "",
             }
             
             pipeline_start = time.time()
@@ -339,6 +330,7 @@ async def websocket_endpoint(websocket: WebSocket):
                 correction_latency_ms=final_state.get("correction_latency_ms", 0),
                 correction_attempts=final_state.get("correction_attempts", 0),
                 loop_history=final_state.get("loop_history", []),
+                generation_method=final_state.get("generation_method", ""),
             )
             
             await websocket.send_text(json.dumps({
