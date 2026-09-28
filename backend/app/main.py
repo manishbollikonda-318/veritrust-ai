@@ -120,9 +120,9 @@ async def global_exception_handler(request: Request, exc: Exception):
     )
 
 
-# 4. CORS Configuration
-cors_origins = settings.ALLOWED_ORIGINS if not settings.PERMISSIVE_CORS else ["*"]
-allow_creds = not settings.PERMISSIVE_CORS
+# 4. CORS Configuration - strict origins only, no wildcards
+cors_origins = settings.cors_origins
+allow_creds = True
 
 app.add_middleware(
     CORSMiddleware,
@@ -143,10 +143,8 @@ app.include_router(review.router, prefix="/api", tags=["Human Review"])
 # Admin security verification helper
 async def verify_admin_key(api_key: str = Security(API_KEY_HEADER)):
     if not settings.ADMIN_API_KEY:
-        if settings.DEMO_MODE:
-            return True
         raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
             detail="Admin access disabled: ADMIN_API_KEY environment variable is not configured."
         )
     if not api_key or api_key != settings.ADMIN_API_KEY:

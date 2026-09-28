@@ -104,53 +104,64 @@ from typing import List, Optional, Dict
 logger = logging.getLogger("veritrust.maker")
 
 
-def call_gemini_api(prompt: str, api_key: str, model_name: str = "gemini-1.5-flash") -> Optional[str]:
+def call_gemini_api(prompt: str, api_key: str, model_name: str = "gemini-3.8-flash") -> Optional[str]:
     """
-    Call Google Gemini API via SDK (if installed) or direct REST endpoint.
-    Guarantees reliable execution across all environments with zero external dependency requirements.
+    Call Google Gemini API via SDK or direct REST endpoint with automatic model cascade.
+    Guarantees reliable execution across all environments.
     """
     if not api_key or not api_key.strip():
         return None
 
-    # 1. Try google.generativeai SDK if available in the environment
+    clean_key = api_key.strip()
+    candidate_models = [model_name, "gemini-3.8-flash", "gemini-3.7-flash", "gemini-flash-latest"]
+    # Remove duplicates preserving order
+    candidate_models = list(dict.fromkeys(candidate_models))
+
+    # 1. Direct Google Generative Language REST API endpoint (most reliable across versions)
+    for m in candidate_models:
+        try:
+            url = f"https://generativelanguage.googleapis.com/v1beta/models/{m}:generateContent?key={clean_key}"
+            payload = {
+                "contents": [
+                    {
+                        "parts": [{"text": prompt}]
+                    }
+                ],
+                "generationConfig": {
+                    "temperature": 0.2,
+                    "maxOutputTokens": 600
+                }
+            }
+            res = requests.post(url, json=payload, timeout=12)
+            if res.status_code == 200:
+                data = res.json()
+                candidates = data.get("candidates", [])
+                if candidates:
+                    parts = candidates[0].get("content", {}).get("parts", [])
+                    if parts:
+                        return parts[0].get("text", "").strip()
+            elif res.status_code in (404, 503):
+                logger.warning(f"Gemini model {m} returned {res.status_code}, trying fallback candidate...")
+                continue
+            else:
+                logger.warning(f"Gemini REST endpoint returned {res.status_code}: {res.text[:200]}")
+        except Exception as e:
+            logger.warning(f"Gemini REST call error with {m}: {e}")
+
+    # 2. Try google.generativeai SDK as final fallback
     try:
         import google.generativeai as genai
-        genai.configure(api_key=api_key.strip())
-        model = genai.GenerativeModel(model_name)
-        response = model.generate_content(prompt)
-        if response and response.text:
-            return response.text.strip()
+        genai.configure(api_key=clean_key)
+        for m in candidate_models:
+            try:
+                model = genai.GenerativeModel(m)
+                response = model.generate_content(prompt)
+                if response and response.text:
+                    return response.text.strip()
+            except Exception:
+                continue
     except ImportError:
         pass
-    except Exception as e:
-        logger.warning(f"Gemini SDK generation failed: {e}. Falling back to REST endpoint...")
-
-    # 2. Direct Google Generative Language REST API endpoint
-    try:
-        url = f"https://generativelanguage.googleapis.com/v1beta/models/{model_name}:generateContent?key={api_key.strip()}"
-        payload = {
-            "contents": [
-                {
-                    "parts": [{"text": prompt}]
-                }
-            ],
-            "generationConfig": {
-                "temperature": 0.2,
-                "maxOutputTokens": 600
-            }
-        }
-        res = requests.post(url, json=payload, timeout=12)
-        if res.status_code == 200:
-            data = res.json()
-            candidates = data.get("candidates", [])
-            if candidates:
-                parts = candidates[0].get("content", {}).get("parts", [])
-                if parts:
-                    return parts[0].get("text", "").strip()
-        else:
-            logger.warning(f"Gemini REST endpoint returned {res.status_code}: {res.text[:200]}")
-    except Exception as e:
-        logger.warning(f"Gemini REST call error: {e}")
 
     return None
 

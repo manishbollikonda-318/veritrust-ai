@@ -1,5 +1,6 @@
 from pydantic_settings import BaseSettings, SettingsConfigDict
 from typing import Optional, List
+import os
 
 class Settings(BaseSettings):
     APP_NAME: str = "VeriTrust AI Guardrail Engine"
@@ -16,7 +17,7 @@ class Settings(BaseSettings):
     OLLAMA_BASE_URL: str = "http://localhost:11434"
     OLLAMA_MODEL: str = "llama3.1:8b"
     GEMINI_API_KEY: Optional[str] = None
-    GEMINI_MODEL: str = "gemini-1.5-flash"
+    GEMINI_MODEL: str = "gemini-3.8-flash"
 
     ADMIN_API_KEY: Optional[str] = None  # Must be set via environment variable in production
     RATE_LIMIT_PER_MINUTE: int = 120
@@ -32,6 +33,20 @@ class Settings(BaseSettings):
     ]
     
     model_config = SettingsConfigDict(env_file=".env", env_file_encoding="utf-8", extra="ignore")
+
+    @property
+    def cors_origins(self) -> List[str]:
+        """Get CORS origins from env var, with localhost only in development."""
+        env_origins = os.getenv("ALLOWED_ORIGINS")
+        if env_origins:
+            return [o.strip() for o in env_origins.split(",") if o.strip()]
+        
+        # In development, include localhost
+        if self.DEBUG or os.getenv("ENV") == "development":
+            return self.ALLOWED_ORIGINS
+        
+        # Production: only explicit production origins
+        return [o for o in self.ALLOWED_ORIGINS if not o.startswith("http://127.0.0.1") and not o.startswith("http://localhost")]
 
 settings = Settings()
 
