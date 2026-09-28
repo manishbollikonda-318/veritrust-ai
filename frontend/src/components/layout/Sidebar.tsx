@@ -17,6 +17,7 @@ const navItems = [
 
 export default function Sidebar() {
   const { isCollapsed, toggleSidebar, isMobileOpen, closeMobile } = useSidebar();
+  const { overallStatus, providers, loading, isAnyProviderAvailable } = useLLMHealth();
 
   return (
     <>
@@ -135,25 +136,48 @@ export default function Sidebar() {
             <div className="space-y-1.5">
               <div className="flex items-center justify-between text-ink-muted font-bold">
                 <span className="flex items-center gap-1.5">
-                  <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse shadow-sm" aria-hidden="true" />
+                  <span className={`w-2 h-2 rounded-full animate-pulse shadow-sm ${
+                    overallStatus === 'healthy' ? 'bg-emerald-500' : 
+                    overallStatus === 'degraded' ? 'bg-amber-500' :
+                    overallStatus === 'offline' ? 'bg-rose-500' :
+                    'bg-slate-400'
+                  }`} aria-hidden="true" />
                   Guardrail Engine
                 </span>
-                <span className="text-[11px] font-extrabold text-positive-deep bg-emerald-100/80 border border-emerald-300/60 px-2 py-0.5 rounded-full shadow-xs">
-                  Active
+                <span className={`text-[11px] font-extrabold px-2 py-0.5 rounded-full shadow-xs ${
+                  overallStatus === 'healthy' ? 'text-positive-deep bg-emerald-100/80 border border-emerald-300/60' :
+                  overallStatus === 'degraded' ? 'text-amber-900 bg-amber-100/80 border border-amber-300/60' :
+                  overallStatus === 'offline' ? 'text-rose-900 bg-rose-100/80 border border-rose-300/60' :
+                  'text-slate-600 bg-slate-100/80 border border-slate-300/60'
+                }`}>
+                  {overallStatus === 'healthy' ? 'Active' :
+                   overallStatus === 'degraded' ? 'Waking up' :
+                   overallStatus === 'offline' ? 'Offline' :
+                   'Loading...'}
                 </span>
               </div>
               <div className="flex items-center justify-between text-ink-muted font-bold text-[11px]">
                 <span className="flex items-center gap-1 text-slate-600 font-semibold">
-                  <span>🤖</span> LLM Pipeline
+                  <span>{isAnyProviderAvailable ? '🤖' : '⚠️'}</span> LLM Pipeline
                 </span>
-                <span className="text-[11px] font-extrabold text-indigo-900 bg-indigo-100/80 border border-indigo-300/60 px-2 py-0.5 rounded-full shadow-xs">
-                  Gemini / Auto
+                <span className={`text-[11px] font-extrabold px-2 py-0.5 rounded-full shadow-xs ${
+                  isAnyProviderAvailable ? 'text-emerald-900 bg-emerald-100/80 border border-emerald-300/60' :
+                  'text-rose-900 bg-rose-100/80 border border-rose-300/60'
+                }`}>
+                  {isAnyProviderAvailable 
+                    ? providers.find(p => p.available)?.name || 'Multi-Provider' 
+                    : 'All Offline'}
                 </span>
               </div>
             </div>
           ) : (
-            <div className="flex flex-col items-center gap-1.5" title="Guardrail: Active | LLM: Multi-Provider">
-              <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse shadow-sm" aria-hidden="true" />
+            <div className="flex flex-col items-center gap-1.5" title={`Guardrail: ${overallStatus === 'healthy' ? 'Active' : overallStatus === 'offline' ? 'Offline' : 'Waking up'} | LLM: ${isAnyProviderAvailable ? 'Available' : 'Offline'}`}>
+              <span className={`w-2.5 h-2.5 rounded-full animate-pulse shadow-sm ${
+                overallStatus === 'healthy' ? 'bg-emerald-500' :
+                overallStatus === 'degraded' ? 'bg-amber-500' :
+                overallStatus === 'offline' ? 'bg-rose-500' :
+                'bg-slate-400'
+              }`} aria-hidden="true" />
             </div>
           )}
 
