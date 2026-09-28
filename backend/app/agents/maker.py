@@ -286,7 +286,7 @@ def dispatch_llm_generation(
 
     elif provider == "gemini":
         use_key = key or settings.GEMINI_API_KEY
-        out = call_gemini_api(prompt, use_key, getattr(settings, "GEMINI_MODEL", "gemini-1.5-flash"))
+        out = call_gemini_api(prompt, use_key, getattr(settings, "GEMINI_MODEL", "gemini-3.8-flash"))
         if out: return out, "Google Gemini"
 
     # 2. Key prefix heuristics if user pasted a custom key into shared_default
@@ -300,8 +300,8 @@ def dispatch_llm_generation(
         elif key.startswith("http"):
             out = call_ollama_api(prompt, key, getattr(settings, "OLLAMA_MODEL", "llama3"))
             if out: return out, "Local Ollama"
-        elif key.startswith("AIza") or len(key) >= 20:
-            out = call_gemini_api(prompt, key, getattr(settings, "GEMINI_MODEL", "gemini-1.5-flash"))
+        elif key.startswith("AIza") or key.startswith("AQ.") or len(key) >= 20:
+            out = call_gemini_api(prompt, key, getattr(settings, "GEMINI_MODEL", "gemini-3.8-flash"))
             if out: return out, "Google Gemini"
 
     # 3. Server-wide environment fallback chain
@@ -314,7 +314,7 @@ def dispatch_llm_generation(
         if out: return out, "Anthropic (Server Key)"
 
     if getattr(settings, "GEMINI_API_KEY", None):
-        out = call_gemini_api(prompt, settings.GEMINI_API_KEY, getattr(settings, "GEMINI_MODEL", "gemini-1.5-flash"))
+        out = call_gemini_api(prompt, settings.GEMINI_API_KEY, getattr(settings, "GEMINI_MODEL", "gemini-3.8-flash"))
         if out: return out, "Google Gemini (Server Key)"
 
     # 4. Check if local Ollama daemon is active on port 11434
@@ -393,15 +393,9 @@ class MakerAgent:
         demo_mode: bool = False,
         workspace_id: str = "default"
     ) -> tuple:
-        """Generate a draft response grounded in the workspace's retrieved company docs.
+        """Generate a dynamic draft response grounded in the workspace's retrieved company docs.
         Returns (draft_text, generation_method)."""
-        # 1. NovaMart demo benchmark: preserve staged scenario triggers
-        if demo_mode and (workspace_id == "default" or not workspace_id):
-            scenario_key = self._match_demo_scenario(query)
-            if scenario_key:
-                return DEMO_RESPONSES[scenario_key]["draft"], "staged_demo_script"
-        
-        # 2. Retrieve documents from the specific workspace vector store
+        # Retrieve documents from the specific workspace vector store
         from app.services.workspace_service import workspace_service
         ws = workspace_service.get_workspace(workspace_id)
         company_name = ws.name if ws else "our customer support"
