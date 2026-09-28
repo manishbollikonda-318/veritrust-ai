@@ -384,7 +384,7 @@ export default function ChatView() {
         </div>
 
         {/* Chat Input */}
-        {!attackMode && <ChatInput onSend={sendMessage} disabled={loading} />}
+        {!attackMode && <ChatInput onSend={sendMessage} disabled={loading} workspaceName={activeWorkspace?.name || undefined} />}
         {attackMode && (
           <div className="text-center py-2 text-xs text-critical font-bold">
             ⚡ Attack Mode active — use the attack panel above to submit queries

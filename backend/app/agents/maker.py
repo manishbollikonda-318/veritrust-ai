@@ -132,7 +132,7 @@ def call_gemini_api(prompt: str, api_key: str, model_name: str = "gemini-3.8-fla
                     "maxOutputTokens": 600
                 }
             }
-            res = requests.post(url, json=payload, timeout=12)
+            res = requests.post(url, json=payload, timeout=5)
             if res.status_code == 200:
                 data = res.json()
                 candidates = data.get("candidates", [])
@@ -145,8 +145,10 @@ def call_gemini_api(prompt: str, api_key: str, model_name: str = "gemini-3.8-fla
                 continue
             else:
                 logger.warning(f"Gemini REST endpoint returned {res.status_code}: {res.text[:200]}")
+                break
         except Exception as e:
             logger.warning(f"Gemini REST call error with {m}: {e}")
+            break
 
     # 2. Try google.generativeai SDK as final fallback
     try:

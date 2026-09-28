@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { useWorkspace } from '../../context/WorkspaceContext';
 import { api } from '../../services/api';
 import NeuCard from '../ui/NeuCard';
@@ -26,7 +26,8 @@ function getApiBaseUrl(): string {
 }
 
 export default function IntegrationView() {
-  const { currentWorkspace } = useWorkspace();
+  const { currentWorkspace, activeWorkspace } = useWorkspace();
+  const companyName = activeWorkspace?.name || 'your company';
   const [testDraft, setTestDraft] = useState(
     'Our standard return policy allows returns within 60 days of delivery. Electronics come with a 2-year warranty, and return shipping is always 100% free with no restocking fees.'
   );
@@ -45,12 +46,22 @@ export default function IntegrationView() {
   const [simMessages, setSimMessages] = useState<Array<{ role: 'user' | 'assistant'; text: string; status?: string; rawDraft?: string }>>([
     {
       role: 'assistant',
-      text: 'Hello! Welcome to NovaMart. How can I help with your order, shipping, or returns today?',
+      text: `Hello! Welcome to ${companyName}. How can I help you today?`,
       status: 'Approved'
     }
   ]);
   const [simInput, setSimInput] = useState('');
   const [simLoading, setSimLoading] = useState(false);
+
+  // Reset simulator when workspace switches so greeting shows correct company name
+  useEffect(() => {
+    setSimMessages([{
+      role: 'assistant',
+      text: `Hello! Welcome to ${companyName}. How can I help you today?`,
+      status: 'Approved'
+    }]);
+    setSimInput('');
+  }, [currentWorkspace, companyName]);
 
   const handleRunVerify = async () => {
     if (!testDraft.trim()) return;
@@ -418,11 +429,11 @@ for claim in result['claims']:
             <div className="bg-slate-900 text-white px-6 py-4 flex items-center justify-between">
               <div className="flex items-center gap-3">
                 <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-indigo-600 to-blue-600 flex items-center justify-center text-white font-extrabold shadow-sm">
-                  N
+                  {companyName.charAt(0).toUpperCase()}
                 </div>
                 <div>
-                  <h3 className="text-sm font-black tracking-tight">NovaMart Retail Storefront (Simulated Demo Benchmark)</h3>
-                  <p className="text-xs text-slate-400 font-mono">Simulated Origin: https://shop.novamart-demo.internal</p>
+                  <h3 className="text-sm font-black tracking-tight">{companyName} Storefront (Simulated Demo)</h3>
+                  <p className="text-xs text-slate-400 font-mono">Simulated Origin: https://shop.demo.internal</p>
                 </div>
               </div>
 
@@ -442,7 +453,7 @@ for claim in result['claims']:
                   <span className="text-xs font-black uppercase tracking-wider bg-white/20 px-2.5 py-0.5 rounded-full">
                     Protected by VeriTrust AI Guardrail
                   </span>
-                  <h4 className="text-base font-black mt-1">NovaMart Online Store (Simulated Retail Environment)</h4>
+                  <h4 className="text-base font-black mt-1">{companyName} (Simulated Storefront)</h4>
                   <p className="text-xs text-blue-100 mt-0.5 font-medium">
                     Customer support chat widget in the bottom right corner is intercepted in real-time by your backend `/api/verify` gateway.
                   </p>
@@ -501,7 +512,7 @@ for claim in result['claims']:
               <div className="flex items-center justify-between pb-2 border-b border-slate-100 mb-2">
                 <div className="flex items-center gap-2">
                   <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse" />
-                  <span className="text-xs font-black text-slate-900">NovaMart Live Assistant</span>
+                  <span className="text-xs font-black text-slate-900">{companyName} Live Assistant</span>
                   <span className="text-xs font-bold px-2.5 py-0.5 rounded-full bg-indigo-100 text-indigo-800">
                     VeriTrust Guardrail Active
                   </span>
@@ -552,7 +563,7 @@ for claim in result['claims']:
                   type="text"
                   value={simInput}
                   onChange={(e) => setSimInput(e.target.value)}
-                  placeholder="Ask the NovaMart assistant anything..."
+                  placeholder={`Ask the ${companyName} assistant anything...`}
                   className="flex-1 text-xs px-4 py-2.5 rounded-xl bg-slate-100 border border-slate-300 focus:outline-none focus:border-indigo-500 font-medium text-slate-800"
                 />
                 <button

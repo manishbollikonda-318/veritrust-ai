@@ -1,0 +1,9 @@
+Acme Health & Pharma — Clinical & Telehealth Guidelines
+
+Prescription Refills: Electronic prescription refill requests are processed and sent to your designated licensed pharmacy within 2 business days. For urgent maintenance medications, an emergency 24-hour expedited refill protocol can be initiated through our clinical nurse triage hotline.
+
+Controlled Substances Policy: In accordance with federal telehealth regulations, controlled substance prescriptions and scheduled substance renewals require a live, real-time video consultation with a certified practitioner. Asynchronous text requests for controlled substances are strictly prohibited and cannot be approved.
+
+Telehealth Appointment Cancellation & Rescheduling: Scheduled telehealth visits must be cancelled or rescheduled at least 24 hours prior to the appointment time to avoid a $25 late cancellation fee. Cancellations made less than 2 hours before the visit are subject to the full consultation fee.
+
+Clinical Operating Hours: Acme Health telehealth clinicians are available Monday through Friday from 7:00 AM to 9:00 PM EST, and Saturday through Sunday from 9:00 AM to 5:00 PM EST. The emergency triage nurse line operates 24 hours a day, 7 days a week for urgent symptoms.

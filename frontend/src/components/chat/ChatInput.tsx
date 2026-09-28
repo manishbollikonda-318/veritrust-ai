@@ -6,11 +6,12 @@ import NeuButton from '../ui/NeuButton';
 interface ChatInputProps {
   onSend: (message: string) => void;
   disabled?: boolean;
+  workspaceName?: string;
 }
 
 const MAX_CHAR_COUNT = 500;
 
-export default function ChatInput({ onSend, disabled }: ChatInputProps) {
+export default function ChatInput({ onSend, disabled, workspaceName }: ChatInputProps) {
   const [input, setInput] = useState('');
   const [isCooldown, setIsCooldown] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -69,7 +70,10 @@ export default function ChatInput({ onSend, disabled }: ChatInputProps) {
           <NeuInput
             value={input}
             onChange={handleChange}
-            placeholder="Ask anything about NovaMart returns, shipping, or warranty..."
+            placeholder={workspaceName
+              ? `Ask anything about ${workspaceName} policies, returns, or procedures...`
+              : "Ask anything about company policies, returns, or procedures..."
+            }
             disabled={disabled}
             className="w-full pr-20"
             aria-label="Customer query input"
