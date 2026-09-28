@@ -7,6 +7,7 @@ import { Send, AlertOctagon, ShieldCheck, Sparkles, Clock, CheckCircle2, XCircle
 import StatusChip from '../chat/StatusChip';
 import { api } from '../../services/api';
 import { ComparisonResponse } from '../../types';
+import { useWorkspace } from '../../context/WorkspaceContext';
 
 const COMPARISON_PRESETS = [
   {
@@ -24,6 +25,7 @@ const COMPARISON_PRESETS = [
 ];
 
 export default function ComparisonView() {
+  const { currentWorkspace } = useWorkspace();
   const [query, setQuery] = useState('');
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState<ComparisonResponse | null>(null);
@@ -36,7 +38,7 @@ export default function ComparisonView() {
     setQuery(q);
 
     try {
-      const data = await api.compare(q);
+      const data = await api.compare(q, currentWorkspace);
       setResult(data);
     } catch (err) {
       console.error('Comparison error:', err);

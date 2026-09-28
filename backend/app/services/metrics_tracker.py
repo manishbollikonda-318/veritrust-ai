@@ -10,29 +10,23 @@ from app.models.schemas import MetricData, DriftPoint, Claim
 
 class MetricsTracker:
     def __init__(self):
-        # Baseline seed to represent an active enterprise guardrail session
-        self.total_queries: int = 142
-        self.passed_queries: int = 108   # 76.06%
-        self.corrected_queries: int = 22 # 15.49%
-        self.blocked_queries: int = 12   # 8.45%
+        # Start with zero - NovaMart baseline is added only for default workspace in get_metrics
+        self.total_queries: int = 0
+        self.passed_queries: int = 0
+        self.corrected_queries: int = 0
+        self.blocked_queries: int = 0
         
-        self.total_claims: int = 486
-        self.verified_claims: int = 388
-        self.unsupported_claims: int = 64
-        self.contradicted_claims: int = 34
+        self.total_claims: int = 0
+        self.verified_claims: int = 0
+        self.unsupported_claims: int = 0
+        self.contradicted_claims: int = 0
         
-        self.latencies: List[float] = [290.0, 310.0, 340.0, 280.0, 320.0]
-        self.maker_latencies: List[float] = [120.0, 130.0, 145.0, 115.0, 135.0]
-        self.judge_latencies: List[float] = [170.0, 180.0, 195.0, 165.0, 185.0]
-        self.correction_latencies: List[float] = [0.0, 85.0, 0.0, 92.0, 0.0]
+        self.latencies: List[float] = []
+        self.maker_latencies: List[float] = []
+        self.judge_latencies: List[float] = []
+        self.correction_latencies: List[float] = []
         
-        self.drift_data: List[DriftPoint] = [
-            DriftPoint(timestamp="10:00", pass_rate=88.0, correction_rate=8.0, block_rate=4.0, query_index=20),
-            DriftPoint(timestamp="10:30", pass_rate=84.5, correction_rate=10.5, block_rate=5.0, query_index=50),
-            DriftPoint(timestamp="11:00", pass_rate=80.2, correction_rate=13.1, block_rate=6.7, query_index=85),
-            DriftPoint(timestamp="11:30", pass_rate=77.0, correction_rate=15.0, block_rate=8.0, query_index=115),
-            DriftPoint(timestamp="12:00", pass_rate=76.1, correction_rate=15.5, block_rate=8.4, query_index=142)
-        ]
+        self.drift_data: List[DriftPoint] = []
         self.query_log: List[dict] = []
 
     def record_query_result(

@@ -43,12 +43,17 @@ def generate_draft_node(state: GraphState) -> Dict[str, Any]:
     workspace_id = state.get("workspace_id", "default")
     draft = state.get("draft")
     if not draft or not draft.strip():
-        draft = maker_agent.generate_draft(
+        draft_result = maker_agent.generate_draft(
             query=state["query"],
             history=state.get("history", []),
             demo_mode=state.get("demo_mode", True),
             workspace_id=workspace_id
         )
+        # Handle both tuple return (draft, method) and legacy string return
+        if isinstance(draft_result, tuple):
+            draft = draft_result[0]
+        else:
+            draft = draft_result
     latency = (time.time() - start) * 1000
     
     loop_entry = {

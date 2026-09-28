@@ -381,13 +381,14 @@ class MakerAgent:
         history: list = None,
         demo_mode: bool = False,
         workspace_id: str = "default"
-    ) -> str:
-        """Generate a draft response grounded in the workspace's retrieved company docs."""
+    ) -> tuple:
+        """Generate a draft response grounded in the workspace's retrieved company docs.
+        Returns (draft_text, generation_method)."""
         # 1. NovaMart demo benchmark: preserve staged scenario triggers
         if demo_mode and (workspace_id == "default" or not workspace_id):
             scenario_key = self._match_demo_scenario(query)
             if scenario_key:
-                return DEMO_RESPONSES[scenario_key]["draft"]
+                return DEMO_RESPONSES[scenario_key]["draft"], "staged_demo_script"
         
         # 2. Retrieve documents from the specific workspace vector store
         from app.services.workspace_service import workspace_service
@@ -411,22 +412,23 @@ class MakerAgent:
                 f"Customer Support Response:"
             )
 
-            llm_response, _ = dispatch_llm_generation(
+            llm_response, provider_used = dispatch_llm_generation(
                 prompt=prompt,
                 provider=llm_provider,
                 custom_api_key=raw_key
             )
 
             if llm_response:
-                return llm_response
+                return llm_response, f"llm_live:{provider_used}"
 
             # Offline/demo synthesis when no live API key is configured or call times out
-            return self._synthesize_draft_from_context(query, results, company_name)
+            return self._synthesize_draft_from_context(query, results, company_name), "offline_fallback"
         
         return (
             f"Thank you for contacting {company_name}! "
             f"I reviewed our knowledge base for your inquiry, but could not find an applicable policy document. "
-            f"Please allow me to connect you with our support team."
+            f"Please allow me to connect you with our support team.",
+            "offline_fallback"
         )
 
     def revise_draft(

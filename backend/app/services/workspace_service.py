@@ -31,7 +31,7 @@ class WorkspaceService:
         self._seed_default_workspaces()
 
     def _seed_default_workspaces(self):
-        """Seed initial benchmark workspaces (NovaMart demo + Healthcare demo)."""
+        """Seed initial benchmark workspaces (NovaMart demo + Healthcare demo) and load custom workspaces from SQLite."""
         self._workspaces["default"] = {
             "id": "default",
             "name": "NovaMart Retail (Demo)",
@@ -52,12 +52,20 @@ class WorkspaceService:
             "created_at": "2026-09-27T01:00:00Z"
         }
 
+        # Load any custom workspaces stored in SQLite
+        try:
+            persisted = vector_store.sqlite.load_workspaces()
+            for w in persisted:
+                self._workspaces[w["id"]] = w
+        except Exception as e:
+            print(f"Notice loading custom workspaces from SQLite: {e}")
+
     def list_workspaces(self) -> List[WorkspaceModel]:
         """List all active company workspaces with live document counts and masked API keys."""
         result: List[WorkspaceModel] = []
         for ws_id, data in self._workspaces.items():
             doc_count = len(vector_store.get_raw_docs(ws_id))
-            raw_key = self._api_keys.get(ws_id)
+            raw_key = self.get_raw_api_key(ws_id)
             has_key = bool(raw_key)
             masked_key = mask_key(raw_key)
 
@@ -79,14 +87,20 @@ class WorkspaceService:
         return sorted(result, key=lambda x: (not x.is_demo, x.created_at))
 
     def get_workspace(self, ws_id: str) -> Optional[WorkspaceModel]:
-        """Retrieve a single workspace by ID."""
-        data = self._workspaces.get(ws_id)
+        """Retrieve a single workspace by ID with hyphen/underscore alias support."""
+        if not ws_id:
+            ws_id = "default"
+        data = (
+            self._workspaces.get(ws_id)
+            or self._workspaces.get(ws_id.replace('-', '_'))
+            or self._workspaces.get(ws_id.replace('_', '-'))
+        )
         if not data:
             return None
-        doc_count = len(vector_store.get_raw_docs(ws_id))
-        raw_key = self._api_keys.get(ws_id)
+        doc_count = len(vector_store.get_raw_docs(data["id"]))
+        raw_key = self.get_raw_api_key(data["id"])
         return WorkspaceModel(
-            id=ws_id,
+            id=data["id"],
             name=data["name"],
             industry=data.get("industry", "General"),
             description=data.get("description", ""),
@@ -151,12 +165,22 @@ class WorkspaceService:
             vector_store.store_raw_doc(ws_id, doc_data)
             vector_store.reindex_workspace(ws_id)
 
+        # Persist workspace definition to SQLite for survivability across restarts
+        try:
+            vector_store.sqlite.store_workspace(self._workspaces[ws_id])
+        except Exception as e:
+            print(f"Warning storing workspace to SQLite: {e}")
+
         return self.get_workspace(ws_id)
 
     def update_workspace_settings(self, ws_id: str, req: WorkspaceSettingsUpdateRequest) -> Optional[WorkspaceModel]:
         """Update workspace metadata or LLM configuration."""
         if ws_id not in self._workspaces:
-            return None
+            alt = ws_id.replace('-', '_') if '-' in ws_id else ws_id.replace('_', '-')
+            if alt in self._workspaces:
+                ws_id = alt
+            else:
+                return None
         data = self._workspaces[ws_id]
 
         if req.name is not None and req.name.strip():
@@ -173,11 +197,20 @@ class WorkspaceService:
             else:
                 self._api_keys.pop(ws_id, None)
 
+        try:
+            vector_store.sqlite.store_workspace(data)
+        except Exception:
+            pass
+
         return self.get_workspace(ws_id)
 
     def get_raw_api_key(self, ws_id: str) -> Optional[str]:
         """Internal server-only retrieval of the unmasked key for agent execution."""
-        return self._api_keys.get(ws_id)
+        return (
+            self._api_keys.get(ws_id)
+            or self._api_keys.get(ws_id.replace('-', '_'))
+            or self._api_keys.get(ws_id.replace('_', '-'))
+        )
 
 
 workspace_service = WorkspaceService()

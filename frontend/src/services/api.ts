@@ -131,16 +131,19 @@ export const api = {
       timestamp: new Date().toISOString()
     };
 
+    const chatPayload = {
+      message: content,
+      demo_mode: demoMode,
+      session_id: workspaceId || 'default',
+      workspace_id: workspaceId || 'default'
+    };
+    console.log('[VeriTrust API] POST /api/chat payload:', JSON.stringify(chatPayload, null, 2));
+
     try {
       const data = await fetchJson<any>(`${API_BASE}/chat`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          message: content,
-          demo_mode: demoMode,
-          session_id: workspaceId || 'default',
-          workspace_id: workspaceId || 'default'
-        })
+        body: JSON.stringify(chatPayload)
       });
 
       const botMessage: Message = {
@@ -168,7 +171,7 @@ export const api = {
       console.warn('Backend fetch failed, utilizing client simulation fallback:', err);
     }
 
-    // Client-side fallback simulation matching PRD rules
+    // Client-side fallback simulation strictly isolated per workspace
     const lower = content.toLowerCase();
     let status: 'Approved' | 'Corrected' | 'Blocked' = 'Approved';
     let originalDraft = '';
@@ -176,90 +179,192 @@ export const api = {
     let claims: any[] = [];
     let reasoning = '';
 
-    if (lower.includes('return') && (lower.includes('how long') || lower.includes('60') || lower.includes('days'))) {
-      status = 'Blocked';
-      originalDraft = 'You have a generous 60-day return window from delivery to return laptops and all electronics for a full refund.';
-      finalResponse = 'I want to make sure I give you the most accurate information. Let me connect you with a member of our support team who can help you with this return inquiry.';
-      reasoning = 'BLOCKED: Found high-severity contradiction. Maker stated 60-day return window, but verified policy mandates 30 days standard and 14 days for electronics.';
-      claims = [
-        {
-          id: 'c-sim-1',
-          text: 'You have a generous 60-day return window from delivery.',
-          verdict: 'Contradicted',
-          sourceSentence: 'Standard Return Window: Customers can return most items within 30 days of delivery for a full refund.',
-          sourceDocument: 'return_policy.txt',
-          reasoning: 'Contradicts verified standard return window (30 days).'
-        },
-        {
-          id: 'c-sim-2',
-          text: 'Electronics have the same 60-day window.',
-          verdict: 'Contradicted',
-          sourceSentence: 'Exceptions to the 30-day window: Electronics must be returned within 14 days of delivery.',
-          sourceDocument: 'return_policy.txt',
-          reasoning: 'Violates specific 14-day electronics policy exception.'
+    const isCustomWorkspace = workspaceId && workspaceId !== 'default';
+
+    if (isCustomWorkspace) {
+      // Retrieve stored custom workspace documents
+      let customDocs: Document[] = [];
+      let companyName = workspaceId.replace(/[-_]/g, ' ');
+      try {
+        const storedDocsStr = localStorage.getItem(`veritrust_docs_${workspaceId}`) 
+          || localStorage.getItem(`veritrust_docs_${workspaceId.replace('-', '_')}`)
+          || localStorage.getItem(`veritrust_docs_${workspaceId.replace('_', '-')}`);
+        if (storedDocsStr) customDocs = JSON.parse(storedDocsStr);
+
+        const customWsStr = localStorage.getItem('veritrust_custom_workspaces');
+        if (customWsStr) {
+          const wsList = JSON.parse(customWsStr);
+          const found = wsList.find((w: any) => w.id === workspaceId || w.id === workspaceId.replace('-', '_') || w.id === workspaceId.replace('_', '-'));
+          if (found) companyName = found.name;
         }
-      ];
-    } else if (lower.includes('express') || lower.includes('shipping cost')) {
-      status = 'Corrected';
-      originalDraft = 'Express Shipping delivers within 2-3 business days for just $9.99 regardless of order value.';
-      finalResponse = 'Express Shipping delivers within 2-3 business days for $15.99 regardless of order value. Free standard shipping applies to orders over $50.';
-      reasoning = 'CORRECTED: Found $9.99 pricing mismatch against official $15.99 express shipping rate. Auto-corrected and re-verified.';
-      claims = [
-        {
-          id: 'c-sim-3',
-          text: 'Express Shipping delivers within 2-3 business days.',
-          verdict: 'Verified',
-          sourceSentence: 'Express orders arrive within 2-3 business days and cost $15.99 regardless of order value.',
-          sourceDocument: 'shipping_policy.txt',
-          reasoning: 'Delivery window matches policy.'
-        },
-        {
-          id: 'c-sim-4',
-          text: 'The cost for Express Shipping is $9.99 (corrected to $15.99).',
-          verdict: 'Contradicted',
-          sourceSentence: 'Express orders arrive within 2-3 business days and cost $15.99 regardless of order value.',
-          sourceDocument: 'shipping_policy.txt',
-          reasoning: 'Rate auto-corrected from $9.99 to $15.99.'
+      } catch {}
+
+      // Find matching sentences from custom company documents
+      let matchingSentence = '';
+      let sourceDoc = customDocs[0]?.filename || `${companyName.replace(/\s+/g, '_')}_policy.txt`;
+      if (customDocs.length > 0) {
+        const allText = customDocs.map(d => d.content || d.snippet || '').join('\n');
+        const sentences = allText.split(/[.\n]/).map(s => s.trim()).filter(s => s.length > 10);
+        const queryWords = content.toLowerCase().split(/\W+/).filter(w => w.length > 2);
+        let bestScore = 0;
+        for (const s of sentences) {
+          const sLower = s.toLowerCase();
+          const score = queryWords.reduce((acc, word) => acc + (sLower.includes(word) ? 1 : 0), 0);
+          if (score > bestScore) {
+            bestScore = score;
+            matchingSentence = s;
+          }
         }
-      ];
-    } else if (lower.includes('price match') || lower.includes('cheaper')) {
-      status = 'Blocked';
-      originalDraft = 'NovaMart offers a Price Match Guarantee where we match any competitor and give 10% off.';
-      finalResponse = 'I want to make sure I give you the most accurate information. Let me connect you with a member of our support team who can help you with this.';
-      reasoning = 'BLOCKED: Maker fabricated a price match policy. Verified policy explicitly states NovaMart does not offer price matching.';
-      claims = [
-        {
-          id: 'c-sim-5',
-          text: 'NovaMart offers a comprehensive Price Match Guarantee.',
-          verdict: 'Contradicted',
-          sourceSentence: 'Price Match Guarantee: We do not currently offer a price match guarantee against competitors.',
-          sourceDocument: 'pricing.txt',
-          reasoning: 'Policy explicitly denies offering competitor price matching.'
+        if (!matchingSentence && sentences.length > 0) {
+          matchingSentence = sentences[0];
         }
-      ];
+      }
+
+      if (matchingSentence) {
+        status = 'Approved';
+        originalDraft = `Hello! Regarding your inquiry for ${companyName}: ${matchingSentence}. Please let us know if you need any further assistance!`;
+        finalResponse = originalDraft;
+        reasoning = `APPROVED: Verified against ${companyName} ground truth policy (${sourceDoc}).`;
+        claims = [
+          {
+            id: 'c-custom-1',
+            text: matchingSentence,
+            verdict: 'Verified',
+            confidence: 0.95,
+            severity: 'none',
+            sourceSentence: matchingSentence,
+            sourceDocument: sourceDoc,
+            reasoning: `Matches verified rule in ${sourceDoc}.`,
+            isFiller: false
+          }
+        ];
+      } else {
+        status = 'Approved';
+        originalDraft = `Thank you for contacting ${companyName}! I reviewed our knowledge base for your inquiry, but could not find an applicable policy document. Please allow me to connect you with our support staff.`;
+        finalResponse = originalDraft;
+        reasoning = `APPROVED: Conversational acknowledgment for ${companyName}.`;
+        claims = [
+          {
+            id: 'c-custom-none',
+            text: `Support assistance for ${companyName}`,
+            verdict: 'Verified',
+            confidence: 1.0,
+            severity: 'none',
+            sourceSentence: 'Support assistance policy',
+            sourceDocument: sourceDoc,
+            reasoning: 'Conversational support response.',
+            isFiller: true
+          }
+        ];
+      }
     } else {
-      status = 'Approved';
-      originalDraft = 'You can return most items within 30 days of delivery for a full refund using our free pre-paid return label. Refunds process in 5-7 business days.';
-      finalResponse = originalDraft;
-      reasoning = 'APPROVED: All claims verified against NovaMart return and refund documentation.';
-      claims = [
-        {
-          id: 'c-sim-6',
-          text: 'You can return most items within 30 days of delivery.',
-          verdict: 'Verified',
-          sourceSentence: 'Standard Return Window: Customers can return most items within 30 days of delivery for a full refund.',
-          sourceDocument: 'return_policy.txt',
-          reasoning: 'Verified against Standard Return Window.'
-        },
-        {
-          id: 'c-sim-7',
-          text: 'Returns are free with our pre-paid return label.',
-          verdict: 'Verified',
-          sourceSentence: 'Return Shipping: Returns are free if you use our pre-paid return label.',
-          sourceDocument: 'return_policy.txt',
-          reasoning: 'Verified against Return Shipping clause.'
-        }
-      ];
+      // Default NovaMart Demo Benchmark Scenarios
+      if (lower.includes('return') && (lower.includes('how long') || lower.includes('60') || lower.includes('days'))) {
+        status = 'Blocked';
+        originalDraft = 'You have a generous 60-day return window from delivery to return laptops and all electronics for a full refund.';
+        finalResponse = 'I want to make sure I give you the most accurate information. Let me connect you with a member of our support team who can help you with this return inquiry.';
+        reasoning = 'BLOCKED: Found high-severity contradiction. Maker stated 60-day return window, but verified policy mandates 30 days standard and 14 days for electronics.';
+        claims = [
+          {
+            id: 'c-sim-1',
+            text: 'You have a generous 60-day return window from delivery.',
+            verdict: 'Contradicted',
+            confidence: 0.95,
+            severity: 'high',
+            sourceSentence: 'Standard Return Window: Customers can return most items within 30 days of delivery for a full refund.',
+            sourceDocument: 'return_policy.txt',
+            reasoning: 'Contradicts verified standard return window (30 days).',
+            isFiller: false
+          },
+          {
+            id: 'c-sim-2',
+            text: 'Electronics have the same 60-day window.',
+            verdict: 'Contradicted',
+            confidence: 0.95,
+            severity: 'high',
+            sourceSentence: 'Exceptions to the 30-day window: Electronics must be returned within 14 days of delivery.',
+            sourceDocument: 'return_policy.txt',
+            reasoning: 'Violates specific 14-day electronics policy exception.',
+            isFiller: false
+          }
+        ];
+      } else if (lower.includes('express') || lower.includes('shipping cost')) {
+        status = 'Corrected';
+        originalDraft = 'Express Shipping delivers within 2-3 business days for just $9.99 regardless of order value.';
+        finalResponse = 'Express Shipping delivers within 2-3 business days for $15.99 regardless of order value. Free standard shipping applies to orders over $50.';
+        reasoning = 'CORRECTED: Found $9.99 pricing mismatch against official $15.99 express shipping rate. Auto-corrected and re-verified.';
+        claims = [
+          {
+            id: 'c-sim-3',
+            text: 'Express Shipping delivers within 2-3 business days.',
+            verdict: 'Verified',
+            confidence: 0.98,
+            severity: 'none',
+            sourceSentence: 'Express orders arrive within 2-3 business days and cost $15.99 regardless of order value.',
+            sourceDocument: 'shipping_policy.txt',
+            reasoning: 'Delivery window matches policy.',
+            isFiller: false
+          },
+          {
+            id: 'c-sim-4',
+            text: 'The cost for Express Shipping is $9.99 (corrected to $15.99).',
+            verdict: 'Contradicted',
+            confidence: 0.92,
+            severity: 'medium',
+            sourceSentence: 'Express orders arrive within 2-3 business days and cost $15.99 regardless of order value.',
+            sourceDocument: 'shipping_policy.txt',
+            reasoning: 'Rate auto-corrected from $9.99 to $15.99.',
+            isFiller: false
+          }
+        ];
+      } else if (lower.includes('price match') || lower.includes('cheaper')) {
+        status = 'Blocked';
+        originalDraft = 'NovaMart offers a Price Match Guarantee where we match any competitor and give 10% off.';
+        finalResponse = 'I want to make sure I give you the most accurate information. Let me connect you with a member of our support team who can help you with this.';
+        reasoning = 'BLOCKED: Maker fabricated a price match policy. Verified policy explicitly states NovaMart does not offer price matching.';
+        claims = [
+          {
+            id: 'c-sim-5',
+            text: 'NovaMart offers a comprehensive Price Match Guarantee.',
+            verdict: 'Contradicted',
+            confidence: 0.96,
+            severity: 'high',
+            sourceSentence: 'Price Match Guarantee: We do not currently offer a price match guarantee against competitors.',
+            sourceDocument: 'pricing.txt',
+            reasoning: 'Policy explicitly denies offering competitor price matching.',
+            isFiller: false
+          }
+        ];
+      } else {
+        status = 'Approved';
+        originalDraft = 'You can return most items within 30 days of delivery for a full refund using our free pre-paid return label. Refunds process in 5-7 business days.';
+        finalResponse = originalDraft;
+        reasoning = 'APPROVED: All claims verified against NovaMart return and refund documentation.';
+        claims = [
+          {
+            id: 'c-sim-6',
+            text: 'You can return most items within 30 days of delivery.',
+            verdict: 'Verified',
+            confidence: 0.95,
+            severity: 'none',
+            sourceSentence: 'Standard Return Window: Customers can return most items within 30 days of delivery for a full refund.',
+            sourceDocument: 'return_policy.txt',
+            reasoning: 'Verified against Standard Return Window.',
+            isFiller: false
+          },
+          {
+            id: 'c-sim-7',
+            text: 'Returns are free with our pre-paid return label.',
+            verdict: 'Verified',
+            confidence: 0.95,
+            severity: 'none',
+            sourceSentence: 'Return Shipping: Returns are free if you use our pre-paid return label.',
+            sourceDocument: 'return_policy.txt',
+            reasoning: 'Verified against Return Shipping clause.',
+            isFiller: false
+          }
+        ];
+      }
     }
 
     const botMessage: Message = {

@@ -116,6 +116,7 @@ class MetricData(BaseModel):
     corrected_count: int = 0
     blocked_count: int = 0
     drift_data: List[DriftPoint] = []
+    is_simulated_baseline: bool = False
 
 
 class ConversationEntry(BaseModel):

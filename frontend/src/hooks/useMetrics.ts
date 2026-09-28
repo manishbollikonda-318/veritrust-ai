@@ -4,7 +4,7 @@ import { api } from '../services/api';
 import { useWorkspace } from '../context/WorkspaceContext';
 
 export function useMetrics() {
-  const { currentWorkspace } = useWorkspace();
+  const { currentWorkspace, workspaceVersion } = useWorkspace();
   const [metrics, setMetrics] = useState<MetricData | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
 
@@ -22,7 +22,7 @@ export function useMetrics() {
     }, 5000);
 
     return () => clearInterval(interval);
-  }, [currentWorkspace]);
+  }, [currentWorkspace, workspaceVersion]);
 
   return { metrics, loading, currentWorkspace };
 }

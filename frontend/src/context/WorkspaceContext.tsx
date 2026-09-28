@@ -13,6 +13,8 @@ interface WorkspaceContextType {
   isCreateModalOpen: boolean;
   openCreateModal: () => void;
   closeCreateModal: () => void;
+  resetWorkspaceData: () => void;
+  workspaceVersion: number;
 }
 
 const WorkspaceContext = createContext<WorkspaceContextType | undefined>(undefined);
@@ -35,6 +37,7 @@ export const WorkspaceProvider: React.FC<{ children: React.ReactNode }> = ({ chi
   });
   const [workspaces, setWorkspaces] = useState<Workspace[]>([DEFAULT_WORKSPACE_FALLBACK]);
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
+  const [workspaceVersion, setWorkspaceVersion] = useState(0);
 
   const refreshWorkspaces = async () => {
     try {
@@ -54,6 +57,8 @@ export const WorkspaceProvider: React.FC<{ children: React.ReactNode }> = ({ chi
   const handleSetWorkspace = (id: string) => {
     setCurrentWorkspace(id);
     localStorage.setItem('veritrust_workspace', id);
+    // Increment version to trigger reset in dependent components
+    setWorkspaceVersion(v => v + 1);
   };
 
   const handleCreateWorkspace = async (input: WorkspaceCreateInput): Promise<Workspace> => {
@@ -62,6 +67,12 @@ export const WorkspaceProvider: React.FC<{ children: React.ReactNode }> = ({ chi
     handleSetWorkspace(newWs.id);
     setIsCreateModalOpen(false);
     return newWs;
+  };
+
+  const resetWorkspaceData = () => {
+    // This function can be called by components to reset their local state
+    // The workspaceVersion increment already triggers useEffect dependencies
+    setWorkspaceVersion(v => v + 1);
   };
 
   const isDemoWorkspace = currentWorkspace === 'default' || currentWorkspace === 'acme-health';
@@ -79,7 +90,9 @@ export const WorkspaceProvider: React.FC<{ children: React.ReactNode }> = ({ chi
         isDemoWorkspace,
         isCreateModalOpen,
         openCreateModal: () => setIsCreateModalOpen(true),
-        closeCreateModal: () => setIsCreateModalOpen(false)
+        closeCreateModal: () => setIsCreateModalOpen(false),
+        resetWorkspaceData,
+        workspaceVersion
       }}
     >
       {children}

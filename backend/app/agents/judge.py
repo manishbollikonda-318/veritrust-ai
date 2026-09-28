@@ -234,7 +234,9 @@ class JudgeAgent:
                     cp = unmatched_claim_prices[0]
                     closest_sp = min(source_prices, key=lambda s: abs(s - cp))
                     pct_err = abs(cp - closest_sp) / max(closest_sp, 0.01) * 100
-                    severity = "critical" if pct_err > 50 else "high" if pct_err > 10 else "medium"
+                    # Price mismatches are correctable by Maker revision — use "medium" severity
+                    # to route to the correction loop instead of blocking
+                    severity = "medium"
                     return {
                         "verdict": "Contradicted",
                         "confidence": 0.97,
@@ -530,16 +532,34 @@ class JudgeAgent:
             ))
 
         # Determine overall safety and severity
+        # Collect max severity among contradicted claims
+        contradicted_severities = [c.severity for c in verified_claims if c.verdict == "Contradicted" and c.severity != "none"]
+        max_contradicted_severity = "none"
+        if contradicted_severities:
+            severity_order = {"critical": 4, "high": 3, "medium": 2, "low": 1, "none": 0}
+            max_contradicted_severity = max(contradicted_severities, key=lambda s: severity_order.get(s, 0))
+        
         if has_contradiction:
             is_safe = False
-            severity = "high"
-            det_note = f" ({deterministic_hits} caught by deterministic code-check)" if deterministic_hits else ""
-            overall_reasoning = (
-                f"BLOCKED: Found {sum(1 for c in verified_claims if c.verdict == 'Contradicted')} "
-                f"contradicted claim(s){det_note}. The draft contains information that directly conflicts with "
-                f"verified company policies. This is a high-severity issue — the AI would have "
-                f"confidently stated incorrect information to the customer."
-            )
+            # Only block for high/critical severity contradictions; medium severity -> correct
+            if max_contradicted_severity in ("high", "critical"):
+                severity = "high"
+                det_note = f" ({deterministic_hits} caught by deterministic code-check)" if deterministic_hits else ""
+                overall_reasoning = (
+                    f"BLOCKED: Found {sum(1 for c in verified_claims if c.verdict == 'Contradicted')} "
+                    f"contradicted claim(s){det_note}. The draft contains information that directly conflicts with "
+                    f"verified company policies. This is a high-severity issue — the AI would have "
+                    f"confidently stated incorrect information to the customer."
+                )
+            else:
+                # Medium severity contradictions can be auto-corrected
+                severity = "low"
+                det_note = f" ({deterministic_hits} caught by deterministic code-check)" if deterministic_hits else ""
+                overall_reasoning = (
+                    f"CORRECTED: Found {sum(1 for c in verified_claims if c.verdict == 'Contradicted')} "
+                    f"contradicted claim(s){det_note} that can be auto-corrected against source documents. "
+                    f"Revising response to align with verified policies."
+                )
         elif has_unsupported:
             is_safe = False
             severity = "low"

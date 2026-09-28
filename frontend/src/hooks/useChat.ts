@@ -4,22 +4,25 @@ import { api } from '../services/api';
 import { useWorkspace } from '../context/WorkspaceContext';
 
 export function useChat() {
-  const { currentWorkspace } = useWorkspace();
+  const { currentWorkspace, workspaceVersion } = useWorkspace();
   const [messages, setMessages] = useState<Message[]>([]);
   const [loading, setLoading] = useState(false);
   const [selectedMessage, setSelectedMessage] = useState<Message | null>(null);
   const [selectedClaim, setSelectedClaim] = useState<Claim | null>(null);
   const [demoMode, setDemoMode] = useState<boolean>(true);
 
+  // Reset all chat state when workspace changes (via version increment)
   useEffect(() => {
+    setMessages([]);
+    setSelectedMessage(null);
+    setSelectedClaim(null);
+
     api.getMessages(currentWorkspace).then((msgs) => {
       setMessages(msgs);
-      // Auto-select the first assistant message that has claims for instant visual feedback
       const firstWithClaims = msgs.find(m => m.claims && m.claims.length > 0);
       if (firstWithClaims) {
         setSelectedMessage(firstWithClaims);
         if (firstWithClaims.claims && firstWithClaims.claims.length > 0) {
-          // Select a flagged claim if any, otherwise first claim
           const flagged = firstWithClaims.claims.find(c => c.verdict !== 'Verified') || firstWithClaims.claims[0];
           setSelectedClaim(flagged);
         }
@@ -28,7 +31,7 @@ export function useChat() {
         setSelectedClaim(null);
       }
     });
-  }, [currentWorkspace]);
+  }, [currentWorkspace, workspaceVersion]);
 
   const sendMessage = async (content: string) => {
     if (!content.trim() || loading) return;

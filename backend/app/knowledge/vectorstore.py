@@ -36,6 +36,17 @@ class SQLiteKnowledgeStore:
             with self._get_connection() as conn:
                 cursor = conn.cursor()
                 cursor.execute("""
+                    CREATE TABLE IF NOT EXISTS corporate_workspaces (
+                        id TEXT PRIMARY KEY,
+                        name TEXT NOT NULL,
+                        industry TEXT NOT NULL,
+                        description TEXT NOT NULL,
+                        is_demo BOOLEAN DEFAULT 0,
+                        llm_provider TEXT DEFAULT 'shared_default',
+                        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+                    )
+                """)
+                cursor.execute("""
                     CREATE TABLE IF NOT EXISTS corporate_documents (
                         id TEXT PRIMARY KEY,
                         workspace_id TEXT NOT NULL,
@@ -59,9 +70,52 @@ class SQLiteKnowledgeStore:
                 """)
                 cursor.execute("CREATE INDEX IF NOT EXISTS idx_docs_ws ON corporate_documents(workspace_id)")
                 cursor.execute("CREATE INDEX IF NOT EXISTS idx_chunks_ws ON document_chunks(workspace_id)")
+                cursor.execute("CREATE INDEX IF NOT EXISTS idx_ws_id ON corporate_workspaces(id)")
                 conn.commit()
         except Exception as e:
             print(f"SQLite initialization warning: {e}")
+
+    def store_workspace(self, ws: Dict[str, Any]):
+        try:
+            with self._get_connection() as conn:
+                cursor = conn.cursor()
+                cursor.execute("""
+                    INSERT OR REPLACE INTO corporate_workspaces (id, name, industry, description, is_demo, llm_provider, created_at)
+                    VALUES (?, ?, ?, ?, ?, ?, ?)
+                """, (
+                    ws["id"],
+                    ws["name"],
+                    ws.get("industry", "General Business"),
+                    ws.get("description", ""),
+                    1 if ws.get("is_demo") else 0,
+                    ws.get("llm_provider", "shared_default"),
+                    ws.get("created_at", datetime.now().isoformat())
+                ))
+                conn.commit()
+        except Exception as e:
+            print(f"SQLite store_workspace error: {e}")
+
+    def load_workspaces(self) -> List[Dict[str, Any]]:
+        try:
+            with self._get_connection() as conn:
+                cursor = conn.cursor()
+                cursor.execute("SELECT id, name, industry, description, is_demo, llm_provider, created_at FROM corporate_workspaces")
+                rows = cursor.fetchall()
+                return [
+                    {
+                        "id": r[0],
+                        "name": r[1],
+                        "industry": r[2],
+                        "description": r[3],
+                        "is_demo": bool(r[4]),
+                        "llm_provider": r[5],
+                        "created_at": r[6]
+                    }
+                    for r in rows
+                ]
+        except Exception as e:
+            print(f"SQLite load_workspaces error: {e}")
+            return []
 
     def store_document(self, workspace_id: str, doc_data: Dict[str, Any]):
         try:
@@ -245,8 +299,8 @@ class LightweightEmbeddingEngine:
 
 class MultiTenantVectorStore:
     def __init__(self):
-        self.engines: Dict[str, LightweightEmbeddingEngine] = defaultdict(LightweightEmbeddingEngine)
-        self.workspace_raw_docs: Dict[str, List[Dict[str, Any]]] = defaultdict(list)
+        self.engines: Dict[str, LightweightEmbeddingEngine] = {}
+        self.workspace_raw_docs: Dict[str, List[Dict[str, Any]]] = {}
         self.use_chroma = HAS_CHROMADB
         self.client = None
         self.embedding_model = None
@@ -270,30 +324,45 @@ class MultiTenantVectorStore:
 
     def _get_engine(self, workspace_id: str = "default") -> LightweightEmbeddingEngine:
         ws = workspace_id or "default"
-        if ws not in self.engines:
-            self.engines[ws] = LightweightEmbeddingEngine(workspace_id=ws)
-            raw_docs = self.get_raw_docs(ws)
-            if raw_docs:
-                chunks = []
-                metadatas = []
-                ids = []
-                for doc in raw_docs:
-                    content = doc.get("content", "")
-                    fname = doc.get("filename", "doc.txt")
-                    doc_chunks = [c.strip() for c in content.split("\n\n") if c.strip()]
-                    for i, chunk in enumerate(doc_chunks):
-                        chunks.append(chunk)
-                        metadatas.append({"source": fname, "chunk_index": i, "workspace_id": ws})
-                        ids.append(f"{ws}_{fname}_{i}")
-                if chunks:
-                    self.engines[ws].fit_and_index(chunks, metadatas, ids)
-            elif ws == "default":
-                try:
-                    from app.knowledge.loader import load_and_embed_documents
-                    load_and_embed_documents(workspace_id="default")
-                except Exception as e:
-                    print(f"Error seeding default knowledge: {e}")
-        return self.engines[ws]
+        alt_ws = ws.replace('-', '_') if '-' in ws else ws.replace('_', '-')
+
+        # Check existing in-memory engine under primary or alt key
+        if ws in self.engines:
+            return self.engines[ws]
+        if alt_ws in self.engines:
+            return self.engines[alt_ws]
+
+        # Initialize fresh engine strictly bound to this workspace
+        engine = LightweightEmbeddingEngine(workspace_id=ws)
+        self.engines[ws] = engine
+
+        # Load raw docs from SQLite
+        raw_docs = self.get_raw_docs(ws)
+        if not raw_docs and alt_ws != ws:
+            raw_docs = self.get_raw_docs(alt_ws)
+
+        if raw_docs:
+            chunks = []
+            metadatas = []
+            ids = []
+            for doc in raw_docs:
+                content = doc.get("content", "")
+                fname = doc.get("filename", "doc.txt")
+                doc_chunks = [c.strip() for c in content.split("\n\n") if c.strip()]
+                for i, chunk in enumerate(doc_chunks):
+                    chunks.append(chunk)
+                    metadatas.append({"source": fname, "chunk_index": i, "workspace_id": ws})
+                    ids.append(f"{ws}_{fname}_{i}")
+            if chunks:
+                engine.fit_and_index(chunks, metadatas, ids)
+        elif ws == "default":
+            try:
+                from app.knowledge.loader import load_and_embed_documents
+                load_and_embed_documents(workspace_id="default")
+            except Exception as e:
+                print(f"Error seeding default knowledge: {e}")
+
+        return engine
 
     def add_documents(
         self,
@@ -313,8 +382,9 @@ class MultiTenantVectorStore:
 
         if self.use_chroma and self._ensure_chroma():
             try:
+                collection_name = f"ws_{ws.replace('-', '_')}"
                 collection = self.client.get_or_create_collection(
-                    name=f"ws_{ws.replace('-', '_')}",
+                    name=collection_name,
                     metadata={"hnsw:space": "cosine"}
                 )
                 embeddings = self.embedding_model.encode(documents).tolist()
@@ -324,24 +394,32 @@ class MultiTenantVectorStore:
 
     def search(self, query: str, n_results: int = 3, workspace_id: str = "default") -> List[Dict[str, Any]]:
         ws = workspace_id or "default"
+        alt_ws = ws.replace('-', '_') if '-' in ws else ws.replace('_', '-')
         engine = self._get_engine(ws)
         
         if self.use_chroma and self._ensure_chroma():
-            try:
-                collection = self.client.get_collection(name=f"ws_{ws.replace('-', '_')}")
-                query_embedding = self.embedding_model.encode([query]).tolist()
-                results = collection.query(query_embeddings=query_embedding, n_results=n_results)
-                docs = results["documents"][0] if results["documents"] else []
-                metas = results["metadatas"][0] if results["metadatas"] else []
-                if docs:
-                    return [{"text": doc, "metadata": meta} for doc, meta in zip(docs, metas)]
-            except Exception:
-                pass
+            for target_ws in [ws, alt_ws]:
+                try:
+                    collection = self.client.get_collection(name=f"ws_{target_ws.replace('-', '_')}")
+                    query_embedding = self.embedding_model.encode([query]).tolist()
+                    results = collection.query(
+                        query_embeddings=query_embedding,
+                        n_results=n_results,
+                        where={"workspace_id": target_ws}
+                    )
+                    docs = results["documents"][0] if results["documents"] else []
+                    metas = results["metadatas"][0] if results["metadatas"] else []
+                    if docs:
+                        return [{"text": doc, "metadata": meta} for doc, meta in zip(docs, metas)]
+                except Exception:
+                    pass
                 
         return engine.search(query, n_results=n_results)
 
     def store_raw_doc(self, workspace_id: str, doc_data: Dict[str, Any]):
         ws = workspace_id or "default"
+        if ws not in self.workspace_raw_docs:
+            self.workspace_raw_docs[ws] = []
         # Filter existing by filename/id
         self.workspace_raw_docs[ws] = [
             d for d in self.workspace_raw_docs[ws] 
@@ -353,18 +431,23 @@ class MultiTenantVectorStore:
 
     def get_raw_docs(self, workspace_id: str = "default") -> List[Dict[str, Any]]:
         ws = workspace_id or "default"
-        if not self.workspace_raw_docs[ws]:
+        alt_ws = ws.replace('-', '_') if '-' in ws else ws.replace('_', '-')
+        
+        if not self.workspace_raw_docs.get(ws):
             loaded = self.sqlite.load_documents(ws)
+            if not loaded and alt_ws != ws:
+                loaded = self.sqlite.load_documents(alt_ws)
             if loaded:
                 self.workspace_raw_docs[ws] = loaded
-        return self.workspace_raw_docs[ws]
+        return self.workspace_raw_docs.get(ws, [])
 
     def delete_doc(self, filename: str, workspace_id: str = "default"):
         ws = workspace_id or "default"
-        self.workspace_raw_docs[ws] = [
-            d for d in self.workspace_raw_docs[ws]
-            if d.get("filename") != filename
-        ]
+        if ws in self.workspace_raw_docs:
+            self.workspace_raw_docs[ws] = [
+                d for d in self.workspace_raw_docs[ws]
+                if d.get("filename") != filename
+            ]
         self.sqlite.delete_document(ws, filename)
         # Re-index workspace chunks
         self.reindex_workspace(ws)

@@ -131,12 +131,17 @@ async def chat_maker_only(request: ChatRequest):
     
     start_time = time.time()
     
-    draft = maker_agent.generate_draft(
+    draft_result = maker_agent.generate_draft(
         query=request.message,
         history=[m.model_dump() for m in request.history],
         demo_mode=demo_mode,
         workspace_id=workspace_id
     )
+    # Handle both tuple return (draft, method) and legacy string return
+    if isinstance(draft_result, tuple):
+        draft = draft_result[0]
+    else:
+        draft = draft_result
     
     latency = (time.time() - start_time) * 1000
     
@@ -163,12 +168,17 @@ async def chat_compare(request: ChatRequest):
     
     # Run maker-only
     maker_start = time.time()
-    draft = maker_agent.generate_draft(
+    draft_result = maker_agent.generate_draft(
         query=request.message,
         history=[m.model_dump() for m in request.history],
         demo_mode=demo_mode,
         workspace_id=workspace_id
     )
+    # Handle both tuple return (draft, method) and legacy string return
+    if isinstance(draft_result, tuple):
+        draft = draft_result[0]
+    else:
+        draft = draft_result
     maker_latency = (time.time() - maker_start) * 1000
     
     maker_only_response = ChatResponse(
