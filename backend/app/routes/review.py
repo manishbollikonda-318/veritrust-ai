@@ -34,6 +34,6 @@ async def resolve_review_item(item_id: str, request: ReviewResolutionRequest):
 
 
 @router.get("/review/stats", response_model=ReviewStatsResponse)
-async def get_review_stats():
+async def get_review_stats(workspace_id: Optional[str] = Query(None)):
     """Get review queue counts and self-improving learned rule stats."""
-    return review_service.get_stats()
+    return review_service.get_stats(workspace_id=workspace_id)

@@ -1,5 +1,6 @@
 import { Message, MetricData, Document, ComparisonResponse, ReviewItem, ReviewStats, Workspace, WorkspaceCreateInput } from '../types';
 import { mockMessages, mockMetrics, mockDocuments } from './mockData';
+import { notifyToast } from './notifications';
 
 function getApiBase(): string {
   // If explicitly specified in environment
@@ -118,6 +119,7 @@ export const api = {
       }
     } catch {
       // Fallback to mock
+      notifyToast('warning', 'Using Local Data', 'Could not load chat history — showing local fallback.');
     }
     // Only return mock baseline messages for default demo workspace
     return workspaceId === 'default' ? [...mockMessages] : [];
@@ -169,6 +171,7 @@ export const api = {
       return { userMessage, botMessage };
     } catch (err) {
       console.warn('Backend fetch failed, utilizing client simulation fallback:', err);
+      notifyToast('warning', 'Using Local Simulation', 'Backend unavailable — using client-side fallback for this workspace.');
     }
 
     // Client-side fallback simulation strictly isolated per workspace
@@ -423,9 +426,32 @@ export const api = {
         })
       };
     } catch {
-      // Fallback
+      // Fallback: only for default demo workspace
+      if (workspaceId === 'default' || !workspaceId) {
+        notifyToast('warning', 'Using Demo Metrics', 'Backend metrics unavailable — showing NovaMart demo baseline.');
+        return mockMetrics;
+      }
+      // For custom workspaces, return empty metrics
+      notifyToast('info', 'No Metrics Yet', 'This workspace has no evaluation data yet.');
+      return {
+        passRate: 0,
+        correctionRate: 0,
+        blockRate: 0,
+        totalQueries: 0,
+        totalClaims: 0,
+        verifiedClaims: 0,
+        unsupportedClaims: 0,
+        contradictedClaims: 0,
+        avgLatencyMs: 0,
+        avgMakerLatencyMs: 0,
+        avgJudgeLatencyMs: 0,
+        avgCorrectionLatencyMs: 0,
+        approvedCount: 0,
+        correctedCount: 0,
+        blockedCount: 0,
+        driftData: []
+      };
     }
-    return mockMetrics;
   },
 
   async getDocuments(workspaceId: string = 'default'): Promise<Document[]> {
@@ -444,6 +470,7 @@ export const api = {
       }
     } catch {
       // Fallback
+      notifyToast('warning', 'Using Demo Documents', 'Could not load workspace documents — showing NovaMart demo baseline.');
     }
     return mockDocuments;
   },

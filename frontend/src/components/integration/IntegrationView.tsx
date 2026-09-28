@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { useWorkspace } from '../../context/WorkspaceContext';
 import { api } from '../../services/api';
 import NeuCard from '../ui/NeuCard';
@@ -10,6 +10,21 @@ import {
   ShoppingBag, Send, X
 } from 'lucide-react';
 
+function getApiBaseUrl(): string {
+  // Match the logic in api.ts getApiBase()
+  if (typeof import.meta !== 'undefined' && (import.meta as any).env?.VITE_API_URL) {
+    return ((import.meta as any).env.VITE_API_URL as string).replace(/\/+$/, '');
+  }
+  if (typeof window !== 'undefined' && window.location.hostname.includes('veritrust-ai-gdgoc.onrender.com')) {
+    return 'https://veritrust-ai-271n.onrender.com/api';
+  }
+  // For local development, use relative path (proxied by Vite) or full URL
+  if (typeof window !== 'undefined') {
+    return `${window.location.origin}/api`;
+  }
+  return '/api';
+}
+
 export default function IntegrationView() {
   const { currentWorkspace } = useWorkspace();
   const [testDraft, setTestDraft] = useState(
@@ -19,6 +34,11 @@ export default function IntegrationView() {
   const [verificationResult, setVerificationResult] = useState<any>(null);
   const [activeTab, setActiveTab] = useState<'curl' | 'js' | 'python' | 'widget'>('curl');
   const [copiedTab, setCopiedTab] = useState<string | null>(null);
+
+  // Dynamic API base for code snippets
+  const apiBase = useMemo(() => getApiBaseUrl().replace(/\/api$/, ''), []);
+  const verifyEndpoint = `${apiBase}/api/verify`;
+  const chatEndpoint = `${apiBase}/api/chat`;
 
   // Storefront Simulator Modal state
   const [showSimulator, setShowSimulator] = useState(false);
@@ -83,7 +103,7 @@ export default function IntegrationView() {
     setTimeout(() => setCopiedTab(null), 2500);
   };
 
-  const curlCode = `curl -X POST "http://127.0.0.1:8000/api/verify" \\
+  const curlCode = `curl -X POST "${verifyEndpoint}" \\
   -H "Content-Type: application/json" \\
   -d '{
     "draft": "${testDraft.replace(/"/g, '\\"')}",
@@ -94,7 +114,7 @@ export default function IntegrationView() {
 import fetch from 'node-fetch';
 
 async function verifyAIResponse(draftText) {
-  const response = await fetch('http://127.0.0.1:8000/api/verify', {
+  const response = await fetch('${verifyEndpoint}', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({
@@ -115,7 +135,7 @@ async function verifyAIResponse(draftText) {
 import requests
 
 def verify_response(draft_text: str, workspace: str = "${currentWorkspace}"):
-    url = "http://127.0.0.1:8000/api/verify"
+    url = "${verifyEndpoint}"
     payload = {
         "draft": draft_text,
         "workspace_id": workspace
@@ -134,7 +154,7 @@ for claim in result['claims']:
 <script
   src="https://cdn.veritrust.ai/widget/v1/guardrail.min.js"
   data-veritrust-workspace="${currentWorkspace}"
-  data-api-endpoint="http://127.0.0.1:8000"
+  data-api-endpoint="${apiBase}"
   async>
 </script>`;
 

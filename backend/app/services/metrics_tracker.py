@@ -131,7 +131,7 @@ class MetricsTracker:
                 # Fresh, newly initialized company workspace with 0 queries run yet
                 return MetricData(
                     total_queries=0,
-                    pass_rate=100.0,
+                    pass_rate=0.0,
                     correction_rate=0.0,
                     block_rate=0.0,
                     total_claims=0,

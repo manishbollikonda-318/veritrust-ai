@@ -189,14 +189,18 @@ class ReviewService:
 
         return item
 
-    def get_stats(self) -> ReviewStatsResponse:
-        pending = sum(1 for it in self.items.values() if it.review_status == "pending")
-        resolved = sum(1 for it in self.items.values() if it.review_status != "pending")
+    def get_stats(self, workspace_id: Optional[str] = None) -> ReviewStatsResponse:
+        items = self.items.values()
+        if workspace_id and workspace_id != "all":
+            items = [it for it in items if it.workspace_id == workspace_id]
+        pending = sum(1 for it in items if it.review_status == "pending")
+        resolved = sum(1 for it in items if it.review_status != "pending")
+        learned = len([lr for lr in self.learned_rules if not workspace_id or lr.get("workspace_id") == workspace_id])
         return ReviewStatsResponse(
             pending_count=pending,
             resolved_count=resolved,
-            total_learned_rules=len(self.learned_rules),
-            system_accuracy_score=round(98.4 + (len(self.learned_rules) * 0.3), 1)
+            total_learned_rules=learned,
+            system_accuracy_score=round(98.4 + (learned * 0.3), 1)
         )
 
 

@@ -11,32 +11,35 @@ import TermsConditions from './components/pages/TermsConditions';
 import NotFound from './components/pages/NotFound';
 import { WorkspaceProvider } from './context/WorkspaceContext';
 import { SidebarProvider } from './context/SidebarContext';
+import { ToastProvider } from './context/ToastContext';
 
 import ErrorBoundary from './components/ui/ErrorBoundary';
 
 export default function App() {
   return (
     <ErrorBoundary fallbackTitle="Application Error">
-      <WorkspaceProvider>
-        <SidebarProvider>
-          <Router>
-            <Layout>
-              <Routes>
-                <Route path="/" element={<Navigate to="/chat" replace />} />
-                <Route path="/chat" element={<ErrorBoundary fallbackTitle="Chat Error"><ChatView /></ErrorBoundary>} />
-                <Route path="/comparison" element={<ErrorBoundary fallbackTitle="Comparison Error"><ComparisonView /></ErrorBoundary>} />
-                <Route path="/review" element={<ErrorBoundary fallbackTitle="Review Queue Error"><ReviewQueueView /></ErrorBoundary>} />
-                <Route path="/metrics" element={<ErrorBoundary fallbackTitle="Metrics Error"><MetricsDashboard /></ErrorBoundary>} />
-                <Route path="/knowledge" element={<ErrorBoundary fallbackTitle="Knowledge Base Error"><KnowledgeBaseView /></ErrorBoundary>} />
-                <Route path="/integration" element={<ErrorBoundary fallbackTitle="Integration Error"><IntegrationView /></ErrorBoundary>} />
-                <Route path="/privacy" element={<PrivacyPolicy />} />
-                <Route path="/terms" element={<TermsConditions />} />
-                <Route path="*" element={<NotFound />} />
-              </Routes>
-            </Layout>
-          </Router>
-        </SidebarProvider>
-      </WorkspaceProvider>
+      <ToastProvider>
+        <WorkspaceProvider>
+          <SidebarProvider>
+            <Router>
+              <Layout>
+                <Routes>
+                  <Route path="/" element={<Navigate to="/chat" replace />} />
+                  <Route path="/chat" element={<ErrorBoundary fallbackTitle="Chat Error"><ChatView /></ErrorBoundary>} />
+                  <Route path="/comparison" element={<ErrorBoundary fallbackTitle="Comparison Error"><ComparisonView /></ErrorBoundary>} />
+                  <Route path="/review" element={<ErrorBoundary fallbackTitle="Review Queue Error"><ReviewQueueView /></ErrorBoundary>} />
+                  <Route path="/metrics" element={<ErrorBoundary fallbackTitle="Metrics Error"><MetricsDashboard /></ErrorBoundary>} />
+                  <Route path="/knowledge" element={<ErrorBoundary fallbackTitle="Knowledge Base Error"><KnowledgeBaseView /></ErrorBoundary>} />
+                  <Route path="/integration" element={<ErrorBoundary fallbackTitle="Integration Error"><IntegrationView /></ErrorBoundary>} />
+                  <Route path="/privacy" element={<PrivacyPolicy />} />
+                  <Route path="/terms" element={<TermsConditions />} />
+                  <Route path="*" element={<NotFound />} />
+                </Routes>
+              </Layout>
+            </Router>
+          </SidebarProvider>
+        </WorkspaceProvider>
+      </ToastProvider>
     </ErrorBoundary>
   );
 }
