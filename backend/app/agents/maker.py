@@ -286,7 +286,7 @@ def dispatch_llm_generation(
 
     elif provider == "gemini":
         use_key = key or settings.GEMINI_API_KEY
-        out = call_gemini_api(prompt, use_key, getattr(settings, "GEMINI_MODEL", "gemini-3.8-flash"))
+        out = call_gemini_api(prompt, use_key, getattr(settings, "GEMINI_MODEL", "gemini-1.5-flash"))
         if out: return out, "Google Gemini"
 
     # 2. Key prefix heuristics if user pasted a custom key into shared_default
@@ -300,8 +300,8 @@ def dispatch_llm_generation(
         elif key.startswith("http"):
             out = call_ollama_api(prompt, key, getattr(settings, "OLLAMA_MODEL", "llama3"))
             if out: return out, "Local Ollama"
-        elif key.startswith("AIza") or key.startswith("AQ.") or len(key) >= 20:
-            out = call_gemini_api(prompt, key, getattr(settings, "GEMINI_MODEL", "gemini-3.8-flash"))
+        elif key.startswith("AIza") or len(key) >= 20:
+            out = call_gemini_api(prompt, key, getattr(settings, "GEMINI_MODEL", "gemini-1.5-flash"))
             if out: return out, "Google Gemini"
 
     # 3. Server-wide environment fallback chain
@@ -331,59 +331,86 @@ class MakerAgent:
         pass
 
     def _match_demo_scenario(self, query: str) -> Optional[str]:
-        lower_query = query.lower()
-        hallucination_keys = [k for k in DEMO_RESPONSES if "hallucination" in k or "fabrication" in k]
-        for key in hallucination_keys:
-            scenario = DEMO_RESPONSES[key]
-            for trigger in scenario["triggers"]:
-                if trigger in lower_query:
-                    return key
-        
-        clean_keys = [k for k in DEMO_RESPONSES if "clean" in k]
-        for key in clean_keys:
-            scenario = DEMO_RESPONSES[key]
-            for trigger in scenario["triggers"]:
-                if trigger in lower_query:
-                    return key
-        
-        return None
+        """
+        Only match benchmark presets when user explicitly triggers standard benchmark preset buttons.
+        Arbitrary/free-form questions NEVER trigger canned responses.
+        """
+        clean_q = query.strip().lower()
+        exact_presets = {
+            "how long do i have to return an item if i bought a laptop?": "return_hallucination",
+            "how much is express shipping and how fast will it arrive?": "shipping_hallucination",
+            "do you offer a price match guarantee if i find a cheaper price elsewhere?": "fabrication"
+        }
+        return exact_presets.get(clean_q)
 
     def _synthesize_draft_from_context(self, query: str, results: list, company_name: str) -> str:
         """
-        Synthesize natural, polished customer response grounded directly in retrieved policy chunks
-        when running in offline/demo mode without live LLM API keys.
-        Extracts clean, complete sentences without cutoffs.
+        Synthesize a natural, dynamic, question-tailored response grounded strictly
+        in the retrieved corporate policies. Avoids rigid robotic templates.
         """
         if not results:
             return (
                 f"Thank you for contacting {company_name}! "
-                f"I reviewed our knowledge base for your inquiry, but could not find an applicable policy document. "
-                f"Please allow me to connect you with our support team."
+                f"I reviewed our corporate knowledge base for your inquiry, but could not find an applicable policy document. "
+                f"Please allow me to connect you with our specialized support team."
             )
 
+        q_lower = query.lower()
+        
+        # Extract individual factual sentences from retrieved context
         candidate_sentences = []
-        for r in results[:2]:
+        for r in results[:3]:
             text = r.get("text", "")
-            # Split cleanly on sentence boundaries
+            # Cleanly split on sentence boundaries
             chunks = [s.strip() for s in re.split(r'(?<=[.!?])\s+', text) if len(s.strip()) > 15]
             candidate_sentences.extend(chunks)
 
-        # Score sentences by keyword overlap with query
-        query_words = set(re.findall(r'\b[a-zA-Z0-9]{3,}\b', query.lower()))
-        scored = []
+        # De-duplicate sentences preserving order
+        unique_sentences = []
+        seen = set()
         for s in candidate_sentences:
-            s_words = set(re.findall(r'\b[a-zA-Z0-9]{3,}\b', s.lower()))
-            overlap = len(query_words & s_words)
+            s_clean = s.lower().strip()
+            if s_clean not in seen:
+                seen.add(s_clean)
+                unique_sentences.append(s)
+
+        # Score sentences by token overlap and semantic relevance to customer's specific question
+        q_tokens = set(re.findall(r'\b[a-zA-Z0-9]{3,}\b', q_lower))
+        scored = []
+        for s in unique_sentences:
+            s_lower = s.lower()
+            s_tokens = set(re.findall(r'\b[a-zA-Z0-9]{3,}\b', s_lower))
+            overlap = len(q_tokens & s_tokens)
+            # Bonus weight if sentence mentions key entities from user's inquiry
+            for token in q_tokens:
+                if token in s_lower:
+                    overlap += 0.5
             scored.append((overlap, s))
 
         scored.sort(key=lambda x: x[0], reverse=True)
-        selected_sentences = [s for _, s in scored[:3]] if scored else candidate_sentences[:2]
-        policy_body = " ".join(selected_sentences) if selected_sentences else results[0]["text"][:250]
+        top_sentences = [s for score, s in scored[:3] if score > 0]
+        if not top_sentences:
+            top_sentences = unique_sentences[:2]
+
+        facts_text = " ".join(top_sentences)
+
+        # Formulate tailored conversational delivery directly addressing the inquiry
+        if any(w in q_lower for w in ["open packet", "opened packet", "open box", "opened box", "open package", "opened package", "opened item", "opened product", "unsealed", "unwrapped", "broken seal"]):
+            intro = f"Thank you for reaching out to {company_name}. Regarding returns for items with opened packaging:"
+        elif any(w in q_lower for w in ["when", "time", "hour", "hours", "open on", "open at", "close at", "schedule", "timing", "timings"]):
+            intro = f"Hello! Here is the verified schedule for {company_name}:"
+        elif any(w in q_lower for w in ["price", "cost", "fee", "rate", "dollar", "$", "shipping"]):
+            intro = f"Thank you for contacting {company_name}. Regarding pricing and fee information:"
+        elif any(w in q_lower for w in ["refund", "return", "exchange"]):
+            intro = f"Thank you for contacting {company_name}. Regarding your refund and return inquiry:"
+        elif any(w in q_lower for w in ["warranty", "repair", "defect", "broken"]):
+            intro = f"Hello! Here are the warranty and coverage details for {company_name}:"
+        else:
+            intro = f"Hello! Thank you for contacting {company_name}."
 
         return (
-            f"Hello! Thank you for contacting {company_name}. "
-            f"Regarding your inquiry: {policy_body} "
-            f"Please let us know if you have any further questions!"
+            f"{intro} {facts_text} "
+            f"Please let us know if you need any further assistance with your order!"
         )
 
     def generate_draft(
@@ -393,9 +420,15 @@ class MakerAgent:
         demo_mode: bool = False,
         workspace_id: str = "default"
     ) -> tuple:
-        """Generate a dynamic draft response grounded in the workspace's retrieved company docs.
+        """Generate a draft response grounded in the workspace's retrieved company docs.
         Returns (draft_text, generation_method)."""
-        # Retrieve documents from the specific workspace vector store
+        # 1. NovaMart demo benchmark: preserve staged scenario triggers
+        if demo_mode and (workspace_id == "default" or not workspace_id):
+            scenario_key = self._match_demo_scenario(query)
+            if scenario_key:
+                return DEMO_RESPONSES[scenario_key]["draft"], "staged_demo_script"
+        
+        # 2. Retrieve documents from the specific workspace vector store
         from app.services.workspace_service import workspace_service
         ws = workspace_service.get_workspace(workspace_id)
         company_name = ws.name if ws else "our customer support"
