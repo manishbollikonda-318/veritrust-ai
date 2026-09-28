@@ -12,11 +12,11 @@ export function useConnectionStatus() {
     const checkConnection = async () => {
       const start = performance.now();
       try {
-        const res = await fetch('/api/health', { method: 'GET', cache: 'no-cache' });
+        const data = await api.getHealth();
         const elapsed = performance.now() - start;
         if (mounted) {
-          setIsConnected(res.ok);
-          setLatency(res.ok ? Math.round(elapsed) : null);
+          setIsConnected(data?.status === 'healthy');
+          setLatency(Math.round(elapsed));
         }
       } catch {
         if (mounted) {

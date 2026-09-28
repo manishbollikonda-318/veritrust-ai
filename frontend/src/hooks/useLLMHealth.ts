@@ -19,13 +19,7 @@ export function useLLMHealth() {
 
     const checkLLMHealth = async () => {
       try {
-        const res = await fetch('/api/health/llm', { 
-          method: 'GET', 
-          cache: 'no-cache' 
-        });
-        if (!res.ok) throw new Error('Failed to fetch LLM health');
-        
-        const data = await res.json();
+        const data = await api.getLLMHealth();
         
         if (!mounted) return;
         

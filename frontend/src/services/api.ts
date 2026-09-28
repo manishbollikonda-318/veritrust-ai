@@ -2,19 +2,29 @@ import { Message, MetricData, Document, ComparisonResponse, ReviewItem, ReviewSt
 import { notifyToast } from './notifications';
 
 export function getApiBase(): string {
+  let base = '';
   // If explicitly specified in environment
   if (typeof import.meta !== 'undefined' && (import.meta as any).env?.VITE_API_URL) {
-    return ((import.meta as any).env.VITE_API_URL as string).replace(/\/+$/, '');
+    base = ((import.meta as any).env.VITE_API_URL as string).replace(/\/+$/, '');
+  } else if (typeof window !== 'undefined' && (
+    window.location.hostname.includes('veritrust-ai-gdgoc.onrender.com') ||
+    window.location.hostname.includes('onrender.com')
+  )) {
+    // When running on Render static deployment
+    base = 'https://veritrust-ai-271n.onrender.com/api';
+  } else {
+    // Standard relative API path for local Vite proxy and unified hosting
+    base = '/api';
   }
-  // When running on Render static deployment (veritrust-ai-gdgoc.onrender.com)
-  if (typeof window !== 'undefined' && window.location.hostname.includes('veritrust-ai-gdgoc.onrender.com')) {
-    return 'https://veritrust-ai-271n.onrender.com/api';
+
+  // Ensure remote backend URLs always end with /api
+  if (base.startsWith('http') && !base.endsWith('/api')) {
+    base = `${base}/api`;
   }
-  // Standard relative API path for local Vite proxy and unified hosting
-  return '/api';
+  return base;
 }
 
-const API_BASE = getApiBase();
+export const API_BASE = getApiBase();
 
 // Get workspace token from localStorage or active workspace context
 function getWorkspaceToken(workspaceId: string): string | null {
@@ -553,6 +563,14 @@ export const api = {
       total_learned_rules: 4,
       system_accuracy_score: 98.4
     };
+  },
+
+  async getHealth(): Promise<{ status: string; timestamp: number }> {
+    return await fetchJson<{ status: string; timestamp: number }>(`${API_BASE}/health`);
+  },
+
+  async getLLMHealth(): Promise<{ status: string; providers: Record<string, any>; default_provider: string }> {
+    return await fetchJson(`${API_BASE}/health/llm`);
   },
 
   async deleteWorkspace(workspaceId: string): Promise<void> {
