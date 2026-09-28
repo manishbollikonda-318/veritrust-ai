@@ -7,7 +7,7 @@ import NeuBadge from '../ui/NeuBadge';
 import {
   Code2, Play, CheckCircle2, AlertTriangle, XCircle, Copy, Check,
   ShieldCheck, Cpu, ExternalLink,
-  ShoppingBag, Send, X
+  ShoppingBag, Send, X, Server, AlertCircle
 } from 'lucide-react';
 
 function getApiBaseUrl(): string {

@@ -19,7 +19,7 @@ class ReviewService:
         self._seed_initial_queue()
 
     def _seed_initial_queue(self):
-        """Seed initial realistic escalation cases so judges see a rich review workflow immediately."""
+        """Seed initial realistic escalation cases for NovaMart (default workspace) so judges see a rich review workflow immediately."""
         seeds = [
             {
                 "id": "rev-seed-1",
@@ -32,6 +32,7 @@ class ReviewService:
                 "severity": "critical",
                 "overall_reasoning": "BLOCKED: Claim asserted a 60-day laptop return window, directly violating the mandatory 14-day return window for electronics.",
                 "review_status": "pending",
+                "is_sample": True,
                 "claims": [
                     Claim(
                         id="c-s1",
@@ -56,6 +57,7 @@ class ReviewService:
                 "severity": "high",
                 "overall_reasoning": "BLOCKED: Hallucinated competitor price match guarantee not supported in official policies.",
                 "review_status": "pending",
+                "is_sample": True,
                 "claims": [
                     Claim(
                         id="c-s2",
@@ -80,6 +82,7 @@ class ReviewService:
                 "severity": "medium",
                 "overall_reasoning": "CORRECTED: Fixed free express threshold claim — Express shipping is a flat $15.99 regardless of cart size.",
                 "review_status": "pending",
+                "is_sample": True,
                 "claims": [
                     Claim(
                         id="c-s3",

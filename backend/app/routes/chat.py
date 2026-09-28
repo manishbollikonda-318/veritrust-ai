@@ -14,6 +14,9 @@ from app.agents.graph import agent_graph
 from app.agents.maker import maker_agent
 from app.agents.judge import judge_agent
 from app.config import settings
+from app.services.workspace_service import workspace_service
+from fastapi import Request, Header, Depends, HTTPException
+from typing import Optional
 
 router = APIRouter()
 
@@ -21,19 +24,52 @@ router = APIRouter()
 conversations: dict = {}
 
 
+async def verify_workspace_token(
+    request: Request,
+    x_workspace_token: Optional[str] = Header(default=None, alias="X-Workspace-Token")
+) -> str:
+    """Verify workspace access token for mutating operations on non-demo workspaces."""
+    # Try to get workspace_id from query params first
+    workspace_id = request.query_params.get("workspace_id")
+    
+    # If not in query params, try to read from request body
+    if not workspace_id:
+        try:
+            body = await request.body()
+            if body:
+                import json
+                body_data = json.loads(body)
+                workspace_id = body_data.get("workspace_id", "default")
+        except Exception:
+            pass
+    
+    if not workspace_id:
+        workspace_id = "default"
+    
+    if workspace_id in ("default", "acme-health"):
+        return workspace_id  # Demo workspaces don't require tokens
+    if not x_workspace_token or not workspace_service.validate_token(workspace_id, x_workspace_token):
+        raise HTTPException(
+            status_code=401,
+            detail="Invalid or expired workspace token"
+        )
+    return workspace_id
+
+
 @router.post("/verify", response_model=VerificationResult)
-async def verify_standalone(request: StandaloneVerifyRequest):
+async def verify_standalone(request: StandaloneVerifyRequest, verified_id: str = Depends(verify_workspace_token)):
     """
     Standalone Guardrail Verification Endpoint.
     Accepts any raw draft text or claim and runs it against the workspace's policy knowledge base.
     Can be used by external AI support systems as a plug-and-play compliance gateway.
     """
     demo_mode = request.demo_mode if request.demo_mode is not None else settings.DEMO_MODE
+    workspace_id = request.workspace_id or "default"
     try:
         result = judge_agent.verify_draft(
             draft=request.draft,
             demo_mode=demo_mode,
-            workspace_id=request.workspace_id
+            workspace_id=workspace_id
         )
         return result
     except Exception as e:
@@ -41,7 +77,7 @@ async def verify_standalone(request: StandaloneVerifyRequest):
 
 
 @router.post("/chat", response_model=ChatResponse)
-async def chat(request: ChatRequest):
+async def chat(request: ChatRequest, verified_id: str = Depends(verify_workspace_token)):
     """
     Main chat endpoint: runs query through Maker → Judge → Decision pipeline.
     Returns the full verification result including claim-level details.
@@ -113,7 +149,7 @@ async def chat(request: ChatRequest):
             except Exception as e:
                 # Non-blocking logging
                 pass
-
+        
         return response
         
     except Exception as e:
@@ -121,7 +157,7 @@ async def chat(request: ChatRequest):
 
 
 @router.post("/chat/maker-only", response_model=ChatResponse)
-async def chat_maker_only(request: ChatRequest):
+async def chat_maker_only(request: ChatRequest, verified_id: str = Depends(verify_workspace_token)):
     """
     Maker-only mode: runs query through Maker Agent only, without Judge verification.
     Used for comparison mode to show what would happen without the guardrail.
@@ -158,7 +194,7 @@ async def chat_maker_only(request: ChatRequest):
 
 
 @router.post("/chat/compare", response_model=ComparisonResponse)
-async def chat_compare(request: ChatRequest):
+async def chat_compare(request: ChatRequest, verified_id: str = Depends(verify_workspace_token)):
     """
     Comparison mode: runs the same query through both Maker-only and Maker+Judge
     pipelines, returning both results side by side.

@@ -3,10 +3,10 @@ import MetricTile from './MetricTile';
 import DriftChart from './DriftChart';
 import ClaimBreakdownChart from './ClaimBreakdownChart';
 import NeuCard from '../ui/NeuCard';
-import { ShieldCheck, Layers, Zap, Timer, CheckCircle2, AlertTriangle, Ban } from 'lucide-react';
+import { ShieldCheck, Layers, Zap, Timer, CheckCircle2, AlertTriangle, Ban, Info, FlaskConical } from 'lucide-react';
 
 export default function MetricsDashboard() {
-  const { metrics, loading } = useMetrics();
+  const { metrics, loading, currentWorkspace } = useMetrics();
 
   if (loading && !metrics) {
     return (
@@ -15,6 +15,9 @@ export default function MetricsDashboard() {
       </div>
     );
   }
+
+  const isSimulatedBaseline = metrics?.isSimulatedBaseline === true;
+  const isDefaultWorkspace = currentWorkspace === 'default';
 
   const m = {
     passRate: typeof metrics?.passRate === 'number' ? metrics.passRate : 76.5,
@@ -40,14 +43,34 @@ export default function MetricsDashboard() {
       {/* Page Title */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
         <div>
-          <h2 className="text-xl sm:text-2xl font-black text-slate-900 tracking-tight">Compliance &amp; Guardrail Telemetry</h2>
+          <h2 className="text-xl sm:text-2xl font-black text-slate-900 tracking-tight">Compliance & Guardrail Telemetry</h2>
           <p className="text-xs text-purple-900 font-bold mt-1">
             Real-time hallucination interception, claim breakdown, and accuracy drift tracking
           </p>
         </div>
-        <div className="self-start sm:self-auto flex items-center gap-2 text-xs font-black text-purple-900 bg-purple-50/90 px-3.5 py-1.5 rounded-xl border border-purple-200/80 shadow-xs">
-          <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse shadow-sm" />
-          Active Telemetry Stream
+        <div className="flex flex-wrap items-center gap-2 text-xs font-black">
+          <div className="self-start sm:self-auto flex items-center gap-2 text-purple-900 bg-purple-50/90 px-3.5 py-1.5 rounded-xl border border-purple-200/80 shadow-xs">
+            <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse shadow-sm" />
+            Active Telemetry Stream
+          </div>
+          {isSimulatedBaseline && isDefaultWorkspace && (
+            <div className="flex items-center gap-1.5 text-amber-900 bg-amber-50/90 px-3.5 py-1.5 rounded-xl border border-amber-200/80 shadow-xs">
+              <FlaskConical className="w-3.5 h-3.5" />
+              <span>Simulated Baseline — NovaMart Demo Data</span>
+            </div>
+          )}
+          {!isSimulatedBaseline && isDefaultWorkspace && (
+            <div className="flex items-center gap-1.5 text-emerald-900 bg-emerald-50/90 px-3.5 py-1.5 rounded-xl border border-emerald-200/80 shadow-xs">
+              <ShieldCheck className="w-3.5 h-3.5" />
+              <span>Live Production Data</span>
+            </div>
+          )}
+          {!isDefaultWorkspace && (
+            <div className="flex items-center gap-1.5 text-blue-900 bg-blue-50/90 px-3.5 py-1.5 rounded-xl border border-blue-200/80 shadow-xs">
+              <Info className="w-3.5 h-3.5" />
+              <span>Custom Workspace — Live Data</span>
+            </div>
+          )}
         </div>
       </div>
 

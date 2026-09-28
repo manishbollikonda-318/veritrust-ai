@@ -10,13 +10,13 @@ class Settings(BaseSettings):
     # Multi-LLM Support (Problem Statement: OpenAI API, Anthropic API, or local Ollama + Gemini)
     DEFAULT_LLM_PROVIDER: str = "auto"
     OPENAI_API_KEY: Optional[str] = None
-    OPENAI_MODEL: str = "gpt-4o-mini"
+    OPENAI_MODEL: str = "gpt-4o"
     ANTHROPIC_API_KEY: Optional[str] = None
-    ANTHROPIC_MODEL: str = "claude-3-5-sonnet-20241022"
+    ANTHROPIC_MODEL: str = "claude-sonnet-4-20250514"
     OLLAMA_BASE_URL: str = "http://localhost:11434"
-    OLLAMA_MODEL: str = "llama3"
+    OLLAMA_MODEL: str = "llama3.1:8b"
     GEMINI_API_KEY: Optional[str] = None
-    GEMINI_MODEL: str = "gemini-3.8-flash"
+    GEMINI_MODEL: str = "gemini-1.5-flash"
 
     ADMIN_API_KEY: Optional[str] = None  # Must be set via environment variable in production
     RATE_LIMIT_PER_MINUTE: int = 120

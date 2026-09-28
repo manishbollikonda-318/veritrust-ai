@@ -157,6 +157,7 @@ class ReviewItem(BaseModel):
     review_status: Literal["pending", "approved", "overridden", "dismissed"] = "pending"
     human_notes: Optional[str] = None
     learned_rule: Optional[str] = None
+    is_sample: bool = False
 
 
 class ReviewResolutionRequest(BaseModel):
@@ -184,6 +185,8 @@ class WorkspaceModel(BaseModel):
     api_key_masked: Optional[str] = None
     document_count: int = 0
     created_at: str = Field(default_factory=lambda: datetime.now().isoformat())
+    access_token: Optional[str] = None
+    token_expires_at: Optional[str] = None
 
 
 class WorkspaceCreateRequest(BaseModel):
@@ -194,6 +197,7 @@ class WorkspaceCreateRequest(BaseModel):
     initial_policy_content: Optional[str] = Field(default=None, max_length=50000)
     llm_provider: Optional[Literal["gemini", "openai", "anthropic", "ollama", "shared_default"]] = "shared_default"
     api_key: Optional[str] = Field(default=None, max_length=300)
+    token_expiry_days: Optional[int] = Field(default=30, ge=1, le=365)
 
 
 class WorkspaceSettingsUpdateRequest(BaseModel):

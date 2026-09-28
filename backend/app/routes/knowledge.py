@@ -2,15 +2,48 @@
 Knowledge base API routes — multi-tenant document management, uploads, edits, and re-indexing.
 """
 
-from fastapi import APIRouter, HTTPException, Query, Request
+from fastapi import APIRouter, HTTPException, Query, Request, Depends, Header
 from pydantic import BaseModel, Field
 from typing import List, Dict, Any, Optional
 from app.knowledge.vectorstore import vector_store
 from app.knowledge.loader import load_and_embed_documents
 from app.models.schemas import KnowledgeDocument
 from app.services.file_security import sanitize_filename, validate_file_content
+from app.services.workspace_service import workspace_service
 
 router = APIRouter()
+
+
+async def verify_workspace_token(
+    request: Request,
+    x_workspace_token: Optional[str] = Header(default=None, alias="X-Workspace-Token")
+) -> str:
+    """Verify workspace access token for mutating operations."""
+    # Try to get workspace_id from query params first
+    workspace_id = request.query_params.get("workspace_id")
+    
+    # If not in query params, try to read from request body
+    if not workspace_id:
+        try:
+            body = await request.body()
+            if body:
+                import json
+                body_data = json.loads(body)
+                workspace_id = body_data.get("workspace_id", "default")
+        except Exception:
+            pass
+    
+    if not workspace_id:
+        workspace_id = "default"
+    
+    if workspace_id in ("default", "acme-health"):
+        return workspace_id  # Demo workspaces don't require tokens
+    if not x_workspace_token or not workspace_service.validate_token(workspace_id, x_workspace_token):
+        raise HTTPException(
+            status_code=401,
+            detail="Invalid or expired workspace token"
+        )
+    return workspace_id
 
 
 class SearchQuery(BaseModel):
@@ -52,9 +85,14 @@ async def list_documents(workspace_id: str = Query(default="default")):
 
 
 @router.post("/knowledge/documents", response_model=KnowledgeDocument)
-async def create_document(req: DocumentCreateRequest, workspace_id: Optional[str] = Query(default=None)):
+async def create_document(
+    req: DocumentCreateRequest, 
+    workspace_id: Optional[str] = Query(default=None),
+    verified_id: str = Depends(verify_workspace_token)
+):
     """Upload or paste a new corporate policy document into the workspace with full security sanitization."""
     target_workspace = workspace_id or req.workspace_id or "default"
+    # verify_workspace_token already validated the token
     
     # 1. Validate content and reject malicious binary/executable payload
     clean_content = validate_file_content(req.content.encode("utf-8"), req.filename or req.title)
@@ -91,7 +129,8 @@ async def upload_document_file(
     request: Request,
     workspace_id: str = Query(default="default"),
     title: Optional[str] = Query(default=None),
-    filename: Optional[str] = Query(default=None)
+    filename: Optional[str] = Query(default=None),
+    verified_id: str = Depends(verify_workspace_token)
 ):
     """
     Dedicated multipart file upload endpoint.
@@ -99,6 +138,7 @@ async def upload_document_file(
     path traversal sanitization, and non-executable memory storage.
     Uses native streaming parser without fragile external dependencies.
     """
+    # verify_workspace_token already validated the token
     content_type = request.headers.get("content-type", "")
     raw_body = await request.body()
     
@@ -163,9 +203,15 @@ async def upload_document_file(
 
 
 @router.put("/knowledge/documents/{filename}", response_model=KnowledgeDocument)
-async def update_document(filename: str, req: DocumentUpdateRequest, workspace_id: Optional[str] = Query(default=None)):
+async def update_document(
+    filename: str, 
+    req: DocumentUpdateRequest, 
+    workspace_id: Optional[str] = Query(default=None),
+    verified_id: str = Depends(verify_workspace_token)
+):
     """Edit an existing policy document and re-index the workspace with security checks."""
     target_workspace = workspace_id or req.workspace_id or "default"
+    # verify_workspace_token already validated the token
     clean_filename = sanitize_filename(filename)
     
     # Validate content against binary, execution tokens, and size
@@ -199,14 +245,21 @@ async def update_document(filename: str, req: DocumentUpdateRequest, workspace_i
 
 
 @router.delete("/knowledge/documents/{filename}")
-async def delete_document(filename: str, workspace_id: str = Query(default="default")):
+async def delete_document(
+    filename: str, 
+    workspace_id: str = Query(default="default"),
+    verified_id: str = Depends(verify_workspace_token)
+):
     """Remove a document from the workspace and re-index the remaining policies."""
     vector_store.delete_doc(filename, workspace_id=workspace_id)
     return {"message": f"Document '{filename}' deleted and workspace '{workspace_id}' re-indexed."}
 
 
 @router.post("/knowledge/reindex")
-async def reindex_knowledge(workspace_id: str = Query(default="default")):
+async def reindex_knowledge(
+    workspace_id: str = Query(default="default"),
+    verified_id: str = Depends(verify_workspace_token)
+):
     """Force re-index all chunks for a workspace."""
     vector_store.reindex_workspace(workspace_id)
     return {
@@ -217,7 +270,10 @@ async def reindex_knowledge(workspace_id: str = Query(default="default")):
 
 
 @router.post("/knowledge/reset-demo")
-async def reset_demo(workspace_id: str = Query(default="default")):
+async def reset_demo(
+    workspace_id: str = Query(default="default"),
+    verified_id: str = Depends(verify_workspace_token)
+):
     """Reset workspace back to standard NovaMart baseline documents."""
     load_and_embed_documents(workspace_id=workspace_id)
     return {

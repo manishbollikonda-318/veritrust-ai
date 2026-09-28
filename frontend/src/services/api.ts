@@ -1,5 +1,4 @@
 import { Message, MetricData, Document, ComparisonResponse, ReviewItem, ReviewStats, Workspace, WorkspaceCreateInput } from '../types';
-import { mockMessages, mockMetrics, mockDocuments } from './mockData';
 import { notifyToast } from './notifications';
 
 function getApiBase(): string {
@@ -16,6 +15,42 @@ function getApiBase(): string {
 }
 
 const API_BASE = getApiBase();
+
+// Get workspace token from localStorage or active workspace context
+function getWorkspaceToken(workspaceId: string): string | null {
+  try {
+    const workspacesStr = localStorage.getItem('veritrust_custom_workspaces');
+    if (workspacesStr) {
+      const workspaces = JSON.parse(workspacesStr);
+      const ws = workspaces.find((w: Workspace) => w.id === workspaceId);
+      if (ws && ws.access_token) {
+        return ws.access_token;
+      }
+    }
+    // Also check the demo workspaces that might have been fetched from backend
+    const allWorkspacesStr = localStorage.getItem('veritrust_all_workspaces');
+    if (allWorkspacesStr) {
+      const workspaces = JSON.parse(allWorkspacesStr);
+      const ws = workspaces.find((w: Workspace) => w.id === workspaceId);
+      if (ws && ws.access_token) {
+        return ws.access_token;
+      }
+    }
+  } catch {}
+  return null;
+}
+
+// Build headers with workspace token for non-demo workspaces
+function getAuthHeaders(workspaceId: string = 'default'): Record<string, string> {
+  const isDemo = workspaceId === 'default' || workspaceId === 'acme-health';
+  if (isDemo) return { 'Content-Type': 'application/json' };
+  
+  const token = getWorkspaceToken(workspaceId);
+  if (token) {
+    return { 'Content-Type': 'application/json', 'X-Workspace-Token': token };
+  }
+  return { 'Content-Type': 'application/json' };
+}
 
 // Helper to map a raw backend claim object → frontend Claim
 function mapClaim(c: any) {
@@ -87,45 +122,48 @@ async function fetchJson<T = any>(url: string, options?: RequestInit): Promise<T
 
 export const api = {
   async getMessages(workspaceId: string = 'default'): Promise<Message[]> {
-    try {
-      const res = await fetch(`${API_BASE}/chat/history/${encodeURIComponent(workspaceId)}`);
-      if (res.ok) {
-        const text = await res.text();
-        if (text && text.trim()) {
-          const data = JSON.parse(text);
-          if (Array.isArray(data) && data.length > 0) {
-            return data.map((item: any) => ({
-              id: item.id || Date.now().toString(),
-              role: 'assistant',
-              content: item.final_response || item.original_draft,
-              originalDraft: item.original_draft,
-              finalResponse: item.final_response,
-              timestamp: item.timestamp || new Date().toISOString(),
-              status: item.status,
-              latencyMs: item.latency_ms,
-              makerLatencyMs: item.maker_latency_ms,
-              judgeLatencyMs: item.judge_latency_ms,
-              correctionLatencyMs: item.correction_latency_ms,
-              correctionAttempts: item.correction_attempts,
-              loopHistory: item.loop_history,
-              severity: item.verification?.severity,
-              overallReasoning: item.verification?.overall_reasoning,
-              estimatedCostUsd: item.verification?.estimated_cost_usd,
-              deterministicChecksRun: item.verification?.deterministic_checks_run,
-              claims: (item.verification?.claims || []).map(mapClaim)
-            }));
-          }
-        }
-      }
-    } catch {
-      // Fallback to mock
-      notifyToast('warning', 'Using Local Data', 'Could not load chat history — showing local fallback.');
+    const res = await fetch(`${API_BASE}/chat/history/${encodeURIComponent(workspaceId)}`, {
+      headers: getAuthHeaders(workspaceId)
+    });
+    if (!res.ok) {
+      const errorText = await res.text();
+      throw new Error(`Failed to load chat history: ${res.status} ${errorText}`);
     }
-    // Only return mock baseline messages for default demo workspace
-    return workspaceId === 'default' ? [...mockMessages] : [];
+    const text = await res.text();
+    if (!text || !text.trim()) {
+      return [];
+    }
+    try {
+      const data = JSON.parse(text);
+      if (Array.isArray(data) && data.length > 0) {
+        return data.map((item: any) => ({
+          id: item.id || Date.now().toString(),
+          role: 'assistant',
+          content: item.final_response || item.original_draft,
+          originalDraft: item.original_draft,
+          finalResponse: item.final_response,
+          timestamp: item.timestamp || new Date().toISOString(),
+          status: item.status,
+          latencyMs: item.latency_ms,
+          makerLatencyMs: item.maker_latency_ms,
+          judgeLatencyMs: item.judge_latency_ms,
+          correctionLatencyMs: item.correction_latency_ms,
+          correctionAttempts: item.correction_attempts,
+          loopHistory: item.loop_history,
+          severity: item.verification?.severity,
+          overallReasoning: item.verification?.overall_reasoning,
+          estimatedCostUsd: item.verification?.estimated_cost_usd,
+          deterministicChecksRun: item.verification?.deterministic_checks_run,
+          claims: (item.verification?.claims || []).map(mapClaim)
+        }));
+      }
+    } catch (err) {
+      throw new Error(`Invalid chat history response: ${err}`);
+    }
+    return [];
   },
 
-  async sendMessage(content: string, demoMode: boolean = true, workspaceId: string = 'default'): Promise<{ userMessage: Message; botMessage: Message }> {
+async sendMessage(content: string, demoMode: boolean = true, workspaceId: string = 'default'): Promise<{ userMessage: Message; botMessage: Message }> {
     const userMessage: Message = {
       id: 'usr-' + Date.now(),
       role: 'user',
@@ -139,346 +177,98 @@ export const api = {
       session_id: workspaceId || 'default',
       workspace_id: workspaceId || 'default'
     };
-    console.log('[VeriTrust API] POST /api/chat payload:', JSON.stringify(chatPayload, null, 2));
 
-    try {
-      const data = await fetchJson<any>(`${API_BASE}/chat`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(chatPayload)
-      });
-
-      const botMessage: Message = {
-        id: data.id || 'bot-' + Date.now(),
-        role: 'assistant',
-        content: data.final_response,
-        originalDraft: data.original_draft,
-        finalResponse: data.final_response,
-        timestamp: data.timestamp || new Date().toISOString(),
-        status: data.status,
-        latencyMs: data.latency_ms,
-        makerLatencyMs: data.maker_latency_ms,
-        judgeLatencyMs: data.judge_latency_ms,
-        correctionLatencyMs: data.correction_latency_ms,
-        correctionAttempts: data.correction_attempts,
-        loopHistory: data.loop_history,
-        severity: data.verification?.severity || 'none',
-        overallReasoning: data.verification?.overall_reasoning || '',
-        estimatedCostUsd: data.verification?.estimated_cost_usd,
-        deterministicChecksRun: data.verification?.deterministic_checks_run,
-        claims: (data.verification?.claims || []).map(mapClaim)
-      };
-      return { userMessage, botMessage };
-    } catch (err) {
-      console.warn('Backend fetch failed, utilizing client simulation fallback:', err);
-      notifyToast('warning', 'Using Local Simulation', 'Backend unavailable — using client-side fallback for this workspace.');
-    }
-
-    // Client-side fallback simulation strictly isolated per workspace
-    const lower = content.toLowerCase();
-    let status: 'Approved' | 'Corrected' | 'Blocked' = 'Approved';
-    let originalDraft = '';
-    let finalResponse = '';
-    let claims: any[] = [];
-    let reasoning = '';
-
-    const isCustomWorkspace = workspaceId && workspaceId !== 'default';
-
-    if (isCustomWorkspace) {
-      // Retrieve stored custom workspace documents
-      let customDocs: Document[] = [];
-      let companyName = workspaceId.replace(/[-_]/g, ' ');
-      try {
-        const storedDocsStr = localStorage.getItem(`veritrust_docs_${workspaceId}`) 
-          || localStorage.getItem(`veritrust_docs_${workspaceId.replace('-', '_')}`)
-          || localStorage.getItem(`veritrust_docs_${workspaceId.replace('_', '-')}`);
-        if (storedDocsStr) customDocs = JSON.parse(storedDocsStr);
-
-        const customWsStr = localStorage.getItem('veritrust_custom_workspaces');
-        if (customWsStr) {
-          const wsList = JSON.parse(customWsStr);
-          const found = wsList.find((w: any) => w.id === workspaceId || w.id === workspaceId.replace('-', '_') || w.id === workspaceId.replace('_', '-'));
-          if (found) companyName = found.name;
-        }
-      } catch {}
-
-      // Find matching sentences from custom company documents
-      let matchingSentence = '';
-      let sourceDoc = customDocs[0]?.filename || `${companyName.replace(/\s+/g, '_')}_policy.txt`;
-      if (customDocs.length > 0) {
-        const allText = customDocs.map(d => d.content || d.snippet || '').join('\n');
-        const sentences = allText.split(/[.\n]/).map(s => s.trim()).filter(s => s.length > 10);
-        const queryWords = content.toLowerCase().split(/\W+/).filter(w => w.length > 2);
-        let bestScore = 0;
-        for (const s of sentences) {
-          const sLower = s.toLowerCase();
-          const score = queryWords.reduce((acc, word) => acc + (sLower.includes(word) ? 1 : 0), 0);
-          if (score > bestScore) {
-            bestScore = score;
-            matchingSentence = s;
-          }
-        }
-        if (!matchingSentence && sentences.length > 0) {
-          matchingSentence = sentences[0];
-        }
-      }
-
-      if (matchingSentence) {
-        status = 'Approved';
-        originalDraft = `Hello! Regarding your inquiry for ${companyName}: ${matchingSentence}. Please let us know if you need any further assistance!`;
-        finalResponse = originalDraft;
-        reasoning = `APPROVED: Verified against ${companyName} ground truth policy (${sourceDoc}).`;
-        claims = [
-          {
-            id: 'c-custom-1',
-            text: matchingSentence,
-            verdict: 'Verified',
-            confidence: 0.95,
-            severity: 'none',
-            sourceSentence: matchingSentence,
-            sourceDocument: sourceDoc,
-            reasoning: `Matches verified rule in ${sourceDoc}.`,
-            isFiller: false
-          }
-        ];
-      } else {
-        status = 'Approved';
-        originalDraft = `Thank you for contacting ${companyName}! I reviewed our knowledge base for your inquiry, but could not find an applicable policy document. Please allow me to connect you with our support staff.`;
-        finalResponse = originalDraft;
-        reasoning = `APPROVED: Conversational acknowledgment for ${companyName}.`;
-        claims = [
-          {
-            id: 'c-custom-none',
-            text: `Support assistance for ${companyName}`,
-            verdict: 'Verified',
-            confidence: 1.0,
-            severity: 'none',
-            sourceSentence: 'Support assistance policy',
-            sourceDocument: sourceDoc,
-            reasoning: 'Conversational support response.',
-            isFiller: true
-          }
-        ];
-      }
-    } else {
-      // Default NovaMart Demo Benchmark Scenarios
-      if (lower.includes('return') && (lower.includes('how long') || lower.includes('60') || lower.includes('days'))) {
-        status = 'Blocked';
-        originalDraft = 'You have a generous 60-day return window from delivery to return laptops and all electronics for a full refund.';
-        finalResponse = 'I want to make sure I give you the most accurate information. Let me connect you with a member of our support team who can help you with this return inquiry.';
-        reasoning = 'BLOCKED: Found high-severity contradiction. Maker stated 60-day return window, but verified policy mandates 30 days standard and 14 days for electronics.';
-        claims = [
-          {
-            id: 'c-sim-1',
-            text: 'You have a generous 60-day return window from delivery.',
-            verdict: 'Contradicted',
-            confidence: 0.95,
-            severity: 'high',
-            sourceSentence: 'Standard Return Window: Customers can return most items within 30 days of delivery for a full refund.',
-            sourceDocument: 'return_policy.txt',
-            reasoning: 'Contradicts verified standard return window (30 days).',
-            isFiller: false
-          },
-          {
-            id: 'c-sim-2',
-            text: 'Electronics have the same 60-day window.',
-            verdict: 'Contradicted',
-            confidence: 0.95,
-            severity: 'high',
-            sourceSentence: 'Exceptions to the 30-day window: Electronics must be returned within 14 days of delivery.',
-            sourceDocument: 'return_policy.txt',
-            reasoning: 'Violates specific 14-day electronics policy exception.',
-            isFiller: false
-          }
-        ];
-      } else if (lower.includes('express') || lower.includes('shipping cost')) {
-        status = 'Corrected';
-        originalDraft = 'Express Shipping delivers within 2-3 business days for just $9.99 regardless of order value.';
-        finalResponse = 'Express Shipping delivers within 2-3 business days for $15.99 regardless of order value. Free standard shipping applies to orders over $50.';
-        reasoning = 'CORRECTED: Found $9.99 pricing mismatch against official $15.99 express shipping rate. Auto-corrected and re-verified.';
-        claims = [
-          {
-            id: 'c-sim-3',
-            text: 'Express Shipping delivers within 2-3 business days.',
-            verdict: 'Verified',
-            confidence: 0.98,
-            severity: 'none',
-            sourceSentence: 'Express orders arrive within 2-3 business days and cost $15.99 regardless of order value.',
-            sourceDocument: 'shipping_policy.txt',
-            reasoning: 'Delivery window matches policy.',
-            isFiller: false
-          },
-          {
-            id: 'c-sim-4',
-            text: 'The cost for Express Shipping is $9.99 (corrected to $15.99).',
-            verdict: 'Contradicted',
-            confidence: 0.92,
-            severity: 'medium',
-            sourceSentence: 'Express orders arrive within 2-3 business days and cost $15.99 regardless of order value.',
-            sourceDocument: 'shipping_policy.txt',
-            reasoning: 'Rate auto-corrected from $9.99 to $15.99.',
-            isFiller: false
-          }
-        ];
-      } else if (lower.includes('price match') || lower.includes('cheaper')) {
-        status = 'Blocked';
-        originalDraft = 'NovaMart offers a Price Match Guarantee where we match any competitor and give 10% off.';
-        finalResponse = 'I want to make sure I give you the most accurate information. Let me connect you with a member of our support team who can help you with this.';
-        reasoning = 'BLOCKED: Maker fabricated a price match policy. Verified policy explicitly states NovaMart does not offer price matching.';
-        claims = [
-          {
-            id: 'c-sim-5',
-            text: 'NovaMart offers a comprehensive Price Match Guarantee.',
-            verdict: 'Contradicted',
-            confidence: 0.96,
-            severity: 'high',
-            sourceSentence: 'Price Match Guarantee: We do not currently offer a price match guarantee against competitors.',
-            sourceDocument: 'pricing.txt',
-            reasoning: 'Policy explicitly denies offering competitor price matching.',
-            isFiller: false
-          }
-        ];
-      } else {
-        status = 'Approved';
-        originalDraft = 'You can return most items within 30 days of delivery for a full refund using our free pre-paid return label. Refunds process in 5-7 business days.';
-        finalResponse = originalDraft;
-        reasoning = 'APPROVED: All claims verified against NovaMart return and refund documentation.';
-        claims = [
-          {
-            id: 'c-sim-6',
-            text: 'You can return most items within 30 days of delivery.',
-            verdict: 'Verified',
-            confidence: 0.95,
-            severity: 'none',
-            sourceSentence: 'Standard Return Window: Customers can return most items within 30 days of delivery for a full refund.',
-            sourceDocument: 'return_policy.txt',
-            reasoning: 'Verified against Standard Return Window.',
-            isFiller: false
-          },
-          {
-            id: 'c-sim-7',
-            text: 'Returns are free with our pre-paid return label.',
-            verdict: 'Verified',
-            confidence: 0.95,
-            severity: 'none',
-            sourceSentence: 'Return Shipping: Returns are free if you use our pre-paid return label.',
-            sourceDocument: 'return_policy.txt',
-            reasoning: 'Verified against Return Shipping clause.',
-            isFiller: false
-          }
-        ];
-      }
-    }
+    const data = await fetchJson<any>(`${API_BASE}/chat`, {
+      method: 'POST',
+      headers: getAuthHeaders(workspaceId),
+      body: JSON.stringify(chatPayload)
+    });
 
     const botMessage: Message = {
-      id: 'bot-' + Date.now(),
+      id: data.id || 'bot-' + Date.now(),
       role: 'assistant',
-      content: finalResponse,
-      originalDraft,
-      finalResponse,
-      timestamp: new Date().toISOString(),
-      status,
-      severity: status === 'Blocked' ? 'high' : status === 'Corrected' ? 'low' : 'none',
-      overallReasoning: reasoning,
-      claims,
-      latencyMs: 310,
-      makerLatencyMs: 130,
-      judgeLatencyMs: 180
+      content: data.final_response,
+      originalDraft: data.original_draft,
+      finalResponse: data.final_response,
+      timestamp: data.timestamp || new Date().toISOString(),
+      status: data.status,
+      latencyMs: data.latency_ms,
+      makerLatencyMs: data.maker_latency_ms,
+      judgeLatencyMs: data.judge_latency_ms,
+      correctionLatencyMs: data.correction_latency_ms,
+      correctionAttempts: data.correction_attempts,
+      loopHistory: data.loop_history,
+      severity: data.verification?.severity || 'none',
+      overallReasoning: data.verification?.overall_reasoning || '',
+      estimatedCostUsd: data.verification?.estimated_cost_usd,
+      deterministicChecksRun: data.verification?.deterministic_checks_run,
+      claims: (data.verification?.claims || []).map(mapClaim)
     };
-
     return { userMessage, botMessage };
   },
 
   async getMetrics(workspaceId?: string): Promise<MetricData> {
-    try {
-      const url = `${API_BASE}/metrics${workspaceId && workspaceId !== 'all' ? `?workspace_id=${encodeURIComponent(workspaceId)}` : ''}`;
-      const data = await fetchJson<any>(url);
-      return {
-        passRate: data.pass_rate,
-        correctionRate: data.correction_rate,
-        blockRate: data.block_rate,
-        totalQueries: data.total_queries,
-        totalClaims: data.total_claims,
-        verifiedClaims: data.verified_claims,
-        unsupportedClaims: data.unsupported_claims,
-        contradictedClaims: data.contradicted_claims,
-        avgLatencyMs: data.avg_latency_ms,
-        avgMakerLatencyMs: data.avg_maker_latency_ms,
-        avgJudgeLatencyMs: data.avg_judge_latency_ms,
-        avgCorrectionLatencyMs: data.avg_correction_latency_ms || 0,
-        approvedCount: data.approved_count || 0,
-        correctedCount: data.corrected_count || 0,
-        blockedCount: data.blocked_count || 0,
-        driftData: (data.drift_data || []).map((d: any) => {
-          let timeStr = d.timestamp || '12:00';
-          if (timeStr.includes('T')) {
-            try {
-              timeStr = new Date(timeStr).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-            } catch {}
-          }
-          return {
-            time: timeStr,
-            passRate: d.pass_rate,
-            correctionRate: d.correction_rate,
-            blockRate: d.block_rate,
-            queryIndex: d.query_index
-          };
-        })
-      };
-    } catch {
-      // Fallback: only for default demo workspace
-      if (workspaceId === 'default' || !workspaceId) {
-        notifyToast('warning', 'Using Demo Metrics', 'Backend metrics unavailable — showing NovaMart demo baseline.');
-        return mockMetrics;
-      }
-      // For custom workspaces, return empty metrics
-      notifyToast('info', 'No Metrics Yet', 'This workspace has no evaluation data yet.');
-      return {
-        passRate: 0,
-        correctionRate: 0,
-        blockRate: 0,
-        totalQueries: 0,
-        totalClaims: 0,
-        verifiedClaims: 0,
-        unsupportedClaims: 0,
-        contradictedClaims: 0,
-        avgLatencyMs: 0,
-        avgMakerLatencyMs: 0,
-        avgJudgeLatencyMs: 0,
-        avgCorrectionLatencyMs: 0,
-        approvedCount: 0,
-        correctedCount: 0,
-        blockedCount: 0,
-        driftData: []
-      };
-    }
+    const url = `${API_BASE}/metrics${workspaceId && workspaceId !== 'all' ? `?workspace_id=${encodeURIComponent(workspaceId)}` : ''}`;
+    const data = await fetchJson<any>(url, {
+      headers: getAuthHeaders(workspaceId || 'default')
+    });
+    return {
+      passRate: data.pass_rate,
+      correctionRate: data.correction_rate,
+      blockRate: data.block_rate,
+      totalQueries: data.total_queries,
+      totalClaims: data.total_claims,
+      verifiedClaims: data.verified_claims,
+      unsupportedClaims: data.unsupported_claims,
+      contradictedClaims: data.contradicted_claims,
+      avgLatencyMs: data.avg_latency_ms,
+      avgMakerLatencyMs: data.avg_maker_latency_ms,
+      avgJudgeLatencyMs: data.avg_judge_latency_ms,
+      avgCorrectionLatencyMs: data.avg_correction_latency_ms || 0,
+      approvedCount: data.approved_count || 0,
+      correctedCount: data.corrected_count || 0,
+      blockedCount: data.blocked_count || 0,
+      driftData: (data.drift_data || []).map((d: any) => {
+        let timeStr = d.timestamp || '12:00';
+        if (timeStr.includes('T')) {
+          try {
+            timeStr = new Date(timeStr).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+          } catch {}
+        }
+        return {
+          time: timeStr,
+          passRate: d.pass_rate,
+          correctionRate: d.correction_rate,
+          blockRate: d.block_rate,
+          queryIndex: d.query_index
+        };
+      }),
+      isSimulatedBaseline: data.is_simulated_baseline || false
+    };
   },
 
   async getDocuments(workspaceId: string = 'default'): Promise<Document[]> {
-    try {
-      const data = await fetchJson<any[]>(`${API_BASE}/knowledge/documents?workspace_id=${encodeURIComponent(workspaceId)}`);
-      if (Array.isArray(data) && data.length > 0) {
-        return data.map((doc: any, i: number) => ({
-          id: `doc-${i + 1}`,
-          filename: doc.filename,
-          title: doc.title,
-          chunkCount: doc.chunk_count,
-          snippet: doc.content.slice(0, 180) + '...',
-          content: doc.content,
-          uploadedAt: '2026-09-20'
-        }));
-      }
-    } catch {
-      // Fallback
-      notifyToast('warning', 'Using Demo Documents', 'Could not load workspace documents — showing NovaMart demo baseline.');
+    const data = await fetchJson<any[]>(`${API_BASE}/knowledge/documents?workspace_id=${encodeURIComponent(workspaceId)}`, {
+      headers: getAuthHeaders(workspaceId)
+    });
+    if (!Array.isArray(data) || data.length === 0) {
+      return [];
     }
-    return mockDocuments;
+    return data.map((doc: any, i: number) => ({
+      id: `doc-${i + 1}`,
+      filename: doc.filename,
+      title: doc.title,
+      chunkCount: doc.chunk_count,
+      snippet: doc.content.slice(0, 180) + '...',
+      content: doc.content,
+      uploadedAt: '2026-09-20'
+    }));
   },
 
   async uploadDocument(filename: string, content: string, title?: string, workspaceId: string = 'default'): Promise<{ message: string; filename: string; chunks: number }> {
     return await fetchJson(`${API_BASE}/knowledge/documents?workspace_id=${encodeURIComponent(workspaceId)}`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: getAuthHeaders(workspaceId),
       body: JSON.stringify({ filename, content, title: title || filename.replace('.txt', '').replace('_', ' ') })
     });
   },
@@ -488,8 +278,16 @@ export const api = {
     formData.append('file', file);
     if (title) formData.append('title', title);
 
+    const isDemo = workspaceId === 'default' || workspaceId === 'acme-health';
+    const headers: Record<string, string> = isDemo ? {} : { 'X-Workspace-Token': getWorkspaceToken(workspaceId) || '' };
+    // Don't set Content-Type for FormData - browser sets it with boundary
+    if (!isDemo && !headers['X-Workspace-Token']) {
+      delete headers['X-Workspace-Token'];
+    }
+
     return await fetchJson(`${API_BASE}/knowledge/documents/upload?workspace_id=${encodeURIComponent(workspaceId)}`, {
       method: 'POST',
+      headers: Object.keys(headers).length > 0 ? headers : undefined,
       body: formData
     });
   },
@@ -497,20 +295,22 @@ export const api = {
   async updateDocument(filename: string, content: string, title?: string, workspaceId: string = 'default'): Promise<{ message: string; filename: string; chunks: number }> {
     return await fetchJson(`${API_BASE}/knowledge/documents/${encodeURIComponent(filename)}?workspace_id=${encodeURIComponent(workspaceId)}`, {
       method: 'PUT',
-      headers: { 'Content-Type': 'application/json' },
+      headers: getAuthHeaders(workspaceId),
       body: JSON.stringify({ content, title: title || filename.replace('.txt', '').replace('_', ' ') })
     });
   },
 
   async deleteDocument(filename: string, workspaceId: string = 'default'): Promise<{ message: string }> {
     return await fetchJson(`${API_BASE}/knowledge/documents/${encodeURIComponent(filename)}?workspace_id=${encodeURIComponent(workspaceId)}`, {
-      method: 'DELETE'
+      method: 'DELETE',
+      headers: getAuthHeaders(workspaceId)
     });
   },
 
   async reindexWorkspace(workspaceId: string = 'default'): Promise<{ message: string; documents_indexed: number }> {
     return await fetchJson(`${API_BASE}/knowledge/reindex?workspace_id=${encodeURIComponent(workspaceId)}`, {
-      method: 'POST'
+      method: 'POST',
+      headers: getAuthHeaders(workspaceId)
     });
   },
 
@@ -547,13 +347,19 @@ export const api = {
     ];
 
     try {
-      const data = await fetchJson<Workspace[]>(`${API_BASE}/workspaces`);
+      const data = await fetchJson<Workspace[]>(`${API_BASE}/workspaces`, {
+        headers: { 'Content-Type': 'application/json' }
+      });
       if (Array.isArray(data) && data.length > 0) {
         const map = new Map<string, Workspace>();
         data.forEach(w => map.set(w.id, w));
         customWorkspaces.forEach(w => {
           if (!map.has(w.id)) map.set(w.id, w);
         });
+        // Cache all workspaces including tokens from backend
+        try {
+          localStorage.setItem('veritrust_all_workspaces', JSON.stringify(data));
+        } catch {}
         return Array.from(map.values());
       }
     } catch {
@@ -608,7 +414,7 @@ export const api = {
     try {
       const backendWs = await fetchJson<Workspace>(`${API_BASE}/workspaces`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: getAuthHeaders(slug),
         body: JSON.stringify(input)
       });
       return backendWs;
@@ -622,7 +428,7 @@ export const api = {
     try {
       return await fetchJson<Workspace>(`${API_BASE}/workspaces/${encodeURIComponent(id)}/settings`, {
         method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
+        headers: getAuthHeaders(id),
         body: JSON.stringify(input)
       });
     } catch (err: any) {
@@ -632,40 +438,18 @@ export const api = {
   },
 
   async verifyDraft(draft: string, workspaceId: string = 'default'): Promise<any> {
-    try {
-      return await fetchJson(`${API_BASE}/verify`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ draft, workspace_id: workspaceId })
-      });
-    } catch (err) {
-      console.warn('Verify call failed:', err);
-    }
-    return {
-      is_safe: true,
-      severity: 'none',
-      overall_reasoning: 'APPROVED: Verified against workspace ground truth policies.',
-      claims: [
-        {
-          id: 'v-' + Date.now(),
-          text: draft.slice(0, 100),
-          verdict: 'Verified',
-          confidence: 0.95,
-          source_sentence: 'Standard enterprise policies verified.',
-          source_document: 'Corporate Policy',
-          reasoning: 'Policy statements align with ground truth documentation.',
-          is_filler: false
-        }
-      ],
-      verification_time_ms: 12.4
-    };
+    return await fetchJson(`${API_BASE}/verify`, {
+      method: 'POST',
+      headers: getAuthHeaders(workspaceId),
+      body: JSON.stringify({ draft, workspace_id: workspaceId })
+    });
   },
 
   async compare(message: string, workspaceId: string = 'default'): Promise<ComparisonResponse> {
     try {
       const data = await fetchJson<any>(`${API_BASE}/chat/compare`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: getAuthHeaders(workspaceId),
         body: JSON.stringify({ message, workspace_id: workspaceId })
       });
       return {
@@ -729,7 +513,12 @@ export const api = {
       if (workspaceId && workspaceId !== 'all') params.append('workspace_id', workspaceId);
       if (status) params.append('status', status);
 
-      return await fetchJson<ReviewItem[]>(`${API_BASE}/review/queue?${params.toString()}`);
+      const isDemo = workspaceId === 'default' || workspaceId === 'acme-health';
+      const headers = isDemo ? { 'Content-Type': 'application/json' } : getAuthHeaders(workspaceId || 'default');
+      
+      return await fetchJson<ReviewItem[]>(`${API_BASE}/review/queue?${params.toString()}`, {
+        headers
+      });
     } catch (err) {
       console.warn('Failed to fetch review queue from backend:', err);
     }
@@ -738,18 +527,22 @@ export const api = {
 
   async resolveReviewItem(
     itemId: string,
-    data: { action: 'approve_correction' | 'override' | 'dismiss'; corrected_response?: string; human_notes?: string; add_to_knowledge_base?: boolean }
+    data: { action: 'approve_correction' | 'override' | 'dismiss'; corrected_response?: string; human_notes?: string; add_to_knowledge_base?: boolean },
+    workspaceId: string = 'default'
   ): Promise<ReviewItem> {
     return await fetchJson<ReviewItem>(`${API_BASE}/review/${itemId}/resolve`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: getAuthHeaders(workspaceId),
       body: JSON.stringify(data)
     });
   },
 
-  async getReviewStats(): Promise<ReviewStats> {
+  async getReviewStats(workspaceId?: string): Promise<ReviewStats> {
     try {
-      return await fetchJson<ReviewStats>(`${API_BASE}/review/stats`);
+      const params = workspaceId && workspaceId !== 'all' ? `?workspace_id=${encodeURIComponent(workspaceId)}` : '';
+      const isDemo = workspaceId === 'default' || workspaceId === 'acme-health';
+      const headers = isDemo ? { 'Content-Type': 'application/json' } : getAuthHeaders(workspaceId || 'default');
+      return await fetchJson<ReviewStats>(`${API_BASE}/review/stats${params}`, { headers });
     } catch {
       // fallback
     }

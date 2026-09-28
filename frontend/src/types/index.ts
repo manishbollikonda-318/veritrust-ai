@@ -85,6 +85,7 @@ export interface MetricData {
   correctedCount?: number;
   blockedCount?: number;
   driftData?: DriftDataPoint[];
+  isSimulatedBaseline?: boolean;
 }
 
 export interface Document {
@@ -117,6 +118,7 @@ export interface ReviewItem {
   review_status: 'pending' | 'approved' | 'overridden' | 'dismissed';
   human_notes?: string;
   learned_rule?: string;
+  is_sample?: boolean;
 }
 
 export interface ReviewStats {
@@ -137,6 +139,8 @@ export interface Workspace {
   api_key_masked?: string;
   document_count: number;
   created_at: string;
+  access_token?: string;
+  token_expires_at?: string;
 }
 
 export interface WorkspaceCreateInput {

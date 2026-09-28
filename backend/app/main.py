@@ -222,6 +222,127 @@ async def health():
     return {"status": "healthy", "timestamp": time.time()}
 
 
+@app.get("/api/health/llm")
+async def llm_health():
+    """Check LLM provider availability and configuration."""
+    import httpx
+    from app.config import settings
+    
+    results = {}
+    
+    # Check OpenAI
+    if settings.OPENAI_API_KEY:
+        try:
+            async with httpx.AsyncClient(timeout=5.0) as client:
+                resp = await client.get(
+                    "https://api.openai.com/v1/models",
+                    headers={"Authorization": f"Bearer {settings.OPENAI_API_KEY}"}
+                )
+                results["openai"] = {
+                    "available": resp.status_code == 200,
+                    "model": settings.OPENAI_MODEL,
+                    "status": "configured" if resp.status_code == 200 else f"error: {resp.status_code}"
+                }
+        except Exception as e:
+            results["openai"] = {
+                "available": False,
+                "model": settings.OPENAI_MODEL,
+                "status": f"error: {str(e)[:100]}"
+            }
+    else:
+        results["openai"] = {
+            "available": False,
+            "model": settings.OPENAI_MODEL,
+            "status": "not_configured"
+        }
+    
+    # Check Anthropic
+    if settings.ANTHROPIC_API_KEY:
+        try:
+            async with httpx.AsyncClient(timeout=5.0) as client:
+                resp = await client.get(
+                    "https://api.anthropic.com/v1/messages",
+                    headers={
+                        "x-api-key": settings.ANTHROPIC_API_KEY,
+                        "anthropic-version": "2023-06-01"
+                    }
+                )
+                results["anthropic"] = {
+                    "available": resp.status_code in (200, 405),  # 405 means auth worked but method not allowed
+                    "model": settings.ANTHROPIC_MODEL,
+                    "status": "configured" if resp.status_code in (200, 405) else f"error: {resp.status_code}"
+                }
+        except Exception as e:
+            results["anthropic"] = {
+                "available": False,
+                "model": settings.ANTHROPIC_MODEL,
+                "status": f"error: {str(e)[:100]}"
+            }
+    else:
+        results["anthropic"] = {
+            "available": False,
+            "model": settings.ANTHROPIC_MODEL,
+            "status": "not_configured"
+        }
+    
+    # Check Gemini
+    if settings.GEMINI_API_KEY:
+        try:
+            async with httpx.AsyncClient(timeout=5.0) as client:
+                resp = await client.get(
+                    f"https://generativelanguage.googleapis.com/v1beta/models/{settings.GEMINI_MODEL}:generateContent",
+                    params={"key": settings.GEMINI_API_KEY}
+                )
+                results["gemini"] = {
+                    "available": resp.status_code in (200, 400),  # 400 means key works but payload issue
+                    "model": settings.GEMINI_MODEL,
+                    "status": "configured" if resp.status_code in (200, 400) else f"error: {resp.status_code}"
+                }
+        except Exception as e:
+            results["gemini"] = {
+                "available": False,
+                "model": settings.GEMINI_MODEL,
+                "status": f"error: {str(e)[:100]}"
+            }
+    else:
+        results["gemini"] = {
+            "available": False,
+            "model": settings.GEMINI_MODEL,
+            "status": "not_configured"
+        }
+    
+    # Check Ollama
+    try:
+        async with httpx.AsyncClient(timeout=5.0) as client:
+            resp = await client.get(f"{settings.OLLAMA_BASE_URL}/api/tags")
+            ollama_available = resp.status_code == 200
+            models = []
+            if ollama_available:
+                models = [m.get("name", "") for m in resp.json().get("models", [])]
+            results["ollama"] = {
+                "available": ollama_available,
+                "model": settings.OLLAMA_MODEL,
+                "status": "running" if ollama_available else "unreachable",
+                "models_available": models
+            }
+    except Exception as e:
+        results["ollama"] = {
+            "available": False,
+            "model": settings.OLLAMA_MODEL,
+            "status": f"error: {str(e)[:100]}",
+            "models_available": []
+        }
+    
+    overall_healthy = any(r.get("available", False) for r in results.values())
+    
+    return {
+        "status": "healthy" if overall_healthy else "degraded",
+        "providers": results,
+        "default_provider": settings.DEFAULT_LLM_PROVIDER,
+        "note": "Ollama requires local installation at http://localhost:11434. See https://ollama.ai for setup."
+    }
+
+
 if FRONTEND_DIST.exists():
     @app.get("/{full_path:path}")
     async def serve_spa(full_path: str):

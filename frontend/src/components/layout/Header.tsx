@@ -1,15 +1,18 @@
 import React from 'react';
-import { Cpu, Building2, Menu, PanelLeftClose, PanelLeftOpen, Sparkles, Plus, Wifi, WifiOff, Activity } from 'lucide-react';
+import { Cpu, Building2, Menu, PanelLeftClose, PanelLeftOpen, Sparkles, Plus, Wifi, WifiOff, Activity, Zap, Server } from 'lucide-react';
 import { useWorkspace } from '../../context/WorkspaceContext';
 import { useSidebar } from '../../context/SidebarContext';
 import { openDataSourceDisclosure } from '../ui/DataSourceDisclosureModal';
 import NeuButton from '../ui/NeuButton';
 import { useConnectionStatus } from '../../hooks/useConnectionStatus';
+import { useLLMHealth } from '../../hooks/useLLMHealth';
 
 export default function Header() {
   const { currentWorkspace, setCurrentWorkspace, workspaces, openCreateModal } = useWorkspace();
   const { isCollapsed, toggleSidebar, toggleMobile } = useSidebar();
   const { isConnected, latency } = useConnectionStatus();
+  const { getActiveProvider, isAnyProviderAvailable, loading: llmLoading } = useLLMHealth();
+  const activeProvider = getActiveProvider();
 
   return (
     <header className="h-16 sm:h-20 w-full flex items-center justify-between gap-2 px-3 sm:px-6 lg:px-8 bg-[#EEF2F8]/80 sticky top-0 z-30 backdrop-blur-md border-b border-slate-200/70">
@@ -70,6 +73,25 @@ export default function Header() {
             </>
           )}
         </div>
+
+        {/* LLM Provider Chip */}
+        {!llmLoading && activeProvider && (
+          <div className="hidden md:flex items-center gap-1.5 px-2.5 py-1.5 rounded-2xl bg-gradient-to-br from-[#F4F7FC] to-[#E6EDF7] shadow-[inset_2px_2px_5px_rgba(165,180,205,0.45),inset_-2px_-2px_5px_rgba(255,255,255,0.9)] border border-slate-200/60">
+            {activeProvider.available ? (
+              <>
+                <Zap size={12} className="text-emerald-500" />
+                <span className="text-xs font-bold text-emerald-700">{activeProvider.name.charAt(0).toUpperCase() + activeProvider.name.slice(1)}</span>
+                <span className="text-[10px] font-mono text-emerald-600 bg-emerald-50 px-1.5 rounded">{activeProvider.model}</span>
+              </>
+            ) : (
+              <>
+                <Server size={12} className="text-amber-500" />
+                <span className="text-xs font-bold text-amber-700">{activeProvider.name.charAt(0).toUpperCase() + activeProvider.name.slice(1)}</span>
+                <span className="text-[10px] font-mono text-amber-600 bg-amber-50 px-1.5 rounded">Unavailable</span>
+              </>
+            )}
+          </div>
+        )}
 
         {/* Demo Disclosure Quick Button */}
         <NeuButton

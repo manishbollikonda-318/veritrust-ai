@@ -95,6 +95,9 @@ export default function DataSourceDisclosureModal() {
               <p>
                 The dual-agent verification system, claim extraction, and guardrail logic you are seeing are <strong className="font-bold text-accent-strong">fully functional</strong> and work identically with real enterprise documents. In production, NovaMart&apos;s sample policies would simply be replaced with your business&apos;s real knowledge base.
               </p>
+              <p>
+                The <strong className="font-bold text-ink">Review Queue</strong> tab shows <strong className="font-bold text-amber-strong">seeded sample escalations</strong> for NovaMart only — these represent realistic blocked/corrected interactions so you can immediately explore the human-in-the-loop workflow. Custom workspaces start with an empty review queue and populate only from real guardrail interceptions.
+              </p>
             </div>
 
             {/* Bring-your-own-data prompt with translucent glass styling */}

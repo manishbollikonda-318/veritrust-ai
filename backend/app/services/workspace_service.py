@@ -5,7 +5,8 @@ and seeds initial policy documents directly into the vector store.
 """
 
 import re
-from datetime import datetime
+import secrets
+from datetime import datetime, timedelta
 from typing import List, Optional, Dict, Any
 from app.models.schemas import WorkspaceModel, WorkspaceCreateRequest, WorkspaceSettingsUpdateRequest
 from app.knowledge.vectorstore import vector_store
@@ -20,6 +21,11 @@ def mask_key(key: Optional[str]) -> Optional[str]:
     prefix = k[:4]
     suffix = k[-4:]
     return f"{prefix}...{suffix}"
+
+
+def generate_workspace_token() -> str:
+    """Generate a secure workspace access token."""
+    return f"vt_{secrets.token_urlsafe(32)}"
 
 
 class WorkspaceService:
@@ -80,7 +86,9 @@ class WorkspaceService:
                     has_custom_api_key=has_key,
                     api_key_masked=masked_key,
                     document_count=doc_count,
-                    created_at=data.get("created_at", datetime.now().isoformat())
+                    created_at=data.get("created_at", datetime.now().isoformat()),
+                    access_token=data.get("access_token"),
+                    token_expires_at=data.get("token_expires_at")
                 )
             )
         # Sort so demo comes first, then chronological
@@ -109,13 +117,15 @@ class WorkspaceService:
             has_custom_api_key=bool(raw_key),
             api_key_masked=mask_key(raw_key),
             document_count=doc_count,
-            created_at=data.get("created_at", datetime.now().isoformat())
+            created_at=data.get("created_at", datetime.now().isoformat()),
+            access_token=data.get("access_token"),
+            token_expires_at=data.get("token_expires_at")
         )
 
     def create_workspace(self, req: WorkspaceCreateRequest) -> WorkspaceModel:
         """
         Create a new company workspace, initialize its metadata, store optional custom API key,
-        and immediately seed and index its initial policy document into the vector store.
+        generate an access token, and immediately seed and index its initial policy document into the vector store.
         """
         raw_slug = re.sub(r'[^a-z0-9_-]', '_', req.name.lower().strip())
         raw_slug = re.sub(r'_+', '_', raw_slug).strip('_')
@@ -128,6 +138,11 @@ class WorkspaceService:
             ws_id = f"{base_id}_{counter}"
             counter += 1
 
+        # Generate access token with expiry
+        access_token = generate_workspace_token()
+        token_expiry_days = req.token_expiry_days or 30
+        token_expires_at = (datetime.now() + timedelta(days=token_expiry_days)).isoformat()
+
         # Store metadata
         self._workspaces[ws_id] = {
             "id": ws_id,
@@ -136,7 +151,9 @@ class WorkspaceService:
             "description": req.description or f"Custom workspace for {req.name}",
             "is_demo": False,
             "llm_provider": req.llm_provider or "shared_default",
-            "created_at": datetime.now().isoformat()
+            "created_at": datetime.now().isoformat(),
+            "access_token": access_token,
+            "token_expires_at": token_expires_at
         }
 
         # Store API key if provided
@@ -203,6 +220,59 @@ class WorkspaceService:
             pass
 
         return self.get_workspace(ws_id)
+
+    def delete_workspace(self, ws_id: str) -> bool:
+        """Delete a custom workspace (not demo workspaces)."""
+        if ws_id not in self._workspaces:
+            alt = ws_id.replace('-', '_') if '-' in ws_id else ws_id.replace('_', '-')
+            if alt in self._workspaces:
+                ws_id = alt
+            else:
+                return False
+        
+        data = self._workspaces[ws_id]
+        if data.get("is_demo", False):
+            raise ValueError("Cannot delete demo workspaces")
+        
+        # Remove from vector store
+        try:
+            vector_store.sqlite.delete_workspace(ws_id)
+        except Exception:
+            pass
+        
+        # Remove from memory
+        self._workspaces.pop(ws_id, None)
+        self._api_keys.pop(ws_id, None)
+        
+        # Remove associated documents
+        try:
+            vector_store.reindex_workspace(ws_id)
+        except Exception:
+            pass
+        
+        return True
+
+    def validate_token(self, ws_id: str, token: str) -> bool:
+        """Validate workspace access token."""
+        data = self._workspaces.get(ws_id)
+        if not data:
+            return False
+        
+        stored_token = data.get("access_token")
+        if not stored_token or stored_token != token:
+            return False
+        
+        # Check expiry
+        expires_at = data.get("token_expires_at")
+        if expires_at:
+            try:
+                from datetime import datetime
+                if datetime.fromisoformat(expires_at) < datetime.now():
+                    return False
+            except Exception:
+                pass
+        
+        return True
 
     def get_raw_api_key(self, ws_id: str) -> Optional[str]:
         """Internal server-only retrieval of the unmasked key for agent execution."""
