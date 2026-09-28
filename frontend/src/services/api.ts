@@ -552,5 +552,16 @@ async sendMessage(content: string, demoMode: boolean = true, workspaceId: string
       total_learned_rules: 4,
       system_accuracy_score: 98.4
     };
+  },
+
+  async deleteWorkspace(workspaceId: string): Promise<void> {
+    const token = getWorkspaceToken(workspaceId);
+    if (!token) {
+      throw new Error('No access token found for this workspace');
+    }
+    return await fetchJson(`${API_BASE}/workspaces/${encodeURIComponent(workspaceId)}`, {
+      method: 'DELETE',
+      headers: { 'X-Workspace-Token': token }
+    });
   }
 };

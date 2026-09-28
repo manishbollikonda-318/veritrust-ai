@@ -9,6 +9,7 @@ interface WorkspaceContextType {
   activeWorkspace?: Workspace;
   refreshWorkspaces: () => Promise<void>;
   createWorkspace: (input: WorkspaceCreateInput) => Promise<Workspace>;
+  deleteWorkspace: (workspaceId: string, confirmationName: string) => Promise<void>;
   isDemoWorkspace: boolean;
   isCreateModalOpen: boolean;
   openCreateModal: () => void;
@@ -69,6 +70,44 @@ export const WorkspaceProvider: React.FC<{ children: React.ReactNode }> = ({ chi
     return newWs;
   };
 
+  const handleDeleteWorkspace = async (workspaceId: string, confirmationName: string): Promise<void> => {
+    const workspace = workspaces.find(w => w.id === workspaceId);
+    if (!workspace) {
+      throw new Error('Workspace not found');
+    }
+    if (workspace.name !== confirmationName) {
+      throw new Error('Company name does not match');
+    }
+    if (workspace.is_demo) {
+      throw new Error('Cannot delete demo workspaces');
+    }
+
+    // Call backend API
+    await api.deleteWorkspace(workspaceId);
+
+    // Remove from localStorage
+    try {
+      const storedStr = localStorage.getItem('veritrust_custom_workspaces');
+      if (storedStr) {
+        const list: Workspace[] = JSON.parse(storedStr);
+        const updated = list.filter(w => w.id !== workspaceId);
+        localStorage.setItem('veritrust_custom_workspaces', JSON.stringify(updated));
+      }
+      // Also remove documents
+      localStorage.removeItem(`veritrust_docs_${workspaceId}`);
+    } catch (e) {
+      console.warn('Could not clean up localStorage:', e);
+    }
+
+    // Refresh workspaces from backend
+    await refreshWorkspaces();
+
+    // If we deleted the current workspace, switch to default
+    if (currentWorkspace === workspaceId) {
+      handleSetWorkspace('default');
+    }
+  };
+
   const resetWorkspaceData = () => {
     // This function can be called by components to reset their local state
     // The workspaceVersion increment already triggers useEffect dependencies
@@ -87,6 +126,7 @@ export const WorkspaceProvider: React.FC<{ children: React.ReactNode }> = ({ chi
         activeWorkspace,
         refreshWorkspaces,
         createWorkspace: handleCreateWorkspace,
+        deleteWorkspace: handleDeleteWorkspace,
         isDemoWorkspace,
         isCreateModalOpen,
         openCreateModal: () => setIsCreateModalOpen(true),
