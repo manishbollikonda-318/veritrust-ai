@@ -29,19 +29,22 @@ export default function ComparisonView() {
   const [query, setQuery] = useState('');
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState<ComparisonResponse | null>(null);
+  const [error, setError] = useState<string | null>(null);
   const [highlightDiff, setHighlightDiff] = useState(true);
 
   const handleRunComparison = async (textToRun: string) => {
     const q = textToRun || query;
     if (!q.trim() || loading) return;
     setLoading(true);
+    setError(null);
     setQuery(q);
 
     try {
       const data = await api.compare(q, currentWorkspace);
       setResult(data);
-    } catch (err) {
+    } catch (err: any) {
       console.error('Comparison error:', err);
+      setError(err?.message || 'Comparison request failed. Please check network connection.');
     } finally {
       setLoading(false);
     }
@@ -87,6 +90,13 @@ export default function ComparisonView() {
             <Send size={18} className={query.trim() ? 'text-indigo-600' : 'text-slate-400'} />
           </NeuButton>
         </form>
+
+        {error && (
+          <div className="p-3 rounded-xl bg-rose-50 border border-rose-300 text-xs font-bold text-rose-800 flex items-center gap-2">
+            <XCircle size={14} className="text-rose-600 shrink-0" />
+            <span>{error}</span>
+          </div>
+        )}
       </div>
 
       {/* Side-by-Side Dual Agent Comparison */}

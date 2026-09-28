@@ -100,14 +100,13 @@ flowchart TD
 
 ---
 
-## 4. Single-Folder Repository Layout
-
-Everything in this project is consolidated inside `/Users/manishbollikonda/Downloads/veritrust-ai/`:
+## 4. Repository Layout
 
 ```
 veritrust-ai/
 ├── run_demo.sh                 # Single-command launcher for both backend & frontend
 ├── README.md                   # Complete system overview & quick start
+├── LICENSE                     # MIT Open Source License
 ├── .gitignore                  # Git exclusions (build artifacts, virtualenv, caches)
 ├── docs/                       # Specifications and Guides
 │   ├── PRD.md                  # Complete Product Requirements Document
@@ -159,7 +158,7 @@ veritrust-ai/
     │   └── index.css           # Multi-hue soft neumorphic styling tokens
     ├── package.json            # Node dependencies
     ├── vite.config.ts          # Vite build & proxy setup
-    └── dist/                   # Production build bundle
+    └── .env.example            # Frontend environment template
 ```
 
 ---
@@ -168,7 +167,8 @@ veritrust-ai/
 
 ### Quick Start (Single Command)
 ```bash
-cd /Users/manishbollikonda/Downloads/veritrust-ai
+git clone <repository-url>
+cd veritrust-ai
 ./run_demo.sh
 ```
 

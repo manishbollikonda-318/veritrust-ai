@@ -21,14 +21,14 @@ export default function ReviewQueueView() {
 
   // Derive stats from filtered items instead of global endpoint
   const stats = useMemo(() => {
-    const pending = items.filter(it => it.review_status === 'pending').length;
-    const resolved = items.filter(it => it.review_status !== 'pending').length;
+    const pending = items.filter(it => (it.review_status || '').trim().toLowerCase() === 'pending').length;
+    const resolved = items.filter(it => (it.review_status || '').trim().toLowerCase() !== 'pending').length;
     const learnedRules = items.filter(it => it.learned_rule).length;
     return {
       pending_count: pending,
       resolved_count: resolved,
       total_learned_rules: learnedRules,
-      system_accuracy_score: Math.round(98.4 + (learnedRules * 0.3) * 10) / 10
+      system_accuracy_score: Math.round((98.4 + (learnedRules * 0.3)) * 10) / 10
     };
   }, [items]);
 
@@ -79,8 +79,9 @@ export default function ReviewQueueView() {
 
   const safeItems = Array.isArray(items) ? items : [];
   const filteredItems = safeItems.filter((it) => {
-    if (filterStatus === 'pending') return it.review_status === 'pending';
-    if (filterStatus === 'resolved') return it.review_status !== 'pending';
+    const status = (it.review_status || '').trim().toLowerCase();
+    if (filterStatus === 'pending') return status === 'pending';
+    if (filterStatus === 'resolved') return status !== 'pending';
     return true;
   });
 
@@ -197,7 +198,7 @@ export default function ReviewQueueView() {
           </NeuCard>
         ) : (
           filteredItems.map((item) => {
-            const isPending = item.review_status === 'pending';
+            const isPending = (item.review_status || '').trim().toLowerCase() === 'pending';
             const isOverriding = activeOverrideId === item.id;
 
             return (

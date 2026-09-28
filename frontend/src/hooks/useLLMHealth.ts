@@ -1,69 +1,75 @@
 import { useState, useEffect } from 'react';
+import { api } from '../services/api';
 
-interface LLMProviderStatus {
+export interface LLMProviderStatus {
   name: string;
   available: boolean;
   model: string;
   status: string;
-  models_available?: string[];
-}
-
-interface LLMHealthResponse {
-  status: string;
-  providers: Record<string, LLMProviderStatus>;
-  default_provider: string;
-  note: string;
 }
 
 export function useLLMHealth() {
-  const [llmHealth, setLlmHealth] = useState<LLMHealthResponse | null>(null);
+  const [providers, setProviders] = useState<LLMProviderStatus[]>([]);
+  const [overallStatus, setOverallStatus] = useState<'healthy' | 'degraded' | 'offline' | 'loading'>('loading');
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const fetchHealth = async () => {
+    let mounted = true;
+    let intervalId: ReturnType<typeof setInterval>;
+
+    const checkLLMHealth = async () => {
       try {
-        const res = await fetch('/api/health/llm');
-        if (res.ok) {
-          const data = await res.json();
-          setLlmHealth(data);
+        const res = await fetch('/api/health/llm', { 
+          method: 'GET', 
+          cache: 'no-cache' 
+        });
+        if (!res.ok) throw new Error('Failed to fetch LLM health');
+        
+        const data = await res.json();
+        
+        if (!mounted) return;
+        
+        const providerList: LLMProviderStatus[] = Object.entries(data.providers || {}).map(([name, info]: [string, any]) => ({
+          name,
+          available: info.available,
+          model: info.model,
+          status: info.status
+        }));
+        
+        setProviders(providerList);
+        setOverallStatus(data.status === 'healthy' ? 'healthy' : data.status === 'degraded' ? 'degraded' : 'offline');
+      } catch {
+        if (mounted) {
+          setOverallStatus('offline');
+          setProviders([]);
         }
-      } catch (err) {
-        console.warn('Failed to fetch LLM health:', err);
       } finally {
-        setLoading(false);
+        if (mounted) {
+          setLoading(false);
+        }
       }
     };
 
-    fetchHealth();
-    
-    // Poll every 60 seconds
-    const interval = setInterval(fetchHealth, 60000);
-    return () => clearInterval(interval);
+    checkLLMHealth();
+    intervalId = setInterval(checkLLMHealth, 30000);
+
+    return () => {
+      mounted = false;
+      clearInterval(intervalId);
+    };
   }, []);
 
-  const getActiveProvider = (): LLMProviderStatus | null => {
-    if (!llmHealth) return null;
-    
-    // Find first available provider
-    for (const provider of Object.values(llmHealth.providers)) {
-      if (provider.available) {
-        return provider;
-      }
-    }
-    
-    // If none available, return the default or first one
-    return Object.values(llmHealth.providers)[0] || null;
+  const getActiveProvider = () => {
+    return providers.find(p => p.available) || providers[0] || null;
   };
 
-  const isAnyProviderAvailable = (): boolean => {
-    if (!llmHealth) return false;
-    return Object.values(llmHealth.providers).some(p => p.available);
-  };
+  const isAnyProviderAvailable = () => providers.some(p => p.available);
 
-  return {
-    llmHealth,
-    loading,
-    getActiveProvider,
-    isAnyProviderAvailable
+  return { 
+    providers, 
+    overallStatus, 
+    loading, 
+    getActiveProvider, 
+    isAnyProviderAvailable: isAnyProviderAvailable() 
   };
 }

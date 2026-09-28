@@ -1,7 +1,7 @@
 import { Message, MetricData, Document, ComparisonResponse, ReviewItem, ReviewStats, Workspace, WorkspaceCreateInput } from '../types';
 import { notifyToast } from './notifications';
 
-function getApiBase(): string {
+export function getApiBase(): string {
   // If explicitly specified in environment
   if (typeof import.meta !== 'undefined' && (import.meta as any).env?.VITE_API_URL) {
     return ((import.meta as any).env.VITE_API_URL as string).replace(/\/+$/, '');

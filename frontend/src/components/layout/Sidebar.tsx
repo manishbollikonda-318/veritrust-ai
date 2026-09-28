@@ -1,9 +1,10 @@
 import { NavLink, Link } from 'react-router-dom';
 import {
   MessageSquare, BarChart2, BookOpen, GitCompare, Shield,
-  Lock, FileText, Code2, X, UserCheck
+  Lock, FileText, Code2, X, UserCheck, Wifi, WifiOff, Zap, Server
 } from 'lucide-react';
 import { useSidebar } from '../../context/SidebarContext';
+import { useLLMHealth } from '../../hooks/useLLMHealth';
 
 const navItems = [
   { path: '/chat', label: 'Live Guardrail', icon: MessageSquare },
@@ -127,21 +128,31 @@ export default function Sidebar() {
 
         {/* Footer & Compliance Status */}
         <div className={`mt-auto pt-4 border-t border-slate-300/60 text-xs ${
-          isCollapsed && !isMobileOpen ? 'text-center' : 'space-y-3'
+          isCollapsed && !isMobileOpen ? 'text-center' : 'space-y-2.5'
         }`}>
           {/* Status indicator */}
           {(!isCollapsed || isMobileOpen) ? (
-            <div className="flex items-center justify-between text-ink-muted font-bold">
-              <span className="flex items-center gap-1.5">
-                <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse shadow-sm" aria-hidden="true" />
-                Guardrail Engine
-              </span>
-              <span className="text-xs font-extrabold text-positive-deep bg-emerald-100/80 border border-emerald-300/60 px-2 py-0.5 rounded-full shadow-xs">
-                Active
-              </span>
+            <div className="space-y-1.5">
+              <div className="flex items-center justify-between text-ink-muted font-bold">
+                <span className="flex items-center gap-1.5">
+                  <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse shadow-sm" aria-hidden="true" />
+                  Guardrail Engine
+                </span>
+                <span className="text-[11px] font-extrabold text-positive-deep bg-emerald-100/80 border border-emerald-300/60 px-2 py-0.5 rounded-full shadow-xs">
+                  Active
+                </span>
+              </div>
+              <div className="flex items-center justify-between text-ink-muted font-bold text-[11px]">
+                <span className="flex items-center gap-1 text-slate-600 font-semibold">
+                  <span>🤖</span> LLM Pipeline
+                </span>
+                <span className="text-[11px] font-extrabold text-indigo-900 bg-indigo-100/80 border border-indigo-300/60 px-2 py-0.5 rounded-full shadow-xs">
+                  Gemini / Auto
+                </span>
+              </div>
             </div>
           ) : (
-            <div className="flex justify-center" title="Guardrail Engine: Active">
+            <div className="flex flex-col items-center gap-1.5" title="Guardrail: Active | LLM: Multi-Provider">
               <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse shadow-sm" aria-hidden="true" />
             </div>
           )}

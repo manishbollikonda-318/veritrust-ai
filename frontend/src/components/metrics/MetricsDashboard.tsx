@@ -20,21 +20,21 @@ export default function MetricsDashboard() {
   const isDefaultWorkspace = currentWorkspace === 'default';
 
   const m = {
-    passRate: typeof metrics?.passRate === 'number' ? metrics.passRate : 76.5,
-    correctionRate: typeof metrics?.correctionRate === 'number' ? metrics.correctionRate : 15.3,
-    blockRate: typeof metrics?.blockRate === 'number' ? metrics.blockRate : 8.2,
-    totalQueries: typeof metrics?.totalQueries === 'number' ? metrics.totalQueries : 142,
-    totalClaims: typeof metrics?.totalClaims === 'number' ? metrics.totalClaims : 486,
-    verifiedClaims: typeof metrics?.verifiedClaims === 'number' ? metrics.verifiedClaims : 388,
-    unsupportedClaims: typeof metrics?.unsupportedClaims === 'number' ? metrics.unsupportedClaims : 64,
-    contradictedClaims: typeof metrics?.contradictedClaims === 'number' ? metrics.contradictedClaims : 34,
-    avgLatencyMs: typeof metrics?.avgLatencyMs === 'number' ? metrics.avgLatencyMs : 312,
-    avgMakerLatencyMs: typeof metrics?.avgMakerLatencyMs === 'number' ? metrics.avgMakerLatencyMs : 135,
-    avgJudgeLatencyMs: typeof metrics?.avgJudgeLatencyMs === 'number' ? metrics.avgJudgeLatencyMs : 177,
-    avgCorrectionLatencyMs: typeof metrics?.avgCorrectionLatencyMs === 'number' ? metrics.avgCorrectionLatencyMs : 88,
-    approvedCount: typeof metrics?.approvedCount === 'number' ? metrics.approvedCount : 108,
-    correctedCount: typeof metrics?.correctedCount === 'number' ? metrics.correctedCount : 22,
-    blockedCount: typeof metrics?.blockedCount === 'number' ? metrics.blockedCount : 12,
+    passRate: typeof metrics?.passRate === 'number' ? metrics.passRate : (isDefaultWorkspace ? 76.5 : 0),
+    correctionRate: typeof metrics?.correctionRate === 'number' ? metrics.correctionRate : (isDefaultWorkspace ? 15.3 : 0),
+    blockRate: typeof metrics?.blockRate === 'number' ? metrics.blockRate : (isDefaultWorkspace ? 8.2 : 0),
+    totalQueries: typeof metrics?.totalQueries === 'number' ? metrics.totalQueries : (isDefaultWorkspace ? 142 : 0),
+    totalClaims: typeof metrics?.totalClaims === 'number' ? metrics.totalClaims : (isDefaultWorkspace ? 486 : 0),
+    verifiedClaims: typeof metrics?.verifiedClaims === 'number' ? metrics.verifiedClaims : (isDefaultWorkspace ? 388 : 0),
+    unsupportedClaims: typeof metrics?.unsupportedClaims === 'number' ? metrics.unsupportedClaims : (isDefaultWorkspace ? 64 : 0),
+    contradictedClaims: typeof metrics?.contradictedClaims === 'number' ? metrics.contradictedClaims : (isDefaultWorkspace ? 34 : 0),
+    avgLatencyMs: typeof metrics?.avgLatencyMs === 'number' ? metrics.avgLatencyMs : (isDefaultWorkspace ? 312 : 0),
+    avgMakerLatencyMs: typeof metrics?.avgMakerLatencyMs === 'number' ? metrics.avgMakerLatencyMs : (isDefaultWorkspace ? 135 : 0),
+    avgJudgeLatencyMs: typeof metrics?.avgJudgeLatencyMs === 'number' ? metrics.avgJudgeLatencyMs : (isDefaultWorkspace ? 177 : 0),
+    avgCorrectionLatencyMs: typeof metrics?.avgCorrectionLatencyMs === 'number' ? metrics.avgCorrectionLatencyMs : (isDefaultWorkspace ? 88 : 0),
+    approvedCount: typeof metrics?.approvedCount === 'number' ? metrics.approvedCount : (isDefaultWorkspace ? 108 : 0),
+    correctedCount: typeof metrics?.correctedCount === 'number' ? metrics.correctedCount : (isDefaultWorkspace ? 22 : 0),
+    blockedCount: typeof metrics?.blockedCount === 'number' ? metrics.blockedCount : (isDefaultWorkspace ? 12 : 0),
     driftData: Array.isArray(metrics?.driftData) ? metrics.driftData : []
   };
 

@@ -133,9 +133,13 @@ class ReviewService:
     def get_queue(self, workspace_id: Optional[str] = None, status_filter: Optional[str] = None) -> List[ReviewItem]:
         items = list(self.items.values())
         if workspace_id and workspace_id != "all":
-            items = [it for it in items if it.workspace_id == workspace_id]
+            clean_ws = workspace_id.replace('-', '_')
+            items = [it for it in items if it.workspace_id == workspace_id or it.workspace_id.replace('-', '_') == clean_ws]
         if status_filter:
-            items = [it for it in items if it.review_status == status_filter]
+            clean_filter = status_filter.strip().lower()
+            items = [it for it in items if (it.review_status or "").strip().lower() == clean_filter]
+        for it in items:
+            it.review_status = (it.review_status or "pending").strip().lower()
         return sorted(items, key=lambda x: x.timestamp, reverse=True)
 
     def resolve_item(self, item_id: str, request: ReviewResolutionRequest) -> ReviewItem:
