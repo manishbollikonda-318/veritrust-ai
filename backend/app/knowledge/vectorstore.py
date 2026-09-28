@@ -1,6 +1,7 @@
 import os
 import math
 import re
+from datetime import datetime
 from typing import List, Dict, Any, Optional
 from collections import defaultdict
 from app.config import settings
@@ -43,9 +44,19 @@ class SQLiteKnowledgeStore:
                         description TEXT NOT NULL,
                         is_demo BOOLEAN DEFAULT 0,
                         llm_provider TEXT DEFAULT 'shared_default',
-                        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+                        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                        access_token TEXT,
+                        token_expires_at TIMESTAMP
                     )
                 """)
+                # Migration: add missing columns if they don't exist
+                cursor.execute("PRAGMA table_info(corporate_workspaces)")
+                columns = [row[1] for row in cursor.fetchall()]
+                if "access_token" not in columns:
+                    cursor.execute("ALTER TABLE corporate_workspaces ADD COLUMN access_token TEXT")
+                if "token_expires_at" not in columns:
+                    cursor.execute("ALTER TABLE corporate_workspaces ADD COLUMN token_expires_at TIMESTAMP")
+
                 cursor.execute("""
                     CREATE TABLE IF NOT EXISTS corporate_documents (
                         id TEXT PRIMARY KEY,
@@ -80,8 +91,8 @@ class SQLiteKnowledgeStore:
             with self._get_connection() as conn:
                 cursor = conn.cursor()
                 cursor.execute("""
-                    INSERT OR REPLACE INTO corporate_workspaces (id, name, industry, description, is_demo, llm_provider, created_at)
-                    VALUES (?, ?, ?, ?, ?, ?, ?)
+                    INSERT OR REPLACE INTO corporate_workspaces (id, name, industry, description, is_demo, llm_provider, created_at, access_token, token_expires_at)
+                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
                 """, (
                     ws["id"],
                     ws["name"],
@@ -89,7 +100,9 @@ class SQLiteKnowledgeStore:
                     ws.get("description", ""),
                     1 if ws.get("is_demo") else 0,
                     ws.get("llm_provider", "shared_default"),
-                    ws.get("created_at", datetime.now().isoformat())
+                    ws.get("created_at", datetime.now().isoformat()),
+                    ws.get("access_token"),
+                    ws.get("token_expires_at")
                 ))
                 conn.commit()
         except Exception as e:
@@ -99,7 +112,7 @@ class SQLiteKnowledgeStore:
         try:
             with self._get_connection() as conn:
                 cursor = conn.cursor()
-                cursor.execute("SELECT id, name, industry, description, is_demo, llm_provider, created_at FROM corporate_workspaces")
+                cursor.execute("SELECT id, name, industry, description, is_demo, llm_provider, created_at, access_token, token_expires_at FROM corporate_workspaces")
                 rows = cursor.fetchall()
                 return [
                     {
@@ -109,7 +122,9 @@ class SQLiteKnowledgeStore:
                         "description": r[3],
                         "is_demo": bool(r[4]),
                         "llm_provider": r[5],
-                        "created_at": r[6]
+                        "created_at": r[6],
+                        "access_token": r[7],
+                        "token_expires_at": r[8]
                     }
                     for r in rows
                 ]
@@ -188,6 +203,18 @@ class SQLiteKnowledgeStore:
                 conn.commit()
         except Exception as e:
             print(f"SQLite delete_document error: {e}")
+
+    def delete_workspace(self, workspace_id: str):
+        """Delete all documents and chunks for a workspace."""
+        try:
+            with self._get_connection() as conn:
+                cursor = conn.cursor()
+                cursor.execute("DELETE FROM corporate_documents WHERE workspace_id = ?", (workspace_id,))
+                cursor.execute("DELETE FROM document_chunks WHERE workspace_id = ?", (workspace_id,))
+                cursor.execute("DELETE FROM corporate_workspaces WHERE id = ?", (workspace_id,))
+                conn.commit()
+        except Exception as e:
+            print(f"SQLite delete_workspace error: {e}")
 
 
 class LightweightEmbeddingEngine:

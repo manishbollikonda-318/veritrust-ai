@@ -2,8 +2,8 @@
 Workspace API routes — Multi-company workspace creation, listing, and LLM provider configuration.
 """
 
-from typing import List
-from fastapi import APIRouter, HTTPException, status, Header, Depends
+from typing import List, Optional
+from fastapi import APIRouter, HTTPException, status, Header, Depends, Request
 from app.models.schemas import WorkspaceModel, WorkspaceCreateRequest, WorkspaceSettingsUpdateRequest
 from app.services.workspace_service import workspace_service
 
@@ -11,11 +11,17 @@ router = APIRouter()
 
 
 async def verify_workspace_token(
+    request: Request,
     workspace_id: str,
-    x_workspace_token: str = Header(..., alias="X-Workspace-Token")
+    x_workspace_token: Optional[str] = Header(default=None, alias="X-Workspace-Token")
 ) -> str:
     """Verify workspace access token for mutating operations."""
-    if not workspace_service.validate_token(workspace_id, x_workspace_token):
+    if workspace_id in ("default", "acme-health"):
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Cannot modify demo workspaces"
+        )
+    if not x_workspace_token or not workspace_service.validate_token(workspace_id, x_workspace_token):
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Invalid or expired workspace token"
@@ -62,6 +68,7 @@ async def get_workspace(workspace_id: str):
 async def update_workspace_settings(
     workspace_id: str, 
     request: WorkspaceSettingsUpdateRequest,
+    http_request: Request,
     verified_id: str = Depends(verify_workspace_token)
 ):
     """Update company metadata or configure a custom LLM provider & API key. Requires valid workspace token."""
@@ -74,6 +81,7 @@ async def update_workspace_settings(
 @router.delete("/workspaces/{workspace_id}", status_code=status.HTTP_204_NO_CONTENT)
 async def delete_workspace(
     workspace_id: str,
+    http_request: Request,
     verified_id: str = Depends(verify_workspace_token)
 ):
     """Delete a custom company workspace. Requires valid workspace token. Demo workspaces cannot be deleted."""

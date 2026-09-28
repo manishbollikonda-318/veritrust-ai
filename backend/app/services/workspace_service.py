@@ -11,6 +11,8 @@ from typing import List, Optional, Dict, Any
 from app.models.schemas import WorkspaceModel, WorkspaceCreateRequest, WorkspaceSettingsUpdateRequest
 from app.knowledge.vectorstore import vector_store
 from app.services.file_security import sanitize_filename, validate_file_content
+from app.services.review_service import review_service
+from app.services.metrics_tracker import metrics_tracker
 
 
 def mask_key(key: Optional[str]) -> Optional[str]:
@@ -222,7 +224,7 @@ class WorkspaceService:
         return self.get_workspace(ws_id)
 
     def delete_workspace(self, ws_id: str) -> bool:
-        """Delete a custom workspace (not demo workspaces)."""
+        """Delete a custom workspace (not demo workspaces) and all associated data."""
         if ws_id not in self._workspaces:
             alt = ws_id.replace('-', '_') if '-' in ws_id else ws_id.replace('_', '-')
             if alt in self._workspaces:
@@ -234,7 +236,7 @@ class WorkspaceService:
         if data.get("is_demo", False):
             raise ValueError("Cannot delete demo workspaces")
         
-        # Remove from vector store
+        # Remove from vector store (SQLite + in-memory)
         try:
             vector_store.sqlite.delete_workspace(ws_id)
         except Exception:
@@ -244,7 +246,34 @@ class WorkspaceService:
         self._workspaces.pop(ws_id, None)
         self._api_keys.pop(ws_id, None)
         
-        # Remove associated documents
+        # Remove associated documents from in-memory store
+        if ws_id in vector_store.workspace_raw_docs:
+            del vector_store.workspace_raw_docs[ws_id]
+        
+        # Remove vector store engine for this workspace
+        if ws_id in vector_store.engines:
+            del vector_store.engines[ws_id]
+        alt_ws = ws_id.replace('-', '_') if '-' in ws_id else ws_id.replace('_', '-')
+        if alt_ws in vector_store.engines:
+            del vector_store.engines[alt_ws]
+        
+        # Clean up review items for this workspace
+        try:
+            items_to_remove = [item_id for item_id, item in review_service.items.items() 
+                              if item.workspace_id == ws_id]
+            for item_id in items_to_remove:
+                del review_service.items[item_id]
+        except Exception:
+            pass
+        
+        # Clean up metrics for this workspace
+        try:
+            metrics_tracker.query_log = [l for l in metrics_tracker.query_log 
+                                         if l.get("workspace_id") != ws_id]
+        except Exception:
+            pass
+        
+        # Re-index workspace (effectively clears it)
         try:
             vector_store.reindex_workspace(ws_id)
         except Exception:
