@@ -5,11 +5,12 @@ import {
 } from 'lucide-react';
 import { useSidebar } from '../../context/SidebarContext';
 import { useLLMHealth } from '../../hooks/useLLMHealth';
+import { useAudit } from '../../context/AuditContext';
 
 const navItems = [
   { path: '/chat', label: 'Live Guardrail', icon: MessageSquare },
   { path: '/comparison', label: 'Maker vs Judge', icon: GitCompare },
-  { path: '/review', label: 'Human Review', icon: UserCheck, badge: '3' },
+  { path: '/review', label: 'Human Review', icon: UserCheck, hasDynamicBadge: true },
   { path: '/metrics', label: 'Telemetry & Drift', icon: BarChart2 },
   { path: '/knowledge', label: 'Ground Truth KB', icon: BookOpen },
   { path: '/integration', label: 'API & Gateway', icon: Code2 },
@@ -18,6 +19,7 @@ const navItems = [
 export default function Sidebar() {
   const { isCollapsed, toggleSidebar, isMobileOpen, closeMobile } = useSidebar();
   const { overallStatus, providers, loading, isAnyProviderAvailable } = useLLMHealth();
+  const { pendingAudits } = useAudit();
 
   return (
     <>
@@ -110,11 +112,17 @@ export default function Sidebar() {
                 {(!isCollapsed || isMobileOpen) && (
                   <span className="truncate flex-1">{item.label}</span>
                 )}
-                {(!isCollapsed || isMobileOpen) && (item as any).badge && (
-                  <span className="px-2 py-0.5 rounded-full text-xs font-black bg-gradient-to-r from-amber-500 to-orange-500 text-onaccent shadow-xs">
-                    {(item as any).badge}
-                  </span>
-                )}
+                {(() => {
+                  const badgeText = (item as any).hasDynamicBadge
+                    ? (pendingAudits.length > 0 ? String(pendingAudits.length) : null)
+                    : (item as any).badge;
+                  if (!(!isCollapsed || isMobileOpen) || !badgeText) return null;
+                  return (
+                    <span className="px-2 py-0.5 rounded-full text-xs font-black bg-gradient-to-r from-amber-500 to-orange-500 text-onaccent shadow-xs">
+                      {badgeText}
+                    </span>
+                  );
+                })()}
 
                 {/* Floating tooltip on hover when collapsed */}
                 {isRail && (

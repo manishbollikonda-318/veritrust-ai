@@ -47,6 +47,11 @@ export interface Message {
   status?: ClaimStatus;
   originalDraft?: string;
   finalResponse?: string;
+  originalQuery?: string;
+  makerDraft?: string;
+  isHallucinated?: boolean;
+  judgeCorrectedOutput?: string;
+  reasoning?: string;
   claims?: Claim[];
   overallReasoning?: string;
   severity?: 'none' | 'low' | 'high';

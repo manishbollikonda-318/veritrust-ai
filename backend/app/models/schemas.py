@@ -78,10 +78,18 @@ class ChatResponse(BaseModel):
     session_id: str = ""
     timestamp: str = Field(default_factory=lambda: datetime.now().isoformat())
     query: str = ""
-    original_draft: str
-    final_response: str
+    original_draft: str = ""
+    final_response: str = ""
+    
+    # Dual-Agent core schema fields
+    originalQuery: Optional[str] = None
+    makerDraft: Optional[str] = None
+    isHallucinated: Optional[bool] = None
+    judgeCorrectedOutput: Optional[str] = None
+    reasoning: Optional[str] = None
+
     verification: Optional[VerificationResult] = None
-    status: Literal["Approved", "Corrected", "Blocked"]
+    status: Literal["Approved", "Corrected", "Blocked"] = "Approved"
     latency_ms: float = 0.0
     maker_latency_ms: float = 0.0
     judge_latency_ms: float = 0.0

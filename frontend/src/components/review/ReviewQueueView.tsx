@@ -9,8 +9,11 @@ import {
   Clock, RefreshCw, Layers, Check, Edit3, XCircle
 } from 'lucide-react';
 
+import { useAudit } from '../../context/AuditContext';
+
 export default function ReviewQueueView() {
   const { currentWorkspace } = useWorkspace();
+  const { pendingAudits, resolveAudit, refreshAudits } = useAudit();
   const [items, setItems] = useState<ReviewItem[]>([]);
   const [loading, setLoading] = useState(false);
   const [filterStatus, setFilterStatus] = useState<'all' | 'pending' | 'resolved'>('all');
@@ -19,24 +22,48 @@ export default function ReviewQueueView() {
   const [overrideNotes, setOverrideNotes] = useState<string>('');
   const [recentlyLearnedRule, setRecentlyLearnedRule] = useState<string | null>(null);
 
-  // Derive stats from filtered items instead of global endpoint
+  // Merge central pendingAudits state with backend queue items
+  const allItems = useMemo(() => {
+    const list = [...items];
+    for (const pa of pendingAudits) {
+      if (!list.some(it => it.id === pa.id)) {
+        list.unshift({
+          id: pa.id,
+          workspace_id: pa.workspace_id || currentWorkspace,
+          query: pa.originalQuery,
+          original_draft: pa.makerDraft,
+          final_response: pa.judgeCorrectedOutput,
+          review_status: 'pending',
+          status: 'Corrected',
+          overall_reasoning: pa.reasoning,
+          severity: 'medium',
+          timestamp: pa.created_at,
+          claims: pa.claims || []
+        });
+      }
+    }
+    return list;
+  }, [items, pendingAudits, currentWorkspace]);
+
+  // Derive stats from merged items
   const stats = useMemo(() => {
-    const pending = items.filter(it => (it.review_status || '').trim().toLowerCase() === 'pending').length;
-    const resolved = items.filter(it => (it.review_status || '').trim().toLowerCase() !== 'pending').length;
-    const learnedRules = items.filter(it => it.learned_rule).length;
+    const pending = allItems.filter(it => (it.review_status || '').trim().toLowerCase() === 'pending').length;
+    const resolved = allItems.filter(it => (it.review_status || '').trim().toLowerCase() !== 'pending').length;
+    const learnedRules = allItems.filter(it => it.learned_rule).length;
     return {
       pending_count: pending,
       resolved_count: resolved,
       total_learned_rules: learnedRules,
       system_accuracy_score: Math.round((98.4 + (learnedRules * 0.3)) * 10) / 10
     };
-  }, [items]);
+  }, [allItems]);
 
   const fetchData = async () => {
     setLoading(true);
     try {
       const queueData = await api.getReviewQueue(currentWorkspace);
       setItems(Array.isArray(queueData) ? queueData : []);
+      await refreshAudits();
     } catch (err) {
       console.error('Failed to load review queue:', err);
       setItems([]);
@@ -56,18 +83,7 @@ export default function ReviewQueueView() {
     notes?: string
   ) => {
     try {
-      const res = await api.resolveReviewItem(item.id, {
-        action,
-        corrected_response: customResponse,
-        human_notes: notes,
-        add_to_knowledge_base: true
-      });
-
-      if (res.learned_rule) {
-        setRecentlyLearnedRule(res.learned_rule);
-        setTimeout(() => setRecentlyLearnedRule(null), 8000);
-      }
-
+      await resolveAudit(item.id, action, customResponse, notes);
       setActiveOverrideId(null);
       setOverrideText('');
       setOverrideNotes('');
@@ -77,7 +93,7 @@ export default function ReviewQueueView() {
     }
   };
 
-  const safeItems = Array.isArray(items) ? items : [];
+  const safeItems = allItems;
   const filteredItems = safeItems.filter((it) => {
     const status = (it.review_status || '').trim().toLowerCase();
     if (filterStatus === 'pending') return status === 'pending';

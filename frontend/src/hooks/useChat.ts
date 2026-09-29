@@ -2,9 +2,13 @@ import { useState, useEffect } from 'react';
 import { Message, Claim } from '../types';
 import { api } from '../services/api';
 import { useWorkspace } from '../context/WorkspaceContext';
+import { useToast } from '../context/ToastContext';
+import { useAudit } from '../context/AuditContext';
 
 export function useChat() {
   const { currentWorkspace, workspaceVersion } = useWorkspace();
+  const { showToast } = useToast();
+  const { addPendingAudit } = useAudit();
   const [messages, setMessages] = useState<Message[]>([]);
   const [loading, setLoading] = useState(false);
   const [selectedMessage, setSelectedMessage] = useState<Message | null>(null);
@@ -45,8 +49,24 @@ export function useChat() {
         const flagged = botMessage.claims.find(c => c.verdict !== 'Verified') || botMessage.claims[0];
         setSelectedClaim(flagged);
       }
-    } catch (err) {
+
+      // If hallucinated, append to pendingAudits in central state
+      if (botMessage.isHallucinated || botMessage.status === 'Corrected' || botMessage.status === 'Blocked') {
+        addPendingAudit({
+          id: botMessage.id,
+          originalQuery: botMessage.originalQuery || content,
+          makerDraft: botMessage.makerDraft || botMessage.originalDraft || '',
+          judgeCorrectedOutput: botMessage.judgeCorrectedOutput || botMessage.finalResponse || '',
+          reasoning: botMessage.reasoning || botMessage.overallReasoning || 'Factual discrepancy intercepted by Judge Guardrail',
+          isHallucinated: true,
+          status: 'pending',
+          created_at: botMessage.timestamp || new Date().toISOString(),
+          claims: botMessage.claims || []
+        });
+      }
+    } catch (err: any) {
       console.error('Error sending message:', err);
+      showToast('error', 'Pipeline Error', err?.message || 'Failed to complete Dual-Agent verification. Please try again.');
     } finally {
       setLoading(false);
     }

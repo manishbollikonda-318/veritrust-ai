@@ -12,6 +12,7 @@ import NotFound from './components/pages/NotFound';
 import { WorkspaceProvider } from './context/WorkspaceContext';
 import { SidebarProvider } from './context/SidebarContext';
 import { ToastProvider } from './context/ToastContext';
+import { AuditProvider } from './context/AuditContext';
 
 import ErrorBoundary from './components/ui/ErrorBoundary';
 
@@ -20,9 +21,10 @@ export default function App() {
     <ErrorBoundary fallbackTitle="Application Error">
       <ToastProvider>
         <WorkspaceProvider>
-          <SidebarProvider>
-            <Router>
-              <Layout>
+          <AuditProvider>
+            <SidebarProvider>
+              <Router>
+                <Layout>
                 <Routes>
                   <Route path="/" element={<Navigate to="/chat" replace />} />
                   <Route path="/chat" element={<ErrorBoundary fallbackTitle="Chat Error"><ChatView /></ErrorBoundary>} />
@@ -38,8 +40,9 @@ export default function App() {
               </Layout>
             </Router>
           </SidebarProvider>
-        </WorkspaceProvider>
-      </ToastProvider>
+        </AuditProvider>
+      </WorkspaceProvider>
+    </ToastProvider>
     </ErrorBoundary>
   );
 }

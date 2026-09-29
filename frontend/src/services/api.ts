@@ -194,22 +194,32 @@ export const api = {
       body: JSON.stringify(chatPayload)
     });
 
+    const makerDraft = data.makerDraft || data.original_draft || '';
+    const judgeOutput = data.judgeCorrectedOutput || data.final_response || makerDraft;
+    const isHallucinated = data.isHallucinated ?? (data.status === 'Corrected' || data.status === 'Blocked');
+    const reasoning = data.reasoning || data.verification?.overall_reasoning || '';
+
     const botMessage: Message = {
       id: data.id || 'bot-' + Date.now(),
       role: 'assistant',
-      content: data.final_response,
-      originalDraft: data.original_draft,
-      finalResponse: data.final_response,
+      content: judgeOutput,
+      originalDraft: makerDraft,
+      finalResponse: judgeOutput,
+      originalQuery: data.originalQuery || content,
+      makerDraft: makerDraft,
+      isHallucinated: isHallucinated,
+      judgeCorrectedOutput: judgeOutput,
+      reasoning: reasoning,
       timestamp: data.timestamp || new Date().toISOString(),
-      status: data.status,
+      status: data.status || (isHallucinated ? 'Corrected' : 'Approved'),
       latencyMs: data.latency_ms,
       makerLatencyMs: data.maker_latency_ms,
       judgeLatencyMs: data.judge_latency_ms,
       correctionLatencyMs: data.correction_latency_ms,
       correctionAttempts: data.correction_attempts,
       loopHistory: data.loop_history,
-      severity: data.verification?.severity || 'none',
-      overallReasoning: data.verification?.overall_reasoning || '',
+      severity: data.verification?.severity || (isHallucinated ? 'high' : 'none'),
+      overallReasoning: reasoning,
       estimatedCostUsd: data.verification?.estimated_cost_usd,
       deterministicChecksRun: data.verification?.deterministic_checks_run,
       generationMethod: data.generation_method,
