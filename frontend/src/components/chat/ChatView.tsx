@@ -140,7 +140,7 @@ export default function ChatView() {
       selectedMessage
         ? 'grid-cols-1 xl:grid-cols-[minmax(0,1fr)_minmax(0,22rem)]'
         : 'grid-cols-1'
-    } xl:h-[calc(100vh-8rem)]`}>
+    } xl:h-[calc(100vh-5.5rem)]`}>
       {/* Main Conversation Feed (Maker Zone: Soft Periwinkle/Blue-Lavender) */}
       <NeuCard
         variant="maker"

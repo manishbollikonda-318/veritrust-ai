@@ -92,4 +92,24 @@ body {
   font-family: var(--font-sans);
   color: #1E293B;
   min-height: 100vh;
+  overflow-x: hidden; /* global horizontal overflow guard */
+}
+
+html {
+  overflow-x: hidden;
+}
+
+/* Hide scrollbar visually but keep scroll functionality */
+.scrollbar-none {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+.scrollbar-none::-webkit-scrollbar {
+  display: none;
+}
+
+/* Safety: prevent any long unbreakable string from blowing out a card */
+.break-words {
+  word-break: break-word;
+  overflow-wrap: break-word;
 }

@@ -39,7 +39,7 @@ export default function MetricsDashboard() {
   };
 
   return (
-    <div className="space-y-6 sm:space-y-8">
+    <div className="space-y-5 sm:space-y-6 w-full overflow-x-hidden pb-6">
       {/* Page Title */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
         <div>
