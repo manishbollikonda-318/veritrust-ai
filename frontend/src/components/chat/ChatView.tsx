@@ -136,11 +136,15 @@ export default function ChatView() {
   };
 
   return (
-    <div className="flex flex-col xl:flex-row gap-6 lg:gap-8 min-h-0 xl:h-[calc(100vh-8.5rem)] pb-8 xl:pb-0">
+    <div className={`grid gap-4 lg:gap-6 min-h-0 pb-4 xl:pb-0 w-full overflow-x-hidden ${
+      selectedMessage
+        ? 'grid-cols-1 xl:grid-cols-[minmax(0,1fr)_minmax(0,22rem)]'
+        : 'grid-cols-1'
+    } xl:h-[calc(100vh-8rem)]`}>
       {/* Main Conversation Feed (Maker Zone: Soft Periwinkle/Blue-Lavender) */}
       <NeuCard
         variant="maker"
-        className="flex-1 flex flex-col p-4 sm:p-6 overflow-hidden relative min-h-[500px] xl:min-h-0"
+        className="flex flex-col p-4 sm:p-6 overflow-hidden relative min-h-[520px] xl:min-h-0 min-w-0 w-full"
       >
         {/* Control Bar */}
         <div className="mb-4 pb-3 border-b border-indigo-200/50 flex flex-col 2xl:flex-row 2xl:items-start justify-between gap-3">
@@ -394,7 +398,7 @@ export default function ChatView() {
 
       {/* Judge Detail Panel (Judge Zone: Soft Mint/Seafoam Green) */}
       {selectedMessage && (
-        <div className="w-full xl:w-96 shrink-0 h-auto xl:h-full">
+        <div className="min-w-0 w-full h-auto xl:h-full overflow-hidden">
           <JudgePanel
             message={selectedMessage}
             claim={selectedClaim}

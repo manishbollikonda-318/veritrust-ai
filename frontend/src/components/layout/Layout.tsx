@@ -23,7 +23,7 @@ export default function Layout({ children }: LayoutProps) {
         `}
       >
         <Header />
-        <main className="flex-1 p-3 sm:p-6 lg:p-8 overflow-y-auto w-full">
+        <main className="flex-1 p-3 sm:p-4 lg:p-6 overflow-y-auto overflow-x-hidden w-full min-w-0">
           <WelcomeBanner />
           {children}
         </main>

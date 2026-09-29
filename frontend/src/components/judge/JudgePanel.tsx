@@ -41,7 +41,7 @@ export default function JudgePanel({ message, claim: initialClaim, onSelectClaim
   return (
     <NeuCard
       variant="judge"
-      className="h-full flex flex-col p-5 sm:p-6 overflow-y-auto"
+      className="h-full flex flex-col p-4 sm:p-5 overflow-y-auto overflow-x-hidden min-w-0 max-h-[85vh] xl:max-h-full"
     >
       {/* Header */}
       <div className="flex justify-between items-center mb-5 pb-4 border-b border-emerald-200/60">
