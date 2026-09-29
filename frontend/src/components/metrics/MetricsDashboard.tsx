@@ -106,78 +106,78 @@ export default function MetricsDashboard() {
         />
       </div>
 
-      {/* Query Outcome Counts — explicitly shows blocked vs approved vs corrected raw numbers */}
+      {/* Query Outcome Counts — explicitly shows blocked vs approved vs corrected raw numbers in liquid glass */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
-        <NeuCard variant="metrics" className="p-4 flex items-center gap-4">
-          <div className="p-3 bg-gradient-to-br from-indigo-100 to-indigo-200 text-indigo-700 rounded-2xl shadow-xs">
+        <NeuCard variant="glass-accent" className="p-4 flex items-center gap-4 transition-transform hover:-translate-y-0.5">
+          <div className="p-3 glass-pill text-indigo-700 rounded-2xl shrink-0">
             <Layers size={20} />
           </div>
-          <div>
+          <div className="min-w-0">
             <div className="text-xl font-black text-slate-900">{m.totalQueries}</div>
-            <div className="text-xs font-bold text-slate-500">Total Evaluated Queries</div>
+            <div className="text-xs font-bold text-slate-600 truncate">Total Evaluated Queries</div>
           </div>
         </NeuCard>
 
-        <NeuCard variant="metrics" className="p-4 flex items-center gap-4">
-          <div className="p-3 bg-gradient-to-br from-emerald-100 to-emerald-200 text-emerald-700 rounded-2xl shadow-xs">
+        <NeuCard variant="glass-emerald" className="p-4 flex items-center gap-4 transition-transform hover:-translate-y-0.5">
+          <div className="p-3 glass-pill text-emerald-700 rounded-2xl shrink-0">
             <CheckCircle2 size={20} />
           </div>
-          <div>
+          <div className="min-w-0">
             <div className="text-xl font-black text-emerald-900">{m.approvedCount || m.totalQueries - (m.correctedCount || 0) - (m.blockedCount || 0)}</div>
-            <div className="text-xs font-bold text-slate-500">Approved Responses</div>
+            <div className="text-xs font-bold text-emerald-800 truncate">Approved Responses</div>
           </div>
         </NeuCard>
 
-        <NeuCard variant="metrics" className="p-4 flex items-center gap-4">
-          <div className="p-3 bg-gradient-to-br from-amber-100 to-amber-200 text-amber-700 rounded-2xl shadow-xs">
+        <NeuCard variant="glass-amber" className="p-4 flex items-center gap-4 transition-transform hover:-translate-y-0.5">
+          <div className="p-3 glass-pill text-amber-700 rounded-2xl shrink-0">
             <AlertTriangle size={20} />
           </div>
-          <div>
+          <div className="min-w-0">
             <div className="text-xl font-black text-amber-900">{m.correctedCount || 0}</div>
-            <div className="text-xs font-bold text-slate-500">Auto-Corrected Responses</div>
+            <div className="text-xs font-bold text-amber-800 truncate">Auto-Corrected Responses</div>
           </div>
         </NeuCard>
 
-        <NeuCard variant="metrics" className="p-4 flex items-center gap-4">
-          <div className="p-3 bg-gradient-to-br from-rose-100 to-rose-200 text-rose-700 rounded-2xl shadow-xs">
+        <NeuCard variant="glass-rose" className="p-4 flex items-center gap-4 transition-transform hover:-translate-y-0.5">
+          <div className="p-3 glass-pill text-rose-700 rounded-2xl shrink-0">
             <Ban size={20} />
           </div>
-          <div>
+          <div className="min-w-0">
             <div className="text-xl font-black text-rose-900">{m.blockedCount || 0}</div>
-            <div className="text-xs font-bold text-slate-500">Blocked & Escalated</div>
+            <div className="text-xs font-bold text-rose-800 truncate">Blocked &amp; Escalated</div>
           </div>
         </NeuCard>
       </div>
 
-      {/* Claim-Level Verification Stats */}
+      {/* Claim-Level Verification Stats in liquid glass */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 sm:gap-6">
-        <NeuCard variant="metrics" className="p-4 flex items-center gap-4">
-          <div className="p-3 bg-gradient-to-br from-emerald-100 to-emerald-200 text-emerald-700 rounded-2xl shadow-xs">
+        <NeuCard variant="glass-emerald" className="p-4 flex items-center gap-4 transition-transform hover:-translate-y-0.5">
+          <div className="p-3 glass-pill text-emerald-700 rounded-2xl shrink-0">
             <ShieldCheck size={20} />
           </div>
-          <div>
+          <div className="min-w-0">
             <div className="text-xl font-black text-emerald-900">{m.verifiedClaims || 388} / {m.totalClaims || 486}</div>
-            <div className="text-xs font-bold text-slate-500">Factual Claims Verified</div>
+            <div className="text-xs font-bold text-emerald-800 truncate">Factual Claims Verified</div>
           </div>
         </NeuCard>
 
-        <NeuCard variant="metrics" className="p-4 flex items-center gap-4">
-          <div className="p-3 bg-gradient-to-br from-rose-100 to-rose-200 text-rose-700 rounded-2xl shadow-xs">
+        <NeuCard variant="glass-rose" className="p-4 flex items-center gap-4 transition-transform hover:-translate-y-0.5">
+          <div className="p-3 glass-pill text-rose-700 rounded-2xl shrink-0">
             <Zap size={20} />
           </div>
-          <div>
+          <div className="min-w-0">
             <div className="text-xl font-black text-rose-900">{m.contradictedClaims || 34}</div>
-            <div className="text-xs font-bold text-slate-500">Severe Hallucinations Intercepted</div>
+            <div className="text-xs font-bold text-rose-800 truncate">Severe Hallucinations Intercepted</div>
           </div>
         </NeuCard>
 
-        <NeuCard variant="metrics" className="p-4 flex items-center gap-4">
-          <div className="p-3 bg-gradient-to-br from-blue-100 to-blue-200 text-blue-700 rounded-2xl shadow-xs">
+        <NeuCard variant="glass-accent" className="p-4 flex items-center gap-4 transition-transform hover:-translate-y-0.5">
+          <div className="p-3 glass-pill text-blue-700 rounded-2xl shrink-0">
             <Timer size={20} />
           </div>
-          <div>
+          <div className="min-w-0">
             <div className="text-xl font-black text-blue-900">{Math.round(m.avgCorrectionLatencyMs || 88)}ms</div>
-            <div className="text-xs font-bold text-slate-500">Avg Correction Speed</div>
+            <div className="text-xs font-bold text-blue-800 truncate">Avg Correction Speed</div>
           </div>
         </NeuCard>
       </div>

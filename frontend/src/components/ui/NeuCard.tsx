@@ -1,7 +1,7 @@
 import React from 'react';
 import { motion, HTMLMotionProps } from 'framer-motion';
 
-export type NeuCardVariant = 'neutral' | 'maker' | 'judge' | 'metrics' | 'chrome' | 'white';
+export type NeuCardVariant = 'neutral' | 'maker' | 'judge' | 'metrics' | 'chrome' | 'white' | 'glass' | 'glass-accent' | 'glass-emerald' | 'glass-amber' | 'glass-rose';
 
 interface NeuCardProps extends HTMLMotionProps<"div"> {
   pressed?: boolean;
@@ -40,6 +40,32 @@ const variantStyles: Record<NeuCardVariant, { raised: string; pressed: string; b
     bg: 'bg-white/80 backdrop-blur-xs',
     raised: 'shadow-neu-raised border border-white/60',
     pressed: 'shadow-neu-pressed border border-slate-200/50',
+  },
+  // ── Liquid Glass variants ─────────────────────────────────────────
+  glass: {
+    bg: 'glass-card',
+    raised: '',
+    pressed: '',
+  },
+  'glass-accent': {
+    bg: 'glass-card-accent',
+    raised: '',
+    pressed: '',
+  },
+  'glass-emerald': {
+    bg: 'glass-card-emerald',
+    raised: '',
+    pressed: '',
+  },
+  'glass-amber': {
+    bg: 'glass-card-amber',
+    raised: '',
+    pressed: '',
+  },
+  'glass-rose': {
+    bg: 'glass-card-rose',
+    raised: '',
+    pressed: '',
   },
 };
 

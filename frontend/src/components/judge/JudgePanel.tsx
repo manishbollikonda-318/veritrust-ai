@@ -65,43 +65,43 @@ export default function JudgePanel({ message, claim: initialClaim, onSelectClaim
         </NeuButton>
       </div>
 
-      {/* Latency, Cost & Audit Metadata — 4-column grid (Seafoam Pressed Cards) */}
+      {/* Latency, Cost & Audit Metadata — 4-column grid (Liquid Glass Crystalline Tiles) */}
       {message && (
         <div className="mb-5 grid grid-cols-2 gap-2.5">
-          <div className="p-3 bg-gradient-to-br from-[#EDF7F2] to-[#DFEFE7] shadow-neu-judge-pressed rounded-xl border border-emerald-200/50">
+          <div className="p-3 liquid-glass-tile rounded-xl">
             <span className="text-xs uppercase font-extrabold text-positive flex items-center gap-1">
               <Clock size={12} /> Maker
             </span>
-            <span className="text-sm font-black text-ink">
+            <span className="text-sm font-black text-ink mt-0.5 block">
               {message.makerLatencyMs ? `${message.makerLatencyMs}ms` : '120ms'}
             </span>
           </div>
-          <div className="p-3 bg-gradient-to-br from-[#EDF7F2] to-[#DFEFE7] shadow-neu-judge-pressed rounded-xl border border-emerald-200/50">
+          <div className="p-3 liquid-glass-tile rounded-xl">
             <span className="text-xs uppercase font-extrabold text-positive flex items-center gap-1">
               <ShieldCheck size={12} /> Judge overhead
             </span>
-            <span className="text-sm font-black text-positive-deep">
+            <span className="text-sm font-black text-positive-deep mt-0.5 block">
               {message.judgeLatencyMs ? `+${message.judgeLatencyMs}ms` : '+180ms'}
             </span>
           </div>
           {costStr && (
-            <div className="p-3 bg-gradient-to-br from-[#EDF7F2] to-[#DFEFE7] shadow-neu-judge-pressed rounded-xl border border-emerald-200/50">
+            <div className="p-3 liquid-glass-tile rounded-xl">
               <span className="text-xs uppercase font-extrabold text-positive flex items-center gap-1">
                 <DollarSign size={12} /> Cost of trust
               </span>
-              <span className="text-sm font-black text-positive-deep">{costStr}</span>
-              <p className="text-xs text-positive font-semibold mt-0.5 leading-tight">per response verified</p>
+              <span className="text-sm font-black text-positive-deep mt-0.5 block">{costStr}</span>
+              <p className="text-[11px] text-positive font-semibold mt-0.5 leading-tight">per response</p>
             </div>
           )}
-          <div className="p-3 bg-gradient-to-br from-[#EDF7F2] to-[#DFEFE7] shadow-neu-judge-pressed rounded-xl border border-emerald-200/50">
+          <div className="p-3 liquid-glass-tile rounded-xl">
             <span className="text-xs uppercase font-extrabold text-positive flex items-center gap-1">
               <Cpu size={12} /> Det. checks
             </span>
-            <span className={`text-sm font-black ${detChecks > 0 ? 'text-accent' : 'text-ink-muted'}`}>
+            <span className={`text-sm font-black mt-0.5 block ${detChecks > 0 ? 'text-accent' : 'text-ink-muted'}`}>
               {detChecks > 0 ? `${detChecks} fired` : 'None'}
             </span>
-            <p className="text-xs text-positive font-semibold mt-0.5 leading-tight">
-              {detChecks > 0 ? 'arithmetic, not AI' : 'semantic-only path'}
+            <p className="text-[11px] text-positive font-semibold mt-0.5 leading-tight">
+              {detChecks > 0 ? 'arithmetic code' : 'semantic path'}
             </p>
           </div>
         </div>
@@ -109,7 +109,7 @@ export default function JudgePanel({ message, claim: initialClaim, onSelectClaim
 
       {/* Intervention Diff: Original Draft vs Final Response */}
       {message && message.originalDraft && message.originalDraft !== message.content && (
-        <div className="mb-6 p-4 rounded-2xl bg-gradient-to-br from-amber-50/90 to-amber-100/70 shadow-neu-judge border border-amber-300/60">
+        <div className="mb-6 p-4 rounded-2xl glass-card-amber">
           <h4 className="text-xs font-black text-caution-deep uppercase tracking-wider mb-2 flex items-center gap-2">
             <ArrowRight size={14} className="text-caution" />
             Intervention Comparison
@@ -117,13 +117,13 @@ export default function JudgePanel({ message, claim: initialClaim, onSelectClaim
           <div className="space-y-3 text-xs">
             <div>
               <span className="font-extrabold text-critical-deep uppercase text-xs">Intercepted Maker Draft:</span>
-              <p className="mt-1 p-2.5 bg-rose-100/80 border border-rose-300/60 text-critical-deep rounded-lg line-through font-medium leading-relaxed break-words whitespace-normal shadow-xs">
+              <p className="mt-1 p-2.5 glass-card-rose text-critical-deep rounded-lg line-through font-medium leading-relaxed break-words whitespace-normal">
                 "{message.originalDraft}"
               </p>
             </div>
             <div>
               <span className="font-extrabold text-positive-deep uppercase text-xs">Customer-Delivered Resolution:</span>
-              <p className="mt-1 p-2.5 bg-emerald-100/80 border border-emerald-300/60 text-positive-deep rounded-lg leading-relaxed font-bold break-words whitespace-normal shadow-xs">
+              <p className="mt-1 p-2.5 glass-card-emerald text-positive-deep rounded-lg leading-relaxed font-bold break-words whitespace-normal">
                 "{message.content}"
               </p>
             </div>
@@ -135,10 +135,10 @@ export default function JudgePanel({ message, claim: initialClaim, onSelectClaim
       {message?.overallReasoning && (
         <div className="mb-6">
           <h4 className="text-xs font-black text-positive-deep uppercase tracking-wider mb-2">Verdict Decision</h4>
-          <div className={`p-4 rounded-2xl text-xs leading-relaxed font-bold border shadow-xs ${
-            status === 'Approved' ? 'bg-emerald-50/90 text-positive-deep border-emerald-300/70' :
-            status === 'Corrected' ? 'bg-amber-50/90 text-caution-deep border-amber-300/70' :
-            'bg-rose-50/90 text-critical-deep border-rose-300/70'
+          <div className={`p-4 rounded-2xl text-xs leading-relaxed font-bold ${
+            status === 'Approved' ? 'glass-card-emerald text-positive-deep' :
+            status === 'Corrected' ? 'glass-card-amber text-caution-deep' :
+            'glass-card-rose text-critical-deep'
           }`}>
             {message.overallReasoning}
           </div>
@@ -147,7 +147,7 @@ export default function JudgePanel({ message, claim: initialClaim, onSelectClaim
 
       {/* LangGraph Multi-Agent Feedback Loop Trace */}
       {message?.loopHistory && message.loopHistory.length > 1 && (
-        <div className="mb-6 p-4 rounded-2xl bg-gradient-to-br from-indigo-50/90 to-indigo-100/70 shadow-neu-judge border border-indigo-200/80">
+        <div className="mb-6 p-4 rounded-2xl glass-card-accent">
           <h4 className="text-xs font-black text-accent-strong uppercase tracking-wider mb-2.5 flex items-center justify-between">
             <span className="flex items-center gap-1.5">
               <span className="w-2 h-2 rounded-full bg-indigo-600 animate-pulse" />

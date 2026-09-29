@@ -188,7 +188,7 @@ export default function ChatView() {
             <div
               role="group"
               aria-labelledby="guardrail-mode-label"
-              className="inline-flex items-center gap-1 p-1 rounded-2xl bg-[#E2E9F4] shadow-neu-maker-pressed"
+              className="inline-flex items-center gap-1 p-1 rounded-2xl glass-pill"
             >
               <NeuButton
                 type="button"
@@ -227,15 +227,15 @@ export default function ChatView() {
 
         {/* ── Active Company Banner (Shown when not in default demo) ────── */}
         {currentWorkspace !== 'default' && (
-          <div className="mb-4 p-3.5 rounded-2xl bg-gradient-to-r from-emerald-50/90 to-teal-50/90 border border-emerald-200/80 shadow-[inset_1px_1px_3px_rgba(16,185,129,0.08)] flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+          <div className="mb-4 p-4 rounded-2xl glass-card-emerald flex flex-col sm:flex-row sm:items-center justify-between gap-3 relative overflow-hidden">
             <div className="flex items-center gap-3">
-              <div className="w-9 h-9 rounded-xl bg-emerald-100 flex items-center justify-center text-sm shadow-xs font-black" aria-hidden="true">
+              <div className="w-9 h-9 rounded-xl glass-pill flex items-center justify-center text-sm shadow-xs font-black shrink-0" aria-hidden="true">
                 🏢
               </div>
               <div>
                 <div className="flex items-center gap-2 flex-wrap">
                   <span className="text-sm font-extrabold text-ink">{activeWorkspace?.name || currentWorkspace}</span>
-                  <span className="text-xs font-bold px-2 py-0.5 rounded-full bg-emerald-100/90 text-positive-deep border border-emerald-300/60 uppercase tracking-wide">
+                  <span className="text-xs font-bold px-2.5 py-0.5 rounded-full glass-pill text-positive-deep uppercase tracking-wide">
                     {activeWorkspace?.industry || 'Enterprise'}
                   </span>
                   <span className="text-xs font-medium text-ink-subtle">
@@ -248,7 +248,7 @@ export default function ChatView() {
               </div>
             </div>
             <div className="flex items-center gap-2 shrink-0">
-              <span className="text-xs font-semibold text-positive-deep bg-white/90 border border-emerald-200/80 px-2.5 py-1 rounded-xl shadow-xs">
+              <span className="text-xs font-semibold text-positive-deep glass-pill px-3 py-1 rounded-xl">
                 LLM: <strong className="font-bold">{activeWorkspace?.llm_provider || 'Shared Demo'}</strong>
               </span>
             </div>
@@ -257,13 +257,13 @@ export default function ChatView() {
 
         {/* ── Adversarial Attack Panel ─────────────────────────────────── */}
         {attackMode && (
-          <div className="mb-4 p-4 rounded-2xl bg-gradient-to-br from-rose-50/95 to-rose-100/80 border-2 border-rose-300/80 border-dashed shadow-[inset_2px_2px_6px_rgba(244,63,94,0.1)]">
+          <div className="mb-4 p-4 rounded-2xl glass-card-rose border-2 border-rose-300/80 border-dashed">
             <div className="flex items-center gap-2 mb-2">
               <Crosshair size={16} className="text-critical" aria-hidden="true" />
               <span className="text-sm font-black text-critical-deep uppercase tracking-wider">
                 Adversarial Attack Mode
               </span>
-              <span className="text-xs bg-rose-200/90 text-critical-deep font-extrabold px-2 py-0.5 rounded-full border border-rose-300/60 shadow-xs">Live pipeline</span>
+              <span className="text-xs glass-pill text-critical-deep font-extrabold px-2 py-0.5 rounded-full">Live pipeline</span>
             </div>
             <p className="text-xs text-critical-deep mb-3 leading-relaxed font-medium">
               Type any adversarial or trick query below — something designed to make the AI hallucinate.

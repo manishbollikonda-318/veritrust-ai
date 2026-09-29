@@ -71,13 +71,13 @@ export default function MessageBubble({
           )}
 
           <NeuCard
-            variant="maker"
+            variant={isUser ? 'neutral' : isSelected ? 'glass-accent' : 'glass'}
             className={`p-5 !rounded-2xl transition-all w-full overflow-hidden ${
               isUser
                 ? 'bg-gradient-to-br from-blue-600 via-indigo-600 to-indigo-700 !shadow-[3px_3px_12px_rgba(79,70,229,0.35)] text-white border-0'
                 : isSelected
-                ? 'border-2 border-indigo-500/80 shadow-neu-maker-pressed bg-gradient-to-br from-[#EEF4FD] to-[#DFECFB]'
-                : 'shadow-neu-maker bg-gradient-to-br from-[#F6F9FE] via-[#EDF3FC] to-[#E3EDFA] hover:border-indigo-200'
+                ? 'border-2 border-indigo-500/80 shadow-[0_8px_30px_rgba(99,102,241,0.18)]'
+                : 'hover:border-indigo-300/80'
             }`}
           >
             <p className={`text-sm leading-relaxed break-words whitespace-pre-wrap ${isUser ? 'text-white font-medium' : 'text-ink font-medium'}`}>
