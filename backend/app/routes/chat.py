@@ -64,7 +64,10 @@ async def verify_standalone(request: StandaloneVerifyRequest, verified_id: str =
 
 import requests
 import re
+import logging
 from datetime import datetime
+
+logger = logging.getLogger(__name__)
 
 ACME_HEALTH_KNOWLEDGE_BASE = """Acme Health Knowledge Base:
 - Return Policy: Standard products, health equipment, and unopened medications/supplies can be returned within 30 days of delivery for a full refund. Returns beyond 30 days are strictly not accepted.
@@ -75,11 +78,30 @@ ACME_HEALTH_KNOWLEDGE_BASE = """Acme Health Knowledge Base:
 - Clinical Support Hours: Clinicians and customer support are available Monday to Friday from 7:00 AM to 9:00 PM EST, and Saturday to Sunday from 9:00 AM to 5:00 PM EST. The emergency triage nurse line is available 24/7."""
 
 
+def mask_secret_key(raw_key: Optional[str]) -> str:
+    """Safely format API keys for log files without exposing secrets."""
+    if not raw_key or len(raw_key.strip()) < 8:
+        return "<no-key>"
+    k = raw_key.strip()
+    return f"{k[:4]}...{k[-4:]}"
+
+
 def call_gemini_direct(prompt: str, response_json: bool = False, custom_key: Optional[str] = None) -> Optional[str]:
-    """Execute live Google Gemini API calls across candidate models."""
+    """
+    Execute live Google Gemini API calls across candidate models.
+    Cascades gracefully:
+    1. gemini-flash-lite-latest (fastest & most responsive)
+    2. gemini-3.5-flash-lite (stable backup)
+    3. gemini-3.1-flash-lite (legacy fallback)
+    4. gemini-3.8-flash (standard tier)
+    
+    Security: The API key is NEVER logged or returned to client responses.
+    """
     key = (custom_key or settings.GEMINI_API_KEY or "").strip()
     if not key:
+        logger.debug("No Gemini API key configured. Utilizing local grounded fallback pipeline.")
         return None
+
     models = ["gemini-flash-lite-latest", "gemini-3.5-flash-lite", "gemini-3.1-flash-lite", "gemini-3.8-flash"]
     payload = {
         "contents": [{"parts": [{"text": prompt}]}],
@@ -103,11 +125,15 @@ def call_gemini_direct(prompt: str, response_json: bool = False, custom_key: Opt
                     if parts:
                         return parts[0].get("text", "").strip()
             elif res.status_code in (404, 503, 429):
+                logger.debug(f"Gemini model {m} returned {res.status_code}, advancing to next model cascade...")
                 continue
             else:
+                logger.warning(f"Gemini API returned status {res.status_code} for model {m}.")
                 break
-        except Exception:
+        except Exception as e:
+            logger.debug(f"Connection attempt to model {m} failed: {e}")
             continue
+
     return None
 
 
@@ -199,8 +225,12 @@ Respond ONLY with a valid JSON object matching this schema:
             is_hallucinated = bool(data.get("isHallucinated", False))
             judge_corrected_output = data.get("judgeCorrectedOutput") or maker_draft
             reasoning = data.get("reasoning") or ("Corrected by Judge Guardrail" if is_hallucinated else "Verified against Knowledge Base.")
-        except Exception:
-            pass
+            if is_hallucinated:
+                logger.info(f"[Judge Agent] ⚠️ Intercepted hallucination for query: '{query[:60]}'")
+            else:
+                logger.info(f"[Judge Agent] ✅ Verified output clean for query: '{query[:60]}'")
+        except Exception as e:
+            logger.warning(f"[Judge Agent] JSON decode fallback: {e}")
     else:
         # Deterministic validation for common adversarial test patterns
         combined = (query + " " + maker_draft).lower()
@@ -210,14 +240,17 @@ Respond ONLY with a valid JSON object matching this schema:
             is_hallucinated = True
             judge_corrected_output = "Acme Health policies strictly allow returns within 30 days of delivery for a full refund. Returns after 30 days cannot be accepted."
             reasoning = f"Draft asserted a {day_match.group(1)}-day return window which directly contradicts the 30-day return policy in the Knowledge Base."
+            logger.info(f"[Deterministic Check] Intercepted invalid day window ({day_match.group(1)} days).")
         elif price_match and "express" in combined and "$9.99" not in maker_draft:
             is_hallucinated = True
             judge_corrected_output = "Express shipping at Acme Health takes 1-2 business days and costs $9.99."
             reasoning = "Draft cited incorrect express shipping terms; Knowledge Base specifies express shipping is $9.99."
+            logger.info("[Deterministic Check] Intercepted non-$9.99 express shipping.")
         else:
             is_hallucinated = False
             judge_corrected_output = maker_draft
             reasoning = "Response verified against Acme Health Knowledge Base."
+            logger.info("[Deterministic Check] Grounded query approved.")
 
     total_latency = round((time.time() - t_start) * 1000, 2)
 
