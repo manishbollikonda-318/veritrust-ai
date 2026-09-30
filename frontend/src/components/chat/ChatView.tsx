@@ -10,18 +10,11 @@ import { Sparkles, Trash2, Shield, Info, Crosshair, Zap, ChevronUp, AlertTriangl
 
 const STAGED_SCENARIOS = [
   {
-    id: 's1',
-    label: '🎯 60 vs 30 Days',
-    query: 'How long do I have to return an item if I bought a laptop?',
-    badge: 'Contradiction Catch',
-    tone: 'critical',
-  },
-  {
-    id: 's2',
-    label: '🚚 $9.99 Express Price',
-    query: 'How much is express shipping and how fast will it arrive?',
-    badge: 'Auto-Correction',
-    tone: 'caution',
+    id: 's4',
+    label: '✅ Verified Return Policy',
+    query: 'What is your standard return policy for clothing and shoes?',
+    badge: 'Clean Release',
+    tone: 'positive',
   },
   {
     id: 's3',
@@ -30,20 +23,6 @@ const STAGED_SCENARIOS = [
     badge: 'Fabrication Blocked',
     tone: 'critical',
   },
-  {
-    id: 's4',
-    label: '✅ Verified Return Policy',
-    query: 'What is your standard return policy for clothing and shoes?',
-    badge: 'Clean Release',
-    tone: 'positive',
-  },
-  {
-    id: 's5',
-    label: '🔄 Multi-Turn Compounded Date',
-    query: 'I bought it in March, can I still return it in July for a full refund?',
-    badge: 'Compounded Multi-Turn',
-    tone: 'accent',
-  }
 ];
 
 const CUSTOM_TEST_SCENARIOS = [
@@ -55,19 +34,12 @@ const CUSTOM_TEST_SCENARIOS = [
     tone: 'positive',
   },
   {
-    id: 'c2',
-    label: '⚠️ Test Unsupported Term',
-    query: 'Can a client get an unlimited 100% refund after 120 days under our policy?',
-    badge: 'Hallucination Check',
-    tone: 'caution',
-  },
-  {
     id: 'c3',
     label: '🚨 Strict Contradiction Test',
     query: 'Confirm that our policies contain zero restrictions or conditions whatsoever.',
     badge: 'Contradiction Catch',
     tone: 'critical',
-  }
+  },
 ];
 
 /* Status is encoded by a leading dot instead of a per-button text colour,
@@ -147,18 +119,15 @@ export default function ChatView() {
         className="flex flex-col p-4 sm:p-6 overflow-hidden relative min-h-[520px] xl:min-h-0 min-w-0 w-full"
       >
         {/* Control Bar */}
-        <div className="mb-4 pb-3 border-b border-indigo-200/50 flex flex-col 2xl:flex-row 2xl:items-start justify-between gap-3">
-          {/* Issue 13: the label is a real grid column that spans the full button
-              block and is vertically centred, so no scenario is left orphaned
-              and the label no longer tracks only the first row. */}
-          <div className="grid gap-2 sm:grid-cols-[8.5rem_1fr] sm:items-center sm:gap-3 min-w-0 flex-1">
+        <div className="mb-4 pb-3 border-b border-indigo-200/50 flex flex-col xl:flex-row xl:items-center justify-between gap-3">
+          <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-3 min-w-0 flex-1">
             <span
-              className="text-xs font-black text-ink uppercase tracking-wider flex items-center gap-1.5 sm:justify-end shrink-0"
+              className="text-xs font-black text-ink uppercase tracking-wider flex items-center gap-1.5 shrink-0"
             >
               <Sparkles size={14} className="text-accent" aria-hidden="true" />
               {currentWorkspace === 'default' ? 'Staged Demos:' : 'Quick Tests:'}
             </span>
-            <div className="grid grid-cols-1 sm:grid-cols-2 2xl:grid-cols-3 gap-2 min-w-0">
+            <div className="flex flex-wrap sm:flex-nowrap items-center gap-2 min-w-0 flex-1">
               {activeScenarios.map((sc) => (
                 <NeuButton
                   key={sc.id}
@@ -167,13 +136,13 @@ export default function ChatView() {
                   disabled={loading}
                   variant="neutral"
                   size="sm"
-                  className={`!justify-start text-left disabled:opacity-50 ${TONE_HOVER[sc.tone]}`}
+                  className={`!justify-start text-left disabled:opacity-50 flex-1 min-w-0 truncate ${TONE_HOVER[sc.tone]}`}
                 >
                   <span
                     aria-hidden="true"
                     className={`w-1.5 h-1.5 rounded-full shrink-0 ${TONE_DOT[sc.tone]}`}
                   />
-                  {sc.label}
+                  <span className="truncate">{sc.label}</span>
                 </NeuButton>
               ))}
             </div>
