@@ -36,7 +36,7 @@ export default function Sidebar() {
       <aside
         id="app-sidebar"
         aria-label="Primary"
-        className={`fixed top-0 bottom-0 left-0 z-50 bg-gradient-to-b from-white/75 via-[#E6ECF5]/65 to-[#D8E1ED]/75 backdrop-blur-2xl transition-all duration-300 ease-in-out flex flex-col border-r border-white/60 shadow-[8px_0_32px_rgba(15,23,42,0.06)]
+        className={`fixed top-0 bottom-0 left-0 z-50 bg-gradient-to-b from-white/55 via-[#E8F0FA]/40 to-[#DCE7F5]/50 backdrop-blur-2xl transition-all duration-300 ease-in-out flex flex-col border-r border-white/70 shadow-[10px_0_35px_rgba(15,23,42,0.08)]
           ${isMobileOpen ? 'translate-x-0 w-72' : '-translate-x-full md:translate-x-0'}
           ${!isMobileOpen ? (isCollapsed ? 'md:w-20' : 'md:w-64') : ''}
           ${isCollapsed && !isMobileOpen ? 'px-3 py-5' : 'p-6'}
@@ -101,8 +101,8 @@ export default function Sidebar() {
                     isRail ? 'justify-center p-3' : 'gap-3 px-4 py-3'
                   } ${
                     isActive
-                      ? 'shadow-[inset_2px_2px_5px_rgba(15,23,42,0.06),inset_-2px_-2px_5px_rgba(255,255,255,0.9)] text-accent-strong bg-white/70 border-l-4 border-accent backdrop-blur-md'
-                      : 'text-ink-muted hover:text-accent hover:bg-white/45 hover:shadow-sm'
+                      ? 'shadow-[0_4px_16px_rgba(79,70,229,0.15),inset_0_1px_1.5px_rgba(255,255,255,0.95)] text-accent-strong bg-white/65 border border-white/80 border-l-4 border-l-accent backdrop-blur-xl'
+                      : 'text-ink-muted hover:text-accent hover:bg-white/35 hover:backdrop-blur-md transition-all'
                   }`
                 }
               >

@@ -12,32 +12,32 @@ interface NeuCardProps extends HTMLMotionProps<"div"> {
 
 const variantStyles: Record<NeuCardVariant, { raised: string; pressed: string; bg: string }> = {
   neutral: {
-    bg: 'bg-white/75 backdrop-blur-xl border border-white/80',
+    bg: 'bg-white/60 backdrop-blur-2xl border border-white/80',
     raised: 'shadow-neu-raised',
     pressed: 'shadow-neu-pressed',
   },
   maker: {
-    bg: 'bg-gradient-to-br from-[#F2F6FE]/85 via-[#EDF3FC]/75 to-[#E2ECFA]/85 backdrop-blur-xl border border-blue-200/60',
+    bg: 'bg-gradient-to-br from-[#EBF3FF]/60 via-[#DCEBFF]/42 to-[#E8F2FF]/58 backdrop-blur-2xl border border-blue-200/60',
     raised: 'shadow-neu-maker',
     pressed: 'shadow-neu-maker-pressed',
   },
   judge: {
-    bg: 'bg-gradient-to-br from-[#F0F8F4]/85 via-[#E8F4EE]/75 to-[#DCEDE5]/85 backdrop-blur-xl border border-emerald-200/70',
+    bg: 'bg-gradient-to-br from-[#E6FAF2]/62 via-[#D0F5E6]/42 to-[#E0F8EE]/58 backdrop-blur-2xl border border-emerald-200/60',
     raised: 'shadow-neu-judge',
     pressed: 'shadow-neu-judge-pressed',
   },
   metrics: {
-    bg: 'bg-gradient-to-br from-[#F5F2FB]/85 via-[#EFEAF7]/75 to-[#E5DCF2]/85 backdrop-blur-xl border border-purple-200/60',
+    bg: 'bg-gradient-to-br from-[#F5EEFF]/62 via-[#E6D8FF]/42 to-[#F0E4FF]/58 backdrop-blur-2xl border border-purple-200/60',
     raised: 'shadow-neu-metrics',
     pressed: 'shadow-neu-metrics-pressed',
   },
   chrome: {
-    bg: 'bg-gradient-to-b from-[#E7EDF6]/85 via-[#DFE6F1]/75 to-[#D7E0EC]/85 backdrop-blur-2xl border-r border-white/60',
+    bg: 'bg-gradient-to-b from-white/60 via-[#E6ECF5]/45 to-[#D8E1ED]/55 backdrop-blur-2xl border-r border-white/65',
     raised: 'shadow-neu-raised',
     pressed: 'shadow-neu-pressed',
   },
   white: {
-    bg: 'bg-white/80 backdrop-blur-xl border border-white/85',
+    bg: 'bg-white/65 backdrop-blur-2xl border border-white/80',
     raised: 'shadow-neu-raised',
     pressed: 'shadow-neu-pressed',
   },

@@ -68,7 +68,7 @@ export default function Header() {
   const currentWs = workspaces.find(w => w.id === currentWorkspace);
 
   return (
-    <header className="w-full sticky top-0 z-30 bg-white/65 backdrop-blur-xl border-b border-white/70 shadow-[0_4px_24px_rgba(15,23,42,0.05)]">
+    <header className="w-full sticky top-0 z-30 bg-white/50 backdrop-blur-2xl border-b border-white/70 shadow-[0_4px_24px_rgba(15,23,42,0.05)]">
       {/* ── Row 1: Brand + Controls ─────────────────────────────────── */}
       <div className="flex items-center justify-between gap-2 px-3 sm:px-5 h-14 sm:h-16">
         {/* Left: sidebar toggles + title */}

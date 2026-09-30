@@ -12,15 +12,15 @@ interface MetricTileProps {
 
 export default function MetricTile({ title, value, subtitle, trend, icon, category = 'general' }: MetricTileProps) {
   const getTrendColor = () => {
-    if (trend === 'up') return 'text-emerald-900 bg-emerald-100/90 border-emerald-300/70';
-    if (trend === 'down') return 'text-rose-900 bg-rose-100/90 border-rose-300/70';
-    return 'text-indigo-900 bg-indigo-100/90 border-indigo-300/70';
+    if (trend === 'up') return 'text-emerald-900 bg-emerald-50/70 border-emerald-300/60 backdrop-blur-md';
+    if (trend === 'down') return 'text-rose-900 bg-rose-50/70 border-rose-300/60 backdrop-blur-md';
+    return 'text-indigo-900 bg-indigo-50/70 border-indigo-300/60 backdrop-blur-md';
   };
 
   return (
     <NeuCard
       variant="metrics"
-      className="p-5 flex flex-col justify-between min-h-[140px] w-full relative overflow-hidden transition-all duration-200 hover:shadow-[8px_8px_18px_rgba(178,172,208,0.5),-8px_-8px_18px_rgba(255,255,255,0.95)]"
+      className="p-5 flex flex-col justify-between min-h-[140px] w-full relative overflow-hidden transition-all duration-200 hover:-translate-y-0.5"
     >
       <div className="flex items-center justify-between gap-2 mb-2">
         <h3 className="text-xs font-black text-purple-900 uppercase tracking-wider truncate">{title}</h3>

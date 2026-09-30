@@ -70,7 +70,7 @@ export default function MessageBubble({
             variant={isUser ? 'neutral' : isSelected ? 'glass-accent' : 'glass'}
             className={`p-5 !rounded-2xl transition-all w-full overflow-hidden ${
               isUser
-                ? 'bg-gradient-to-br from-blue-600 via-indigo-600 to-indigo-700 !shadow-[3px_3px_12px_rgba(79,70,229,0.35)] text-white border-0'
+                ? 'bg-gradient-to-br from-blue-600/90 via-indigo-600/90 to-indigo-700/90 backdrop-blur-md shadow-[0_8px_24px_rgba(79,70,229,0.3)] text-white border border-indigo-400/40'
                 : isSelected
                 ? 'border-2 border-indigo-500/80 shadow-[0_8px_30px_rgba(99,102,241,0.18)]'
                 : 'hover:border-indigo-300/80'

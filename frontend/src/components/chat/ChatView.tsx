@@ -127,7 +127,7 @@ export default function ChatView() {
               <Sparkles size={14} className="text-accent" aria-hidden="true" />
               {currentWorkspace === 'default' ? 'Staged Demos:' : 'Quick Tests:'}
             </span>
-            <div className="flex flex-wrap sm:flex-nowrap items-center gap-2 min-w-0 flex-1">
+            <div className="flex flex-wrap items-center gap-2 min-w-0">
               {activeScenarios.map((sc) => (
                 <NeuButton
                   key={sc.id}
@@ -136,7 +136,7 @@ export default function ChatView() {
                   disabled={loading}
                   variant="neutral"
                   size="sm"
-                  className={`!justify-start text-left disabled:opacity-50 flex-1 min-w-0 truncate ${TONE_HOVER[sc.tone]}`}
+                  className={`!justify-start text-left disabled:opacity-50 shrink-0 max-w-[280px] ${TONE_HOVER[sc.tone]}`}
                 >
                   <span
                     aria-hidden="true"
