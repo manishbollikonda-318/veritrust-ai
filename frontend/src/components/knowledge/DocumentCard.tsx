@@ -16,32 +16,32 @@ export default function DocumentCard({ document, onEdit, onDelete, isReadOnly = 
 
   return (
     <NeuCard
-      className="p-6 flex flex-col justify-between transition-all bg-gradient-to-br from-[#F7F9FD] via-[#EFF3FA] to-[#E5EDF7] shadow-neu-maker min-h-[320px] relative overflow-hidden border border-indigo-100/60"
+      className="p-6 flex flex-col justify-between transition-all bg-gradient-to-br from-[#F7F9FD] via-[#EFF3FA] to-[#E5EDF7] shadow-neu-maker min-h-[380px] relative overflow-hidden border border-indigo-100/60 hover:shadow-xl duration-200"
     >
       <div>
         <div className="flex items-start justify-between gap-3 mb-4">
-          <div className="flex items-center gap-3">
-            <div className="p-3 bg-gradient-to-br from-indigo-500 to-blue-600 text-white rounded-2xl shadow-sm shrink-0">
+          <div className="flex items-start gap-3 min-w-0 flex-1">
+            <div className="p-3 bg-gradient-to-br from-indigo-500 to-blue-600 text-white rounded-2xl shadow-sm shrink-0 mt-0.5">
               <FileText size={22} />
             </div>
             <div className="min-w-0 flex-1">
               <div className="flex items-start gap-2 flex-wrap">
-                <h3 className="font-black text-slate-900 text-sm sm:text-base leading-snug break-words">
+                <h3 className="font-black text-slate-900 text-sm sm:text-base leading-snug break-normal">
                   {document.title}
                 </h3>
                 {isDemoDoc && (
-                  <span className="px-2 py-0.5 rounded-md text-[9px] font-extrabold uppercase tracking-wider bg-blue-100/90 text-blue-700 border border-blue-200/80 shrink-0 mt-0.5">
+                  <span className="px-2 py-0.5 rounded-md text-[9px] font-black uppercase tracking-wider bg-blue-100/90 text-blue-800 border border-blue-200/80 shrink-0 mt-0.5">
                     Sample Data
                   </span>
                 )}
               </div>
-              <div className="flex items-center gap-3 text-xs text-indigo-700 font-bold mt-1">
-                <span className="flex items-center gap-1 truncate max-w-[200px]" title={document.filename}>
-                  <Database size={12} className="text-indigo-400 shrink-0" />
+              <div className="flex items-center gap-3 text-xs text-indigo-800 font-extrabold mt-1.5 flex-wrap">
+                <span className="flex items-center gap-1 truncate max-w-[220px]" title={document.filename}>
+                  <Database size={12} className="text-indigo-500 shrink-0" />
                   <span className="truncate">{document.filename || 'Source Doc'}</span>
                 </span>
                 {document.chunkCount !== undefined && (
-                  <span className="flex items-center gap-1 text-indigo-600 shrink-0">
+                  <span className="flex items-center gap-1 text-indigo-700 shrink-0">
                     <Layers size={12} />
                     {document.chunkCount} chunks
                   </span>
@@ -78,14 +78,14 @@ export default function DocumentCard({ document, onEdit, onDelete, isReadOnly = 
           )}
         </div>
 
-        <div className="bg-gradient-to-br from-[#F0F4FC] to-[#E3EBF7] shadow-neu-maker-pressed p-4 rounded-xl text-xs text-slate-800 leading-relaxed font-sans max-h-48 overflow-y-auto border border-indigo-100/50">
+        <div className="bg-gradient-to-br from-[#F0F4FC] to-[#E3EBF7] shadow-neu-maker-pressed p-4 sm:p-5 rounded-2xl text-xs sm:text-[13px] text-slate-900 leading-relaxed font-sans min-h-[145px] max-h-64 overflow-y-auto border border-indigo-100/60 my-2">
           {expanded ? (
-            <div className="whitespace-pre-line space-y-2 font-medium">
+            <div className="whitespace-pre-line space-y-2 font-bold text-slate-900 leading-relaxed">
               {document.content || document.snippet}
             </div>
           ) : (
-            <p className="line-clamp-4 italic text-slate-700 font-medium">
-              "{document.snippet || document.content?.slice(0, 180)}"
+            <p className="line-clamp-6 italic text-slate-900 font-bold leading-relaxed">
+              "{document.snippet || document.content?.slice(0, 320)}"
             </p>
           )}
         </div>
@@ -95,7 +95,7 @@ export default function DocumentCard({ document, onEdit, onDelete, isReadOnly = 
         <button
           type="button"
           onClick={() => setExpanded(!expanded)}
-          className="text-xs font-bold text-indigo-600 hover:text-indigo-800 flex items-center gap-1 cursor-pointer"
+          className="text-xs font-black text-indigo-700 hover:text-indigo-900 flex items-center gap-1 cursor-pointer"
         >
           {expanded ? (
             <>
@@ -108,7 +108,7 @@ export default function DocumentCard({ document, onEdit, onDelete, isReadOnly = 
           )}
         </button>
 
-        <span className="text-xs text-slate-500 font-bold">
+        <span className="text-xs text-slate-700 font-bold">
           {document.uploadedAt || 'Ground Truth'}
         </span>
       </div>

@@ -114,7 +114,7 @@ export default function ReviewQueueView() {
               Human-in-the-Loop Review Queue
             </h2>
           </div>
-          <p className="text-xs text-slate-600 font-medium mt-1">
+          <p className="text-xs sm:text-sm text-slate-900 font-bold mt-1">
             Audit blocked or auto-corrected customer interactions, provide supervisor overrides, and promote verified resolutions to the vector store.
           </p>
         </div>

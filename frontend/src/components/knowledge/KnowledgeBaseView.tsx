@@ -235,7 +235,7 @@ export default function KnowledgeBaseView() {
               Ground Truth
             </span>
           </div>
-          <p className="text-xs sm:text-sm text-slate-700 font-medium">
+          <p className="text-xs sm:text-sm text-slate-900 font-bold">
             All customer replies are verified at the atomic claim level against documents indexed here.
           </p>
         </div>
@@ -380,7 +380,7 @@ export default function KnowledgeBaseView() {
           <p className="text-sm font-bold text-slate-700">Loading ground-truth policy documents...</p>
         </div>
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <div className={`grid gap-6 ${filtered.length === 1 ? 'grid-cols-1 max-w-2xl' : filtered.length === 2 ? 'grid-cols-1 md:grid-cols-2 max-w-4xl' : 'grid-cols-1 md:grid-cols-2 xl:grid-cols-3'}`}>
           {filtered.map(doc => (
             <DocumentCard
               key={doc.id || doc.filename}
