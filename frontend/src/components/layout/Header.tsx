@@ -101,7 +101,7 @@ export default function Header() {
           </h2>
 
           {/* Engine badge — lg+ only */}
-          <span className="hidden lg:inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-extrabold bg-gradient-to-r from-blue-50 to-indigo-50 text-accent-strong border border-indigo-200/80 shadow-[2px_2px_6px_rgba(99,102,241,0.15),-2px_-2px_6px_rgba(255,255,255,0.9)] shrink-0">
+          <span className="hidden lg:inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-extrabold bg-white/45 backdrop-blur-xl text-accent-strong border border-indigo-200/70 shadow-[0_2px_8px_rgba(99,102,241,0.12),inset_0_1px_1px_rgba(255,255,255,0.9)] shrink-0">
             <Cpu size={11} className="text-accent" aria-hidden="true" />
             Maker &amp; Judge Engine
           </span>
@@ -110,7 +110,7 @@ export default function Header() {
         {/* Right: status chips + workspace + add */}
         <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
           {/* API status — md+ */}
-          <div className="hidden md:flex items-center gap-1.5 px-2 py-1.5 rounded-xl bg-gradient-to-br from-[#F4F7FC] to-[#E6EDF7] shadow-[inset_2px_2px_5px_rgba(165,180,205,0.45),inset_-2px_-2px_5px_rgba(255,255,255,0.9)] border border-slate-200/60 text-xs font-bold">
+          <div className="hidden md:flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl bg-white/45 hover:bg-white/60 backdrop-blur-xl border border-white/70 shadow-[0_2px_10px_rgba(15,23,42,0.04),inset_0_1px_1px_rgba(255,255,255,0.9)] text-xs font-bold transition-all">
             {isConnected === null ? (
               <><Activity size={11} className="text-amber-500 animate-pulse" /><span className="text-amber-700">Connecting</span></>
             ) : isConnected ? (
@@ -122,9 +122,9 @@ export default function Header() {
 
           {/* LLM chip — lg+ */}
           {!llmLoading && activeProvider && (
-            <div className="hidden lg:flex items-center gap-1.5 px-2 py-1.5 rounded-xl bg-gradient-to-br from-[#F4F7FC] to-[#E6EDF7] shadow-[inset_2px_2px_5px_rgba(165,180,205,0.45),inset_-2px_-2px_5px_rgba(255,255,255,0.9)] border border-slate-200/60 text-xs font-bold max-w-[160px]">
+            <div className="hidden lg:flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl bg-white/45 hover:bg-white/60 backdrop-blur-xl border border-white/70 shadow-[0_2px_10px_rgba(15,23,42,0.04),inset_0_1px_1px_rgba(255,255,255,0.9)] text-xs font-bold max-w-[200px] transition-all">
               {activeProvider.available ? (
-                <><Zap size={11} className="text-emerald-500 shrink-0" /><span className="text-emerald-700 truncate">{activeProvider.name}</span><span className="text-[10px] font-mono text-emerald-600 bg-emerald-50 px-1 rounded truncate max-w-[80px]">{activeProvider.model}</span></>
+                <><Zap size={11} className="text-emerald-500 shrink-0" /><span className="text-emerald-700 truncate">{activeProvider.name}</span><span className="text-[10px] font-mono text-emerald-600 bg-emerald-50 px-1 rounded truncate max-w-[90px]">{activeProvider.model}</span></>
               ) : (
                 <><Server size={11} className="text-amber-500 shrink-0" /><span className="text-amber-700 truncate">{activeProvider.name}</span><span className="text-[10px] font-mono text-amber-600 bg-amber-50 px-1 rounded">Unavailable</span></>
               )}
@@ -149,7 +149,7 @@ export default function Header() {
           <div className="relative" ref={dropdownRef}>
             <button
               onClick={() => setShowWorkspaceDropdown(!showWorkspaceDropdown)}
-              className="bg-white/60 hover:bg-white/80 backdrop-blur-md shadow-sm border border-white/80 px-2 sm:px-3 py-1.5 rounded-xl flex items-center gap-1.5 max-w-[140px] sm:max-w-[180px] transition-all"
+              className="bg-white/45 hover:bg-white/70 backdrop-blur-xl shadow-[0_2px_10px_rgba(15,23,42,0.04),inset_0_1px_1px_rgba(255,255,255,0.9)] border border-white/75 px-2.5 sm:px-3 py-1.5 rounded-xl flex items-center gap-1.5 max-w-[150px] sm:max-w-[210px] transition-all"
               aria-label="Active Enterprise Workspace"
               aria-expanded={showWorkspaceDropdown}
               aria-haspopup="listbox"
