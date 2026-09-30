@@ -221,33 +221,39 @@ def call_gemini_direct(
 def run_gemini_dual_agent(query: str, workspace_id: str = "default", custom_key: Optional[str] = None) -> dict:
     """
     Real Dual-Agent Hallucination Guardrail Pipeline:
-    - Agent 1 (Maker Agent): Drafts an answer grounded in the Acme Health Knowledge Base.
-    - Agent 2 (Judge Agent): Evaluates Maker draft against Knowledge Base for factual accuracy
+    - Agent 1 (Maker Agent): 50% Generative Drafting — drafts a response strictly grounded in the workspace's dynamic policies.
+    - Agent 2 (Judge Agent): 50% Generative Auditing — evaluates Maker draft against Ground Truth for factual accuracy
       using Gemini Native Structured Outputs with strict schema enforcement.
     Returns: { originalQuery, makerDraft, is_approved, isHallucinated, corrected_text, overall_reasoning, claim_evaluations, ... }
     """
     t_start = time.time()
     
-    # 1. Prepare Ground Truth Knowledge Base
-    kb = ACME_HEALTH_KNOWLEDGE_BASE
-    try:
-        from app.knowledge.vectorstore import vector_store
-        ws_docs = vector_store.search(query, n_results=2, workspace_id=workspace_id)
-        if ws_docs:
-            kb += "\n\nAdditional Verified Policies:\n" + "\n".join(d["text"] for d in ws_docs)
-    except Exception:
-        pass
+    # 1. Dynamically retrieve Ground Truth Knowledge Base from Vector Store & Workspace
+    from app.services.workspace_service import workspace_service
+    from app.knowledge.vectorstore import vector_store
 
-    # 2. Agent 1: Maker Agent
-    maker_prompt = f"""You are a customer service assistant representing Acme Health.
-Answer the customer's question directly, accurately, and naturally based ONLY on the following verified Knowledge Base.
-Do not use generic filler boilerplate like "Thank you for reaching out". State the facts directly.
+    ws = workspace_service.get_workspace(workspace_id)
+    company_name = ws.name if ws else "our company"
 
-Knowledge Base:
+    # Search relevant policy documents for the specific inquiry
+    ws_docs = vector_store.search(query, n_results=5, workspace_id=workspace_id)
+    if ws_docs and len(ws_docs) > 0:
+        kb_chunks = [f"[{d.get('doc_id', 'Policy Document')}]: {d['text']}" for d in ws_docs]
+        kb = f"{company_name} Official Verified Policies:\n" + "\n\n".join(kb_chunks)
+    else:
+        # Fallback to default Acme Health knowledge base if vector store is newly initializing
+        kb = ACME_HEALTH_KNOWLEDGE_BASE
+
+    # 2. Agent 1: Maker Agent (50% Generative Drafting)
+    maker_prompt = f"""You are a professional, helpful, and polite customer service representative representing {company_name}.
+Answer the customer's question directly, accurately, and naturally based ONLY on the following verified policies.
+Be completely factual: do not invent policies, discounts, or terms not stated below.
+
+Verified Company Policies:
 {kb}
 
 Customer Question: {query}
-Draft Response:"""
+Customer Support Response:"""
 
     t_maker = time.time()
     maker_draft = call_gemini_direct(maker_prompt, response_json=False, custom_key=custom_key)
@@ -267,14 +273,14 @@ Draft Response:"""
         else:
             maker_draft = "Under Acme Health policy, the return window is 30 days and express shipping is $9.99. Clinical support is available Monday through Friday from 7am to 9pm EST."
 
-    # 3. Agent 2: Ruthless Compliance Auditor Judge Agent with Structured Output
-    judge_prompt = f"""You are a ruthless compliance auditor and factual accuracy Judge Guardrail for Acme Health.
-You must inspect the Draft Response against the ground-truth Knowledge Base with absolute zero tolerance for discrepancies.
+    # 3. Agent 2: Ruthless Compliance Auditor Judge Agent with Structured Output (50% Generative Auditing)
+    judge_prompt = f"""You are a ruthless compliance auditor and factual accuracy Judge Guardrail for {company_name}.
+You must inspect the Draft Response against the verified Company Policies with absolute zero tolerance for discrepancies.
 
 CRITICAL AUDIT DIRECTIVE:
-Extract every numeric value, price, and timeframe from the Draft. Compare it strictly against the Knowledge Base. If a number contradicts the Knowledge Base (e.g., $4.99 vs $9.99, or 60 days vs 30 days), you MUST set 'is_approved' to false, flag the specific claim in 'claim_evaluations', and provide the accurate 'corrected_text'.
+Extract every numeric value, price, timeframe, and policy constraint from the Draft. Compare it strictly against the Verified Company Policies. If a statement contradicts or is unsupported by the Policies (e.g., $4.99 vs $9.99, or 60 days vs 30 days), you MUST set 'is_approved' to false, flag the specific claim in 'claim_evaluations', and provide the accurate 'corrected_text'.
 
-Knowledge Base:
+Verified Company Policies:
 {kb}
 
 Customer Query: {query}
