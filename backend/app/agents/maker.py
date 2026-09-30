@@ -109,61 +109,54 @@ def call_gemini_api(prompt: str, api_key: str, model_name: str = "gemini-3.8-fla
     Call Google Gemini API via SDK or direct REST endpoint with automatic model cascade.
     Guarantees reliable execution across all environments.
     """
-    if not api_key or not api_key.strip():
+    candidate_keys: List[str] = []
+    if api_key and api_key.strip():
+        candidate_keys.append(api_key.strip())
+    for k in settings.get_gemini_api_keys():
+        if k not in candidate_keys:
+            candidate_keys.append(k)
+
+    if not candidate_keys:
         return None
 
-    clean_key = api_key.strip()
-    candidate_models = [model_name, "gemini-3.8-flash", "gemini-3.7-flash", "gemini-flash-latest"]
-    # Remove duplicates preserving order
+    candidate_models = [model_name, "gemini-flash-lite-latest", "gemini-3.5-flash-lite", "gemini-3.1-flash-lite", "gemini-3.8-flash"]
     candidate_models = list(dict.fromkeys(candidate_models))
 
-    # 1. Direct Google Generative Language REST API endpoint (most reliable across versions)
-    for m in candidate_models:
-        try:
-            url = f"https://generativelanguage.googleapis.com/v1beta/models/{m}:generateContent?key={clean_key}"
-            payload = {
-                "contents": [
-                    {
-                        "parts": [{"text": prompt}]
-                    }
-                ],
-                "generationConfig": {
-                    "temperature": 0.2,
-                    "maxOutputTokens": 600
-                }
-            }
-            res = requests.post(url, json=payload, timeout=5)
-            if res.status_code == 200:
-                data = res.json()
-                candidates = data.get("candidates", [])
-                if candidates:
-                    parts = candidates[0].get("content", {}).get("parts", [])
-                    if parts:
-                        return parts[0].get("text", "").strip()
-            elif res.status_code in (404, 503):
-                logger.warning(f"Gemini model {m} returned {res.status_code}, trying fallback candidate...")
-                continue
-            else:
-                logger.warning(f"Gemini REST endpoint returned {res.status_code}: {res.text[:200]}")
-                break
-        except Exception as e:
-            logger.warning(f"Gemini REST call error with {m}: {e}")
-            break
-
-    # 2. Try google.generativeai SDK as final fallback
-    try:
-        import google.generativeai as genai
-        genai.configure(api_key=clean_key)
+    # 1. Direct Google Generative Language REST API endpoint with key rotation
+    for key in candidate_keys:
         for m in candidate_models:
             try:
-                model = genai.GenerativeModel(m)
-                response = model.generate_content(prompt)
-                if response and response.text:
-                    return response.text.strip()
-            except Exception:
+                url = f"https://generativelanguage.googleapis.com/v1beta/models/{m}:generateContent?key={key}"
+                payload = {
+                    "contents": [
+                        {
+                            "parts": [{"text": prompt}]
+                        }
+                    ],
+                    "generationConfig": {
+                        "temperature": 0.2,
+                        "maxOutputTokens": 600
+                    }
+                }
+                res = requests.post(url, json=payload, timeout=6)
+                if res.status_code == 200:
+                    data = res.json()
+                    candidates = data.get("candidates", [])
+                    if candidates:
+                        parts = candidates[0].get("content", {}).get("parts", [])
+                        if parts:
+                            return parts[0].get("text", "").strip()
+                elif res.status_code in (429, 403):
+                    logger.warning(f"Gemini key quota exceeded (HTTP {res.status_code}), advancing to backup key...")
+                    break  # break model loop, advance to next key in pool
+                elif res.status_code in (404, 503):
+                    continue
+                else:
+                    logger.warning(f"Gemini REST endpoint returned {res.status_code}")
+                    continue
+            except Exception as e:
+                logger.debug(f"Gemini REST call error with {m}: {e}")
                 continue
-    except ImportError:
-        pass
 
     return None
 

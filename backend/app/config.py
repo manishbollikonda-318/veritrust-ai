@@ -48,5 +48,31 @@ class Settings(BaseSettings):
         # Production: only explicit production origins
         return [o for o in self.ALLOWED_ORIGINS if not o.startswith("http://127.0.0.1") and not o.startswith("http://localhost")]
 
+    def get_gemini_api_keys(self) -> List[str]:
+        """
+        Return an ordered pool of available Gemini API keys.
+        Supports:
+        - Comma/newline-separated list in GEMINI_API_KEY or GEMINI_API_KEYS
+        - Dedicated backup variables: GEMINI_API_KEY_BACKUP, GEMINI_API_KEY_2, GEMINI_API_KEY_3
+        """
+        keys: List[str] = []
+        raw_candidates = [
+            self.GEMINI_API_KEY,
+            os.getenv("GEMINI_API_KEYS"),
+            os.getenv("GEMINI_API_KEY_BACKUP"),
+            os.getenv("GEMINI_API_KEY_2"),
+            os.getenv("GEMINI_API_KEY_3"),
+            os.getenv("GEMINI_API_KEY_4"),
+            os.getenv("GEMINI_API_KEY_5"),
+        ]
+        for candidate in raw_candidates:
+            if candidate:
+                # Split by comma or whitespace/newline if multiple were concatenated
+                for k in candidate.replace("\n", ",").split(","):
+                    k_clean = k.strip()
+                    if k_clean and k_clean not in keys:
+                        keys.append(k_clean)
+        return keys
+
 settings = Settings()
 

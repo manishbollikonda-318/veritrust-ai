@@ -116,18 +116,30 @@ def call_gemini_direct(
     custom_key: Optional[str] = None
 ) -> Optional[str]:
     """
-    Execute live Google Gemini API calls across candidate models.
+    Execute live Google Gemini API calls across candidate models with automatic API Key Rotation & Quota Failover.
     Supports native Structured Outputs using responseSchema.
-    Cascades gracefully:
-    1. gemini-flash-lite-latest (fastest & most responsive)
-    2. gemini-3.5-flash-lite (stable backup)
-    3. gemini-3.1-flash-lite (legacy fallback)
-    4. gemini-3.8-flash (standard tier)
     
-    Security: The API key is NEVER logged or returned to client responses.
+    Resilience Architecture:
+    1. Key Rotation: If Key #1 exhausts its quota or rate limit (HTTP 429/403), seamlessly failover to Key #2, #3, etc.
+    2. Model Cascades:
+       - gemini-flash-lite-latest (fastest & most responsive)
+       - gemini-3.5-flash-lite (stable backup)
+       - gemini-3.1-flash-lite (legacy fallback)
+       - gemini-3.8-flash (standard tier)
+    
+    Security: API keys are NEVER logged in plaintext or returned to client responses.
     """
-    key = (custom_key or settings.GEMINI_API_KEY or "").strip()
-    if not key:
+    # Build candidate keys pool
+    candidate_keys: List[str] = []
+    if custom_key and custom_key.strip():
+        candidate_keys.append(custom_key.strip())
+    
+    # Add system configured key pool
+    for k in settings.get_gemini_api_keys():
+        if k not in candidate_keys:
+            candidate_keys.append(k)
+
+    if not candidate_keys:
         logger.debug("No Gemini API key configured. Utilizing local grounded fallback pipeline.")
         return None
 
@@ -144,47 +156,64 @@ def call_gemini_direct(
         if response_schema:
             payload["generationConfig"]["responseSchema"] = response_schema
 
-    for m in models:
-        try:
-            url = f"https://generativelanguage.googleapis.com/v1beta/models/{m}:generateContent?key={key}"
-            res = requests.post(url, json=payload, timeout=9)
-            if res.status_code == 200:
-                data = res.json()
-                candidates = data.get("candidates", [])
-                if candidates:
-                    parts = candidates[0].get("content", {}).get("parts", [])
-                    if parts:
-                        return parts[0].get("text", "").strip()
-            elif res.status_code in (404, 503, 429):
-                logger.debug(f"Gemini model {m} returned {res.status_code}, advancing to next model cascade...")
-                continue
-            else:
-                # If schema validation fails on older models, try without responseSchema
-                if response_schema and res.status_code == 400:
-                    try:
-                        fallback_payload = {
-                            "contents": [{"parts": [{"text": prompt}]}],
-                            "generationConfig": {
-                                "temperature": 0.0,
-                                "maxOutputTokens": 1200,
-                                "responseMimeType": "application/json"
+    # Iterate through keys in pool (Key Failover)
+    for key_idx, key in enumerate(candidate_keys):
+        masked_key = mask_secret_key(key)
+        key_quota_exhausted = False
+
+        for m in models:
+            try:
+                url = f"https://generativelanguage.googleapis.com/v1beta/models/{m}:generateContent?key={key}"
+                res = requests.post(url, json=payload, timeout=9)
+                if res.status_code == 200:
+                    data = res.json()
+                    candidates = data.get("candidates", [])
+                    if candidates:
+                        parts = candidates[0].get("content", {}).get("parts", [])
+                        if parts:
+                            return parts[0].get("text", "").strip()
+                elif res.status_code in (429, 403):
+                    logger.warning(
+                        f"Gemini API key [{masked_key}] hit rate limit or quota exhaustion (HTTP {res.status_code}). "
+                        f"Attempting next model or advancing to backup API key..."
+                    )
+                    # If quota exhausted (429/403), mark to shift to next backup key
+                    key_quota_exhausted = True
+                    break
+                elif res.status_code in (404, 503):
+                    logger.debug(f"Gemini model {m} returned {res.status_code}, advancing to next model cascade...")
+                    continue
+                else:
+                    # If schema validation fails on older models, try without responseSchema
+                    if response_schema and res.status_code == 400:
+                        try:
+                            fallback_payload = {
+                                "contents": [{"parts": [{"text": prompt}]}],
+                                "generationConfig": {
+                                    "temperature": 0.0,
+                                    "maxOutputTokens": 1200,
+                                    "responseMimeType": "application/json"
+                                }
                             }
-                        }
-                        f_res = requests.post(url, json=fallback_payload, timeout=9)
-                        if f_res.status_code == 200:
-                            f_data = f_res.json()
-                            candidates = f_data.get("candidates", [])
-                            if candidates:
-                                parts = candidates[0].get("content", {}).get("parts", [])
-                                if parts:
-                                    return parts[0].get("text", "").strip()
-                    except Exception:
-                        pass
-                logger.warning(f"Gemini API returned status {res.status_code} for model {m}.")
+                            f_res = requests.post(url, json=fallback_payload, timeout=9)
+                            if f_res.status_code == 200:
+                                f_data = f_res.json()
+                                candidates = f_data.get("candidates", [])
+                                if candidates:
+                                    parts = candidates[0].get("content", {}).get("parts", [])
+                                    if parts:
+                                        return parts[0].get("text", "").strip()
+                        except Exception:
+                            pass
+                    logger.warning(f"Gemini API returned status {res.status_code} for model {m}.")
+                    continue
+            except Exception as e:
+                logger.debug(f"Connection attempt to model {m} using key [{masked_key}] failed: {e}")
                 continue
-        except Exception as e:
-            logger.debug(f"Connection attempt to model {m} failed: {e}")
-            continue
+
+        if key_quota_exhausted and (key_idx + 1) < len(candidate_keys):
+            next_masked = mask_secret_key(candidate_keys[key_idx + 1])
+            logger.info(f"🔄 Auto-shifting from exhausted key [{masked_key}] to backup key [{next_masked}]...")
 
     return None
 
