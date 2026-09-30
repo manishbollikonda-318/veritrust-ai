@@ -68,7 +68,7 @@ export default function Header() {
   const currentWs = workspaces.find(w => w.id === currentWorkspace);
 
   return (
-    <header className="w-full sticky top-0 z-30 bg-[#EEF2F8]/95 backdrop-blur-md border-b border-slate-200/70 shadow-sm">
+    <header className="w-full sticky top-0 z-30 bg-white/65 backdrop-blur-xl border-b border-white/70 shadow-[0_4px_24px_rgba(15,23,42,0.05)]">
       {/* ── Row 1: Brand + Controls ─────────────────────────────────── */}
       <div className="flex items-center justify-between gap-2 px-3 sm:px-5 h-14 sm:h-16">
         {/* Left: sidebar toggles + title */}
@@ -149,7 +149,7 @@ export default function Header() {
           <div className="relative" ref={dropdownRef}>
             <button
               onClick={() => setShowWorkspaceDropdown(!showWorkspaceDropdown)}
-              className="bg-gradient-to-br from-[#F4F7FC] to-[#E6EDF7] shadow-[inset_2px_2px_5px_rgba(165,180,205,0.45),inset_-2px_-2px_5px_rgba(255,255,255,0.9)] border border-slate-200/60 px-2 sm:px-3 py-1.5 rounded-xl flex items-center gap-1.5 max-w-[140px] sm:max-w-[180px]"
+              className="bg-white/60 hover:bg-white/80 backdrop-blur-md shadow-sm border border-white/80 px-2 sm:px-3 py-1.5 rounded-xl flex items-center gap-1.5 max-w-[140px] sm:max-w-[180px] transition-all"
               aria-label="Active Enterprise Workspace"
               aria-expanded={showWorkspaceDropdown}
               aria-haspopup="listbox"
@@ -162,7 +162,7 @@ export default function Header() {
             </button>
 
             {showWorkspaceDropdown && (
-              <div className="absolute right-0 top-full mt-1.5 w-60 bg-white rounded-xl shadow-[0_25px_50px_-12px_rgba(0,0,0,0.15)] border border-slate-200 py-1.5 z-40 animate-in fade-in-0 zoom-in-95 duration-150">
+              <div className="absolute right-0 top-full mt-1.5 w-60 bg-white/90 backdrop-blur-2xl rounded-xl shadow-[0_20px_40px_-10px_rgba(15,23,42,0.15)] border border-white/80 py-1.5 z-40 animate-in fade-in-0 zoom-in-95 duration-150">
                 {workspaces.map((w) => (
                   <div key={w.id} className="flex items-center gap-2 px-3 py-2">
                     <button

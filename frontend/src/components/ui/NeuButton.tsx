@@ -11,19 +11,19 @@ type NeuButtonSize = 'sm' | 'md';
  */
 const VARIANT_STYLES: Record<NeuButtonVariant, string> = {
   neutral:
-    'bg-gradient-to-br from-[#F6F8FC] to-[#E8EDF5] text-ink border border-slate-200/60 hover:text-accent',
+    'bg-white/65 hover:bg-white/85 text-ink border border-white/80 hover:border-white shadow-sm backdrop-blur-md hover:text-accent',
   subtle:
-    'bg-white/70 text-ink-muted border border-slate-200/70 hover:text-accent hover:border-accent/30',
+    'bg-white/50 hover:bg-white/75 text-ink-muted border border-white/60 hover:text-accent hover:border-accent/30 backdrop-blur-md',
   ghost:
-    'bg-transparent text-ink-muted border border-transparent hover:text-accent',
+    'bg-transparent text-ink-muted border border-transparent hover:bg-white/40 hover:text-accent backdrop-blur-xs',
   primary:
-    'bg-gradient-to-r from-indigo-600 via-blue-600 to-indigo-700 text-onaccent border border-transparent',
+    'bg-gradient-to-r from-indigo-600 via-blue-600 to-indigo-700 text-onaccent border border-indigo-400/40 shadow-md backdrop-blur-md',
   accent:
-    'bg-accent text-onaccent border border-transparent hover:bg-accent-strong active:bg-accent-strong',
+    'bg-accent text-onaccent border border-indigo-300/30 hover:bg-accent-strong active:bg-accent-strong shadow-md backdrop-blur-md',
   danger:
-    'bg-gradient-to-br from-rose-50 to-rose-100 text-critical-deep border border-rose-200/80',
+    'bg-gradient-to-br from-rose-50/80 to-rose-100/80 text-critical-deep border border-rose-200/80 backdrop-blur-md',
   judge:
-    'bg-gradient-to-br from-[#F0F8F4] to-[#E3F2EB] text-positive-deep border border-emerald-200/60',
+    'bg-gradient-to-br from-[#F0F8F4]/80 to-[#E3F2EB]/80 text-positive-deep border border-emerald-200/70 backdrop-blur-md',
 };
 
 const SIZE_STYLES: Record<NeuButtonSize, string> = {
@@ -54,8 +54,8 @@ export default function NeuButton({
         SIZE_STYLES[size]
       } ${
         active
-          ? 'shadow-neu-pressed text-accent-strong'
-          : 'shadow-neu-raised hover:shadow-[7px_7px_16px_rgba(175,187,204,0.5),-7px_-7px_16px_rgba(255,255,255,0.95)]'
+          ? 'shadow-neu-pressed text-accent-strong bg-white/80'
+          : 'shadow-neu-raised hover:shadow-[0_8px_20px_rgba(15,23,42,0.1),inset_0_1px_1px_rgba(255,255,255,0.95)]'
       } ${VARIANT_STYLES[variant]} ${className}`}
       {...props}
     >

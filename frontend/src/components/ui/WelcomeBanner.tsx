@@ -23,7 +23,7 @@ export default function WelcomeBanner() {
 
   return (
     <NeuCard
-      className="mb-6 p-4 sm:p-5 bg-gradient-to-r from-[#EEF4FE] via-[#F3F6FA] to-[#E8F5EF] border border-indigo-200/60 shadow-[6px_6px_16px_rgba(165,183,212,0.4),-6px_-6px_16px_rgba(255,255,255,0.95)] relative"
+      className="mb-6 p-4 sm:p-5 bg-gradient-to-r from-[#EEF4FE]/80 via-white/70 to-[#E8F5EF]/80 backdrop-blur-xl border border-white/80 shadow-[0_12px_32px_rgba(15,23,42,0.06),inset_0_1px_1px_rgba(255,255,255,0.95)] relative"
     >
       <button
         onClick={handleDismiss}

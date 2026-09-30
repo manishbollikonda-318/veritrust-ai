@@ -12,34 +12,34 @@ interface NeuCardProps extends HTMLMotionProps<"div"> {
 
 const variantStyles: Record<NeuCardVariant, { raised: string; pressed: string; bg: string }> = {
   neutral: {
-    bg: 'bg-gradient-to-br from-[#F6F8FC] via-[#EEF2F8] to-[#E5EBF4]',
+    bg: 'bg-white/75 backdrop-blur-xl border border-white/80',
     raised: 'shadow-neu-raised',
     pressed: 'shadow-neu-pressed',
   },
   maker: {
-    bg: 'bg-gradient-to-br from-[#F2F6FE] via-[#EDF3FC] to-[#E2ECFA]',
-    raised: 'shadow-neu-maker border border-blue-100/50',
-    pressed: 'shadow-neu-maker-pressed border border-blue-200/40',
+    bg: 'bg-gradient-to-br from-[#F2F6FE]/85 via-[#EDF3FC]/75 to-[#E2ECFA]/85 backdrop-blur-xl border border-blue-200/60',
+    raised: 'shadow-neu-maker',
+    pressed: 'shadow-neu-maker-pressed',
   },
   judge: {
-    bg: 'bg-gradient-to-br from-[#F0F8F4] via-[#E8F4EE] to-[#DCEDE5]',
-    raised: 'shadow-neu-judge border border-emerald-100/60',
-    pressed: 'shadow-neu-judge-pressed border border-emerald-200/50',
+    bg: 'bg-gradient-to-br from-[#F0F8F4]/85 via-[#E8F4EE]/75 to-[#DCEDE5]/85 backdrop-blur-xl border border-emerald-200/70',
+    raised: 'shadow-neu-judge',
+    pressed: 'shadow-neu-judge-pressed',
   },
   metrics: {
-    bg: 'bg-gradient-to-br from-[#F5F2FB] via-[#EFEAF7] to-[#E5DCF2]',
-    raised: 'shadow-neu-metrics border border-purple-100/50',
-    pressed: 'shadow-neu-metrics-pressed border border-purple-200/40',
+    bg: 'bg-gradient-to-br from-[#F5F2FB]/85 via-[#EFEAF7]/75 to-[#E5DCF2]/85 backdrop-blur-xl border border-purple-200/60',
+    raised: 'shadow-neu-metrics',
+    pressed: 'shadow-neu-metrics-pressed',
   },
   chrome: {
-    bg: 'bg-gradient-to-b from-[#E7EDF6] via-[#DFE6F1] to-[#D7E0EC]',
-    raised: 'shadow-neu-raised border-r border-slate-300/60',
+    bg: 'bg-gradient-to-b from-[#E7EDF6]/85 via-[#DFE6F1]/75 to-[#D7E0EC]/85 backdrop-blur-2xl border-r border-white/60',
+    raised: 'shadow-neu-raised',
     pressed: 'shadow-neu-pressed',
   },
   white: {
-    bg: 'bg-white/80 backdrop-blur-xs',
-    raised: 'shadow-neu-raised border border-white/60',
-    pressed: 'shadow-neu-pressed border border-slate-200/50',
+    bg: 'bg-white/80 backdrop-blur-xl border border-white/85',
+    raised: 'shadow-neu-raised',
+    pressed: 'shadow-neu-pressed',
   },
   // ── Liquid Glass variants ─────────────────────────────────────────
   glass: {

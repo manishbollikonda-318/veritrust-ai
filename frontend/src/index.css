@@ -26,53 +26,77 @@
 }
 
 @layer utilities {
-  /* Ambient Multi-Hue Canvas Background */
+  /* Ambient Multi-Hue Canvas Background with User Mesh Wallpaper */
   .bg-canvas {
-    background: linear-gradient(135deg, #EEF2F8 0%, #F4F1F9 45%, #FBF8F3 100%);
-    background-attachment: fixed;
+    background: url('/background.png') no-repeat center center fixed;
+    background-size: cover;
   }
 
-  /* Neutral Soft Dual Shadows */
+  /* Neutral Soft Glass Shadows */
   .shadow-neu-raised {
-    box-shadow: 6px 6px 14px rgba(175, 187, 204, 0.45), -6px -6px 14px rgba(255, 255, 255, 0.85);
+    box-shadow: 
+      0 10px 30px -5px rgba(15, 23, 42, 0.08),
+      0 4px 12px -2px rgba(15, 23, 42, 0.04),
+      inset 0 1.5px 1.5px 0 rgba(255, 255, 255, 0.95),
+      inset 0 -1.5px 2px 0 rgba(255, 255, 255, 0.35);
   }
   .shadow-neu-pressed {
-    box-shadow: inset 3px 3px 7px rgba(175, 187, 204, 0.5), inset -3px -3px 7px rgba(255, 255, 255, 0.9);
+    box-shadow: 
+      inset 2px 2px 6px rgba(15, 23, 42, 0.12),
+      inset -2px -2px 6px rgba(255, 255, 255, 0.85);
   }
 
-  /* Maker Zone (Periwinkle / Blue-Lavender) Tactile Shadows */
+  /* Maker Zone (Periwinkle / Blue-Lavender) Glass Shadows */
   .shadow-neu-maker {
-    box-shadow: 6px 6px 14px rgba(165, 183, 212, 0.45), -6px -6px 14px rgba(255, 255, 255, 0.9);
+    box-shadow: 
+      0 12px 36px -4px rgba(37, 99, 235, 0.12),
+      0 4px 12px -2px rgba(37, 99, 235, 0.05),
+      inset 0 1.5px 1.5px 0 rgba(255, 255, 255, 0.95),
+      inset 0 -1.5px 2px 0 rgba(191, 219, 254, 0.45);
   }
   .shadow-neu-maker-pressed {
-    box-shadow: inset 3px 3px 7px rgba(165, 183, 212, 0.5), inset -3px -3px 7px rgba(255, 255, 255, 0.95);
+    box-shadow: 
+      inset 2px 2px 6px rgba(37, 99, 235, 0.18),
+      inset -2px -2px 6px rgba(255, 255, 255, 0.85);
   }
 
-  /* Judge Zone (Mint / Seafoam) Tactile Shadows */
+  /* Judge Zone (Mint / Seafoam) Glass Shadows */
   .shadow-neu-judge {
-    box-shadow: 6px 6px 14px rgba(158, 192, 180, 0.45), -6px -6px 14px rgba(255, 255, 255, 0.9);
+    box-shadow: 
+      0 12px 36px -4px rgba(16, 185, 129, 0.12),
+      0 4px 12px -2px rgba(16, 185, 129, 0.05),
+      inset 0 1.5px 1.5px 0 rgba(255, 255, 255, 0.95),
+      inset 0 -1.5px 2px 0 rgba(167, 243, 208, 0.45);
   }
   .shadow-neu-judge-pressed {
-    box-shadow: inset 3px 3px 7px rgba(158, 192, 180, 0.5), inset -3px -3px 7px rgba(255, 255, 255, 0.95);
+    box-shadow: 
+      inset 2px 2px 6px rgba(16, 185, 129, 0.18),
+      inset -2px -2px 6px rgba(255, 255, 255, 0.85);
   }
 
-  /* Telemetry / Metrics (Lavender / Violet) Tactile Shadows */
+  /* Telemetry / Metrics (Lavender / Violet) Glass Shadows */
   .shadow-neu-metrics {
-    box-shadow: 6px 6px 14px rgba(178, 172, 208, 0.42), -6px -6px 14px rgba(255, 255, 255, 0.9);
+    box-shadow: 
+      0 12px 36px -4px rgba(139, 92, 246, 0.12),
+      0 4px 12px -2px rgba(139, 92, 246, 0.05),
+      inset 0 1.5px 1.5px 0 rgba(255, 255, 255, 0.95),
+      inset 0 -1.5px 2px 0 rgba(221, 214, 254, 0.45);
   }
   .shadow-neu-metrics-pressed {
-    box-shadow: inset 3px 3px 7px rgba(178, 172, 208, 0.48), inset -3px -3px 7px rgba(255, 255, 255, 0.95);
+    box-shadow: 
+      inset 2px 2px 6px rgba(139, 92, 246, 0.18),
+      inset -2px -2px 6px rgba(255, 255, 255, 0.85);
   }
 
   /* Semantic State Soft Shadows */
   .shadow-neu-verified {
-    box-shadow: 4px 4px 10px rgba(16, 185, 129, 0.15), -4px -4px 10px rgba(255, 255, 255, 0.9);
+    box-shadow: 0 6px 18px rgba(16, 185, 129, 0.15), inset 0 1px 1px rgba(255, 255, 255, 0.9);
   }
   .shadow-neu-unsupported {
-    box-shadow: 4px 4px 10px rgba(245, 158, 11, 0.15), -4px -4px 10px rgba(255, 255, 255, 0.9);
+    box-shadow: 0 6px 18px rgba(245, 158, 11, 0.15), inset 0 1px 1px rgba(255, 255, 255, 0.9);
   }
   .shadow-neu-contradicted {
-    box-shadow: 4px 4px 10px rgba(239, 68, 68, 0.15), -4px -4px 10px rgba(255, 255, 255, 0.9);
+    box-shadow: 0 6px 18px rgba(239, 68, 68, 0.15), inset 0 1px 1px rgba(255, 255, 255, 0.9);
   }
 }
 
@@ -180,10 +204,10 @@
 }
 
 body {
-  background: linear-gradient(135deg, #EEF2F8 0%, #F4F1F9 45%, #FBF8F3 100%);
-  background-attachment: fixed;
+  background: url('/background.png') no-repeat center center fixed;
+  background-size: cover;
   font-family: var(--font-sans);
-  color: #1E293B;
+  color: #0F172A;
   min-height: 100vh;
   overflow-x: hidden; /* global horizontal overflow guard */
 }
