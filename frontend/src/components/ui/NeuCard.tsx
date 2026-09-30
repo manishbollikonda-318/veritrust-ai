@@ -12,33 +12,33 @@ interface NeuCardProps extends HTMLMotionProps<"div"> {
 
 const variantStyles: Record<NeuCardVariant, { raised: string; pressed: string; bg: string }> = {
   neutral: {
-    bg: 'bg-white/60 backdrop-blur-2xl border border-white/80',
-    raised: 'shadow-neu-raised',
+    bg: 'bg-white/70 backdrop-blur-3xl border border-white/90',
+    raised: 'shadow-neu-raised hover:shadow-[0_16px_36px_-6px_rgba(15,23,42,0.1),inset_0_2px_2px_rgba(255,255,255,0.95)]',
     pressed: 'shadow-neu-pressed',
   },
   maker: {
-    bg: 'bg-gradient-to-br from-[#EBF3FF]/60 via-[#DCEBFF]/42 to-[#E8F2FF]/58 backdrop-blur-2xl border border-blue-200/60',
-    raised: 'shadow-neu-maker',
+    bg: 'bg-gradient-to-br from-[#EBF4FF]/72 via-[#DCEBFF]/52 to-[#E8F2FF]/65 backdrop-blur-3xl border border-blue-200/80',
+    raised: 'shadow-neu-maker hover:shadow-[0_18px_40px_-6px_rgba(37,99,235,0.16),inset_0_2px_2px_rgba(255,255,255,0.98)]',
     pressed: 'shadow-neu-maker-pressed',
   },
   judge: {
-    bg: 'bg-gradient-to-br from-[#E6FAF2]/62 via-[#D0F5E6]/42 to-[#E0F8EE]/58 backdrop-blur-2xl border border-emerald-200/60',
-    raised: 'shadow-neu-judge',
+    bg: 'bg-gradient-to-br from-[#E8FAF3]/72 via-[#D2F6E8]/52 to-[#E2F9F0]/65 backdrop-blur-3xl border border-emerald-200/80',
+    raised: 'shadow-neu-judge hover:shadow-[0_18px_40px_-6px_rgba(16,185,129,0.16),inset_0_2px_2px_rgba(255,255,255,0.98)]',
     pressed: 'shadow-neu-judge-pressed',
   },
   metrics: {
-    bg: 'bg-gradient-to-br from-[#F5EEFF]/62 via-[#E6D8FF]/42 to-[#F0E4FF]/58 backdrop-blur-2xl border border-purple-200/60',
-    raised: 'shadow-neu-metrics',
+    bg: 'bg-gradient-to-br from-[#F6F0FF]/72 via-[#E8DCFF]/52 to-[#F2E6FF]/65 backdrop-blur-3xl border border-purple-200/80',
+    raised: 'shadow-neu-metrics hover:shadow-[0_18px_40px_-6px_rgba(139,92,246,0.16),inset_0_2px_2px_rgba(255,255,255,0.98)]',
     pressed: 'shadow-neu-metrics-pressed',
   },
   chrome: {
-    bg: 'bg-gradient-to-b from-white/60 via-[#E6ECF5]/45 to-[#D8E1ED]/55 backdrop-blur-2xl border-r border-white/65',
+    bg: 'bg-gradient-to-b from-white/70 via-[#E8F0FA]/50 to-[#DCE7F5]/60 backdrop-blur-3xl border-r border-white/80',
     raised: 'shadow-neu-raised',
     pressed: 'shadow-neu-pressed',
   },
   white: {
-    bg: 'bg-white/65 backdrop-blur-2xl border border-white/80',
-    raised: 'shadow-neu-raised',
+    bg: 'bg-white/75 backdrop-blur-3xl border border-white/90',
+    raised: 'shadow-neu-raised hover:shadow-[0_16px_36px_-6px_rgba(15,23,42,0.1),inset_0_2px_2px_rgba(255,255,255,0.95)]',
     pressed: 'shadow-neu-pressed',
   },
   // ── Liquid Glass variants ─────────────────────────────────────────

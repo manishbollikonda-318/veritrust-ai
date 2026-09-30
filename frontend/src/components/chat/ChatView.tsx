@@ -119,15 +119,16 @@ export default function ChatView() {
         className="flex flex-col p-4 sm:p-6 overflow-hidden relative min-h-[520px] xl:min-h-0 min-w-0 w-full"
       >
         {/* Control Bar */}
-        <div className="mb-4 pb-3 border-b border-indigo-200/50 flex flex-col xl:flex-row xl:items-center justify-between gap-3">
-          <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-3 min-w-0 flex-1">
+        <div className="mb-4 pb-3.5 border-b border-indigo-200/50 flex flex-wrap items-center justify-between gap-y-3.5 gap-x-4">
+          {/* Quick Tests / Staged Demos */}
+          <div className="flex flex-wrap items-center gap-2 sm:gap-2.5">
             <span
-              className="text-xs font-black text-ink uppercase tracking-wider flex items-center gap-1.5 shrink-0"
+              className="text-xs font-black text-ink uppercase tracking-wider flex items-center gap-1.5 shrink-0 mr-1"
             >
-              <Sparkles size={14} className="text-accent" aria-hidden="true" />
+              <Sparkles size={14} className="text-accent animate-pulse" aria-hidden="true" />
               {currentWorkspace === 'default' ? 'Staged Demos:' : 'Quick Tests:'}
             </span>
-            <div className="flex flex-wrap items-center gap-2 min-w-0">
+            <div className="flex flex-wrap items-center gap-2">
               {activeScenarios.map((sc) => (
                 <NeuButton
                   key={sc.id}
@@ -136,28 +137,27 @@ export default function ChatView() {
                   disabled={loading}
                   variant="neutral"
                   size="sm"
-                  className={`!justify-start text-left disabled:opacity-50 shrink-0 max-w-[280px] ${TONE_HOVER[sc.tone]}`}
+                  className={`!justify-start text-left disabled:opacity-50 transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md ${TONE_HOVER[sc.tone]}`}
                 >
                   <span
                     aria-hidden="true"
-                    className={`w-1.5 h-1.5 rounded-full shrink-0 ${TONE_DOT[sc.tone]}`}
+                    className={`w-2 h-2 rounded-full shrink-0 ${TONE_DOT[sc.tone]}`}
                   />
-                  <span className="truncate">{sc.label}</span>
+                  <span className="font-semibold text-xs whitespace-nowrap">{sc.label}</span>
                 </NeuButton>
               ))}
             </div>
           </div>
 
-          {/* Issue 12: one segmented control, one visual language, state exposed
-              through aria-pressed so the relationship is unambiguous. */}
-          <div className="flex items-center gap-2 shrink-0">
+          {/* Mode Controls */}
+          <div className="flex items-center gap-2.5 shrink-0 ml-auto sm:ml-0">
             <span id="guardrail-mode-label" className="text-xs font-black text-ink-subtle uppercase tracking-wider">
               Mode
             </span>
             <div
               role="group"
               aria-labelledby="guardrail-mode-label"
-              className="inline-flex items-center gap-1 p-1 rounded-2xl glass-pill"
+              className="inline-flex items-center gap-1.5 p-1 rounded-2xl glass-pill shadow-xs"
             >
               <NeuButton
                 type="button"
@@ -165,9 +165,10 @@ export default function ChatView() {
                 variant={attackMode ? 'accent' : 'ghost'}
                 size="sm"
                 aria-pressed={attackMode}
+                className="transition-all duration-200 hover:-translate-y-0.5"
               >
-                <Crosshair size={12} aria-hidden="true" />
-                {attackMode ? 'Attack Mode ON' : 'Attack Mode'}
+                <Crosshair size={13} aria-hidden="true" className={attackMode ? 'animate-spin' : ''} />
+                <span className="whitespace-nowrap">{attackMode ? 'Attack Mode ON' : 'Attack Mode'}</span>
               </NeuButton>
               <NeuButton
                 type="button"
@@ -175,9 +176,10 @@ export default function ChatView() {
                 variant={demoMode ? 'accent' : 'ghost'}
                 size="sm"
                 aria-pressed={demoMode}
+                className="transition-all duration-200 hover:-translate-y-0.5"
               >
-                <Shield size={12} aria-hidden="true" />
-                {demoMode ? 'Demo Guard' : 'Live Mode'}
+                <Shield size={13} aria-hidden="true" />
+                <span className="whitespace-nowrap">{demoMode ? 'Demo Guard' : 'Live Mode'}</span>
               </NeuButton>
             </div>
             <NeuButton
@@ -185,7 +187,7 @@ export default function ChatView() {
               onClick={clearChat}
               variant="subtle"
               size="sm"
-              className="!p-2"
+              className="!p-2.5 hover:-translate-y-0.5 hover:text-critical transition-all shadow-xs"
               title="Clear conversation"
               aria-label="Clear conversation"
             >

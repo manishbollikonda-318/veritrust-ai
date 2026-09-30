@@ -49,7 +49,9 @@ export default function NeuButton({
 }: NeuButtonProps) {
   return (
     <motion.button
-      whileTap={props.disabled ? undefined : { scale: 0.98 }}
+      whileHover={props.disabled ? undefined : { scale: 1.025, y: -1 }}
+      whileTap={props.disabled ? undefined : { scale: 0.97 }}
+      transition={{ type: 'spring', stiffness: 450, damping: 26 }}
       className={`font-bold transition-all duration-200 outline-none flex items-center justify-center cursor-pointer disabled:cursor-not-allowed ${
         SIZE_STYLES[size]
       } ${

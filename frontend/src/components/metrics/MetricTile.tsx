@@ -20,11 +20,13 @@ export default function MetricTile({ title, value, subtitle, trend, icon, catego
   return (
     <NeuCard
       variant="metrics"
-      className="p-5 flex flex-col justify-between min-h-[140px] w-full relative overflow-hidden transition-all duration-200 hover:-translate-y-0.5"
+      whileHover={{ y: -3, scale: 1.015 }}
+      transition={{ type: 'spring', stiffness: 350, damping: 25 }}
+      className="p-5 flex flex-col justify-between min-h-[140px] w-full relative overflow-hidden transition-all duration-200"
     >
       <div className="flex items-center justify-between gap-2 mb-2">
         <h3 className="text-xs font-black text-purple-900 uppercase tracking-wider truncate">{title}</h3>
-        {icon && <div className="text-purple-600 shrink-0">{icon}</div>}
+        {icon && <div className="p-1.5 rounded-xl glass-pill text-purple-700 shrink-0 shadow-2xs">{icon}</div>}
       </div>
       
       <div className="my-1">

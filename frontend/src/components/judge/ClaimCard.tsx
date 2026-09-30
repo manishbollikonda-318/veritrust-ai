@@ -21,7 +21,7 @@ export default function ClaimCard({ claim }: ClaimCardProps) {
   const isDeterministic = trace?.deterministic_applied;
 
   return (
-    <div className="bg-gradient-to-br from-[#EEF7F2] to-[#DFEEE6] shadow-neu-judge-pressed p-4 sm:p-5 rounded-2xl mb-4 transition-all duration-200 border border-emerald-200/50">
+    <div className="glass-card-emerald p-4 sm:p-5 rounded-2xl mb-4 transition-all duration-200 hover:-translate-y-0.5">
       {/* Header row */}
       <div className="flex justify-between items-start gap-3 mb-3">
         <div className="flex-1 min-w-0">
@@ -94,7 +94,7 @@ export default function ClaimCard({ claim }: ClaimCardProps) {
               </span>
             )}
           </div>
-          <div className="border-l-4 border-teal-500 pl-3 py-2 text-xs sm:text-sm text-ink font-medium italic bg-white/60 rounded-r-xl break-words leading-relaxed whitespace-normal border border-emerald-100/60 shadow-xs">
+          <div className="border-l-4 border-teal-500 pl-3 py-2 text-xs sm:text-sm text-ink font-medium italic bg-white/70 backdrop-blur-md rounded-r-xl break-words leading-relaxed whitespace-normal border border-white/80 shadow-xs">
             "{claim.sourceSentence}"
           </div>
         </div>
@@ -110,7 +110,7 @@ export default function ClaimCard({ claim }: ClaimCardProps) {
           )}
           Judge Verification Reasoning
         </p>
-        <p className="text-xs sm:text-sm text-ink font-semibold bg-gradient-to-br from-[#F4FAF6] to-[#E8F4EE] shadow-[3px_3px_7px_rgba(158,192,180,0.4),-3px_-3px_7px_rgba(255,255,255,0.9)] p-3.5 rounded-xl break-words leading-relaxed whitespace-normal border border-emerald-200/60">
+        <p className="text-xs sm:text-sm text-ink font-semibold bg-white/70 backdrop-blur-md p-3.5 rounded-xl break-words leading-relaxed whitespace-normal border border-emerald-200/70 shadow-xs">
           {claim.reasoning}
         </p>
       </div>

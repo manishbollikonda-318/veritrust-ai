@@ -100,7 +100,7 @@ export default function ComparisonView() {
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 lg:gap-6 min-w-0">
 
         {/* Left: Maker Only */}
-        <NeuCard className="min-w-0 p-4 sm:p-6 flex flex-col relative overflow-hidden bg-gradient-to-br from-rose-50/70 via-[#FDF2F4] to-[#FBE7EB] border border-rose-200/70 shadow-[6px_6px_14px_rgba(244,63,94,0.15),-6px_-6px_14px_rgba(255,255,255,0.9)] min-h-[280px]">
+        <NeuCard variant="glass-rose" className="min-w-0 p-4 sm:p-6 flex flex-col relative overflow-hidden min-h-[280px] hover:shadow-xl transition-all duration-300">
           <div className="flex flex-wrap items-start justify-between gap-3 mb-5 pb-3 border-b border-rose-200/70">
             <div className="flex items-center gap-2.5">
               <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-rose-500 to-rose-600 flex items-center justify-center text-white font-bold shadow-xs shrink-0">
@@ -125,7 +125,7 @@ export default function ComparisonView() {
             </div>
           ) : result ? (
             <div className="space-y-4 overflow-y-auto flex-1 pr-1">
-              <div className="p-4 bg-white/80 shadow-[inset_2px_2px_6px_rgba(244,63,94,0.12),inset_-2px_-2px_6px_rgba(255,255,255,0.9)] rounded-2xl border border-rose-200/60">
+              <div className="p-4 bg-white/75 backdrop-blur-md rounded-2xl border border-white/80 shadow-xs">
                 <p className="text-sm text-slate-900 font-medium leading-relaxed break-words">{result.makerOnly.content}</p>
               </div>
               <div className="p-4 rounded-xl bg-rose-100/80 border border-rose-300/80 text-xs text-rose-950 space-y-1.5 shadow-xs">
@@ -152,7 +152,7 @@ export default function ComparisonView() {
         </NeuCard>
 
         {/* Right: Maker + Judge */}
-        <NeuCard variant="maker" className="min-w-0 p-4 sm:p-6 flex flex-col relative overflow-hidden border-2 border-indigo-400/60 min-h-[280px]">
+        <NeuCard variant="maker" className="min-w-0 p-4 sm:p-6 flex flex-col relative overflow-hidden border-2 border-indigo-400/80 min-h-[280px] hover:shadow-2xl transition-all duration-300">
           <div className="flex flex-wrap items-start justify-between gap-3 mb-5 pb-3 border-b border-indigo-200/60">
             <div className="flex items-center gap-2.5">
               <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-indigo-600 to-blue-600 flex items-center justify-center text-white font-bold shadow-md shrink-0">
