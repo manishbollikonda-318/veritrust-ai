@@ -192,7 +192,7 @@ for claim in result['claims']:
           className="self-start sm:self-auto px-5 py-2.5 rounded-2xl bg-gradient-to-r from-indigo-600 via-blue-600 to-indigo-700 text-white font-black text-xs flex items-center gap-2 shadow-[0_4px_14px_rgba(79,70,229,0.35)] hover:from-indigo-700 hover:to-blue-700 transition-all cursor-pointer"
         >
           <ExternalLink size={15} />
-          <span>Launch Storefront Simulator 🛍️</span>
+          <span>Launch Customer Chatbot Simulator 💬</span>
         </button>
       </div>
 
@@ -421,122 +421,65 @@ for claim in result['claims']:
         </div>
       </div>
 
-      {/* ── Standalone Storefront Simulator Modal ─────────────────────────────── */}
+      {/* ── Standalone Customer Chatbot Simulator Modal ─────────────────────────────── */}
       {showSimulator && (
-        <div className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-3 sm:p-6 overflow-y-auto">
-          <div className="bg-slate-100 rounded-3xl shadow-2xl max-w-4xl w-full overflow-hidden border border-slate-300 relative flex flex-col max-h-[92vh]">
-            {/* Storefront Mock Header */}
-            <div className="bg-slate-900 text-white px-6 py-4 flex items-center justify-between">
+        <div className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-md flex items-center justify-center p-3 sm:p-6 overflow-y-auto">
+          <div className="bg-white/85 backdrop-blur-2xl rounded-3xl shadow-2xl max-w-3xl w-full overflow-hidden border border-white/80 relative flex flex-col h-[650px] max-h-[92vh]">
+            {/* Customer Assistant Header */}
+            <div className="bg-slate-900/90 backdrop-blur-md text-white px-6 py-4 flex items-center justify-between border-b border-white/10">
               <div className="flex items-center gap-3">
-                <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-indigo-600 to-blue-600 flex items-center justify-center text-white font-extrabold shadow-sm">
+                <div className="w-9 h-9 rounded-2xl bg-gradient-to-br from-indigo-600 to-blue-600 flex items-center justify-center text-white font-black shadow-sm text-sm">
                   {companyName.charAt(0).toUpperCase()}
                 </div>
                 <div>
-                  <h3 className="text-sm font-black tracking-tight">{companyName} Storefront (Simulated Demo)</h3>
-                  <p className="text-xs text-slate-400 font-mono">Simulated Origin: https://shop.demo.internal</p>
+                  <h3 className="text-sm font-black tracking-tight">{companyName} Customer Assistant (Simulated Demo)</h3>
+                  <p className="text-xs text-slate-300 font-medium flex items-center gap-2">
+                    <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
+                    <span>Live Client Simulator</span>
+                    <span>•</span>
+                    <span className="text-indigo-300 font-mono text-[11px]">Endpoint: /api/chat</span>
+                  </p>
                 </div>
               </div>
 
               <button
                 onClick={() => setShowSimulator(false)}
-                className="p-1.5 rounded-full hover:bg-slate-800 text-slate-400 hover:text-white transition-colors cursor-pointer"
+                className="p-2 rounded-full hover:bg-white/10 text-slate-400 hover:text-white transition-colors cursor-pointer"
+                aria-label="Close simulator"
               >
-                <X size={20} />
+                <X size={18} />
               </button>
             </div>
 
-            {/* Mock Storefront Body */}
-            <div className="flex-1 overflow-y-auto p-6 bg-slate-50 space-y-6">
-              {/* Promo Banner */}
-              <div className="p-4 rounded-2xl bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600 text-white flex items-center justify-between shadow-md">
-                <div>
-                  <span className="text-xs font-black uppercase tracking-wider bg-white/20 px-2.5 py-0.5 rounded-full">
-                    Protected by VeriTrust AI Guardrail
-                  </span>
-                  <h4 className="text-base font-black mt-1">{companyName} (Simulated Storefront)</h4>
-                  <p className="text-xs text-blue-100 mt-0.5 font-medium">
-                    Customer support chat widget in the bottom right corner is intercepted in real-time by your backend `/api/verify` gateway.
-                  </p>
-                </div>
-                <ShoppingBag size={32} className="opacity-80 hidden sm:block" />
-              </div>
-
-              {/* Mock Products Grid */}
-              <div>
-                <h4 className="text-xs font-black text-slate-700 uppercase tracking-wider mb-3">Featured Products</h4>
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                  {[
-                    { name: 'MacBook Pro 16" M3 Max', price: '$2,499.00', category: 'Electronics (14-day return)', tag: 'Electronics' },
-                    { name: 'Sony WH-1000XM5 Headphones', price: '$399.99', category: 'Electronics (1-yr warranty)', tag: 'Electronics' },
-                    { name: 'Merino Wool Pullover Sweater', price: '$89.00', category: 'Apparel (30-day return)', tag: 'Apparel' },
-                  ].map((p, i) => (
-                    <div key={i} className="p-4 rounded-2xl bg-white border border-slate-200 shadow-sm space-y-2">
-                      <div className="h-28 rounded-xl bg-slate-100 flex items-center justify-center text-slate-400 font-bold text-xs">
-                        {p.tag} Image
-                      </div>
-                      <h5 className="font-black text-xs text-slate-900 leading-snug">{p.name}</h5>
-                      <div className="flex items-center justify-between">
-                        <span className="text-xs font-black text-indigo-600">{p.price}</span>
-                        <span className="text-xs text-slate-500 font-semibold">{p.category}</span>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </div>
-
-              {/* Quick Attack Prompts inside Simulator */}
-              <div className="p-4 rounded-2xl bg-gradient-to-br from-amber-50 to-amber-100/70 border border-amber-300">
-                <span className="text-xs font-black uppercase text-amber-900 tracking-wider block mb-1.5">
-                  Try Asking the Storefront Widget:
-                </span>
-                <div className="flex flex-wrap gap-2">
-                  {[
-                    'Can I return a laptop after 60 days?',
-                    'How much is express shipping?',
-                    'Do you offer a price match guarantee with Amazon?'
-                  ].map((preset, idx) => (
-                    <button
-                      key={idx}
-                      onClick={() => handleSimSend(preset)}
-                      className="text-xs px-3 py-1 rounded-xl bg-white border border-amber-300 text-amber-900 font-bold hover:bg-amber-100 transition-colors text-left cursor-pointer"
-                    >
-                      "{preset}"
-                    </button>
-                  ))}
-                </div>
-              </div>
-            </div>
-
-            {/* Embedded Live Widget in Bottom Right */}
-            <div className="bg-white border-t border-slate-200 p-4 sm:p-6 flex flex-col h-80">
-              <div className="flex items-center justify-between pb-2 border-b border-slate-100 mb-2">
+            {/* Chatbot Body */}
+            <div className="flex-1 overflow-y-auto p-4 sm:p-6 space-y-4">
+              {/* Security Shield Banner */}
+              <div className="p-3.5 rounded-2xl glass-card-emerald flex items-center justify-between gap-3 text-xs">
                 <div className="flex items-center gap-2">
-                  <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse" />
-                  <span className="text-xs font-black text-slate-900">{companyName} Live Assistant</span>
-                  <span className="text-xs font-bold px-2.5 py-0.5 rounded-full bg-indigo-100 text-indigo-800">
-                    VeriTrust Guardrail Active
+                  <ShieldCheck size={18} className="text-emerald-700 shrink-0" />
+                  <span className="text-emerald-950 font-bold">
+                    VeriTrust Guardrail Active: Responses are verified strictly against {companyName}'s knowledge base.
                   </span>
                 </div>
-                <span className="text-xs text-slate-400 font-mono font-bold">Endpoint: /api/chat</span>
               </div>
 
               {/* Messages container */}
-              <div className="flex-1 overflow-y-auto space-y-2.5 pr-2 mb-3 text-xs">
+              <div className="space-y-3 pt-2">
                 {simMessages.map((m, i) => (
                   <div key={i} className={`flex flex-col ${m.role === 'user' ? 'items-end' : 'items-start'}`}>
                     <div
-                      className={`p-3 rounded-2xl max-w-[85%] leading-relaxed font-medium ${
+                      className={`p-3.5 rounded-2xl max-w-[85%] leading-relaxed font-medium text-xs ${
                         m.role === 'user'
-                          ? 'bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-br-none shadow-sm'
-                          : 'bg-slate-100 text-slate-900 border border-slate-200 rounded-bl-none font-medium'
+                          ? 'bg-gradient-to-r from-blue-600 via-indigo-600 to-indigo-700 text-white rounded-br-xs shadow-md'
+                          : 'glass-card text-slate-900 rounded-bl-xs font-semibold'
                       }`}
                     >
                       {m.text}
                     </div>
                     {m.status && m.role === 'assistant' && (
-                      <span className={`text-[9px] font-black mt-1 px-2 py-0.5 rounded-full border shadow-xs ${
-                        m.status === 'Approved' ? 'text-emerald-900 bg-emerald-100 border-emerald-300/60' :
-                        m.status === 'Corrected' ? 'text-amber-900 bg-amber-100 border-amber-300/60' : 'text-rose-900 bg-rose-100 border-rose-300/60'
+                      <span className={`text-[10px] font-black mt-1 px-2.5 py-0.5 rounded-full border shadow-2xs ${
+                        m.status === 'Approved' ? 'text-emerald-900 bg-emerald-100/90 border-emerald-300/60' :
+                        m.status === 'Corrected' ? 'text-amber-900 bg-amber-100/90 border-amber-300/60' : 'text-rose-900 bg-rose-100/90 border-rose-300/60'
                       }`}>
                         🛡️ Guardrail: {m.status}
                       </span>
@@ -544,11 +487,33 @@ for claim in result['claims']:
                   </div>
                 ))}
                 {simLoading && (
-                  <div className="text-xs text-slate-500 italic flex items-center gap-2 font-medium">
-                    <span className="w-2 h-2 rounded-full bg-indigo-600 animate-bounce" />
-                    Maker drafting &amp; Judge verifying...
+                  <div className="text-xs text-indigo-700 font-bold italic flex items-center gap-2 p-2">
+                    <span className="w-2 h-2 rounded-full bg-indigo-600 animate-ping" />
+                    Maker drafting &amp; Judge verifying claims against {companyName}...
                   </div>
                 )}
+              </div>
+            </div>
+
+            {/* Quick Test Chips & Chat Input Bar */}
+            <div className="bg-white/70 backdrop-blur-xl border-t border-white/80 p-4 space-y-3">
+              {/* Quick Prompt Suggestions */}
+              <div className="flex items-center gap-1.5 overflow-x-auto pb-1 text-xs">
+                <span className="text-[11px] font-black text-slate-500 uppercase shrink-0">Try Asking:</span>
+                {[
+                  `What are ${companyName}'s main policies?`,
+                  `How do I request a refund or return?`,
+                  `Are there any restrictions or conditions?`
+                ].map((preset, idx) => (
+                  <button
+                    key={idx}
+                    type="button"
+                    onClick={() => handleSimSend(preset)}
+                    className="text-xs px-3 py-1 rounded-xl bg-white/80 hover:bg-white text-indigo-900 border border-indigo-200/60 font-bold transition-all shrink-0 cursor-pointer shadow-2xs"
+                  >
+                    "{preset}"
+                  </button>
+                ))}
               </div>
 
               {/* Chat Input */}
@@ -564,14 +529,14 @@ for claim in result['claims']:
                   value={simInput}
                   onChange={(e) => setSimInput(e.target.value)}
                   placeholder={`Ask the ${companyName} assistant anything...`}
-                  className="flex-1 text-xs px-4 py-2.5 rounded-xl bg-slate-100 border border-slate-300 focus:outline-none focus:border-indigo-500 font-medium text-slate-800"
+                  className="flex-1 text-xs px-4 py-3 rounded-2xl bg-white/80 border border-slate-300/80 focus:outline-none focus:border-indigo-500 font-medium text-slate-900 shadow-inner"
                 />
                 <button
                   type="submit"
                   disabled={!simInput.trim() || simLoading}
-                  className="px-4 py-2.5 rounded-xl bg-gradient-to-r from-indigo-600 to-blue-600 text-white text-xs font-black hover:from-indigo-700 hover:to-blue-700 disabled:opacity-40 flex items-center gap-1.5 cursor-pointer shadow-sm"
+                  className="px-5 py-3 rounded-2xl bg-gradient-to-r from-indigo-600 via-blue-600 to-indigo-700 text-white text-xs font-black hover:from-indigo-700 hover:to-blue-700 disabled:opacity-40 flex items-center gap-1.5 cursor-pointer shadow-md transition-all shrink-0"
                 >
-                  <Send size={13} />
+                  <Send size={14} />
                   <span>Send</span>
                 </button>
               </form>
