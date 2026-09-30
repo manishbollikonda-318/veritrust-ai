@@ -1,4 +1,4 @@
-import { Message, MetricData, Document, ComparisonResponse, ReviewItem, ReviewStats, Workspace, WorkspaceCreateInput, ClaimStatus } from '../types';
+import { Message, MetricData, Document, ComparisonResponse, ReviewItem, ReviewStats, Workspace, WorkspaceCreateInput, ClaimStatus, StressTestResponse } from '../types';
 import { notifyToast } from './notifications';
 
 export function getApiBase(): string {
@@ -181,11 +181,13 @@ export const api = {
       timestamp: new Date().toISOString()
     };
 
+    const currentStrictness = (typeof localStorage !== 'undefined' && localStorage.getItem('veritrust_strictness_mode')) || 'balanced';
     const chatPayload = {
       message: content,
       demo_mode: demoMode,
       session_id: workspaceId || 'default',
-      workspace_id: workspaceId || 'default'
+      workspace_id: workspaceId || 'default',
+      strictness_mode: currentStrictness
     };
 
     const t0 = performance.now();
@@ -254,6 +256,7 @@ export const api = {
       estimatedCostUsd: data.verification?.estimated_cost_usd || 0.00015,
       deterministicChecksRun: data.verification?.deterministic_checks_run || claimEvaluations.length,
       generationMethod: data.generation_method || 'llm_live:gemini',
+      strictnessMode: (data.strictness_mode || currentStrictness) as any,
       claims: claims
     };
     return { userMessage, botMessage };
@@ -656,5 +659,22 @@ export const api = {
       method: 'DELETE',
       headers: { 'X-Workspace-Token': token }
     });
+  },
+
+  async runStressTest(workspaceIds?: string[]): Promise<StressTestResponse> {
+    return await fetchJson<StressTestResponse>(`${API_BASE}/stress-test/run`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ workspace_ids: workspaceIds || ['default', 'novamart', 'apex-financial'] })
+    });
+  },
+
+  getAuditExportUrl(workspaceId: string = 'default'): string {
+    return `${API_BASE}/audit/export?workspace_id=${encodeURIComponent(workspaceId)}`;
+  },
+
+  async exportAuditReport(workspaceId: string = 'default'): Promise<any> {
+    return await fetchJson(`${API_BASE}/audit/export?workspace_id=${encodeURIComponent(workspaceId)}`);
   }
 };
+

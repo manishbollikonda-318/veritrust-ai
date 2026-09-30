@@ -1,7 +1,7 @@
 import { NavLink, Link } from 'react-router-dom';
 import {
   MessageSquare, BarChart2, BookOpen, GitCompare, Shield,
-  Lock, FileText, Code2, X, UserCheck, Wifi, WifiOff, Zap, Server
+  Lock, FileText, Code2, X, UserCheck, Wifi, WifiOff, Zap, Server, Crosshair
 } from 'lucide-react';
 import { useSidebar } from '../../context/SidebarContext';
 import { useLLMHealth } from '../../hooks/useLLMHealth';
@@ -10,6 +10,7 @@ import { useAudit } from '../../context/AuditContext';
 const navItems = [
   { path: '/chat', label: 'Live Guardrail', icon: MessageSquare },
   { path: '/comparison', label: 'Maker vs Judge', icon: GitCompare },
+  { path: '/stress-test', label: 'Red-Team Audit', icon: Crosshair },
   { path: '/review', label: 'Human Review', icon: UserCheck, hasDynamicBadge: true },
   { path: '/metrics', label: 'Telemetry & Drift', icon: BarChart2 },
   { path: '/knowledge', label: 'Ground Truth KB', icon: BookOpen },

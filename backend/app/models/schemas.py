@@ -55,6 +55,7 @@ class ChatRequest(BaseModel):
     history: List[Message] = Field(default=[], max_length=50)
     demo_mode: Optional[bool] = None
     maker_only: bool = False
+    strictness_mode: Literal["strict", "balanced", "advisory"] = "balanced"
 
     @field_validator("message", mode="before")
     @classmethod
@@ -99,6 +100,7 @@ class ChatResponse(BaseModel):
     corrected_text: Optional[str] = None
     overall_reasoning: Optional[str] = None
     claim_evaluations: Optional[List[ClaimEvaluation]] = None
+    strictness_mode: str = "balanced"
 
     # Legacy & UI compatibility fields
     originalQuery: Optional[str] = None
@@ -234,4 +236,29 @@ class WorkspaceSettingsUpdateRequest(BaseModel):
     description: Optional[str] = Field(default=None, max_length=500)
     llm_provider: Optional[Literal["gemini", "openai", "anthropic", "ollama", "shared_default"]] = None
     api_key: Optional[str] = Field(default=None, max_length=300)
+
+
+class StressTestRequest(BaseModel):
+    workspace_ids: Optional[List[str]] = Field(default=["default", "novamart", "apex-financial"])
+
+class StressTestProbeResult(BaseModel):
+    probe_id: int
+    workspace_id: str
+    industry: str
+    probe_query: str
+    hallucinated_draft: str
+    intercepted: bool
+    claims_flagged: int
+    latency_ms: float
+    judge_reasoning: str
+
+class StressTestResponse(BaseModel):
+    total_probes: int
+    intercepted: int
+    missed: int
+    interception_rate: float
+    avg_latency_ms: float
+    compliance_grade: str
+    results: List[StressTestProbeResult]
+    timestamp: str
 

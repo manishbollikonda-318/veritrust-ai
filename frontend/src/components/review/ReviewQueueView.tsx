@@ -6,7 +6,7 @@ import NeuCard from '../ui/NeuCard';
 import NeuButton from '../ui/NeuButton';
 import {
   UserCheck, ShieldAlert, CheckCircle2, Sparkles,
-  Clock, RefreshCw, Layers, Check, Edit3, XCircle
+  Clock, RefreshCw, Layers, Check, Edit3, XCircle, Download
 } from 'lucide-react';
 
 import { useAudit } from '../../context/AuditContext';
@@ -101,6 +101,22 @@ export default function ReviewQueueView() {
     return true;
   });
 
+  const handleExportAudit = async () => {
+    try {
+      const response = await fetch(`${api.getAuditExportUrl(currentWorkspace || 'default')}`);
+      const data = await response.json();
+      const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `veritrust_audit_${currentWorkspace || 'default'}_${new Date().toISOString().slice(0, 10)}.json`;
+      a.click();
+      URL.revokeObjectURL(url);
+    } catch (err) {
+      console.error('Export failed:', err);
+    }
+  };
+
   return (
     <div className="space-y-6 sm:space-y-8 pb-12">
       {/* Header Banner */}
@@ -118,10 +134,21 @@ export default function ReviewQueueView() {
             Audit blocked or auto-corrected customer interactions, provide supervisor overrides, and promote verified resolutions to the vector store.
           </p>
         </div>
-        <NeuButton onClick={fetchData} className="self-start sm:self-auto flex items-center gap-2 text-xs font-bold px-3 py-2">
-          <RefreshCw size={13} className={loading ? 'animate-spin text-indigo-600' : ''} />
-          <span>Refresh Queue</span>
-        </NeuButton>
+        <div className="flex items-center gap-2 self-start sm:self-auto">
+          <button
+            type="button"
+            onClick={handleExportAudit}
+            className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-white/70 hover:bg-white text-indigo-700 font-bold border border-indigo-200/80 shadow-xs hover:shadow-md transition-all cursor-pointer text-xs"
+            title="Export compliance audit certificate JSON"
+          >
+            <Download size={13} className="text-indigo-600" />
+            <span>Export Audit Log</span>
+          </button>
+          <NeuButton onClick={fetchData} className="flex items-center gap-2 text-xs font-bold px-3 py-2">
+            <RefreshCw size={13} className={loading ? 'animate-spin text-indigo-600' : ''} />
+            <span>Refresh Queue</span>
+          </NeuButton>
+        </div>
       </div>
 
       {/* Top Stat Cards */}

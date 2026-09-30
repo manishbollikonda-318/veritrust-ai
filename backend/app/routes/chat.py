@@ -218,7 +218,7 @@ def call_gemini_direct(
     return None
 
 
-def run_gemini_dual_agent(query: str, workspace_id: str = "default", custom_key: Optional[str] = None) -> dict:
+def run_gemini_dual_agent(query: str, workspace_id: str = "default", custom_key: Optional[str] = None, strictness_mode: str = "balanced") -> dict:
     """
     Real Dual-Agent Hallucination Guardrail Pipeline:
     - Agent 1 (Maker Agent): 50% Generative Drafting — drafts a response strictly grounded in the workspace's dynamic policies.
@@ -283,10 +283,16 @@ Customer Support Response:"""
             maker_draft = f"Under {company_name} verified policies, our guidelines govern all operational and customer inquiries. Please contact our support team for specific assistance."
 
     # 3. Agent 2: Ruthless Compliance Auditor Judge Agent with Structured Output (50% Generative Auditing)
+    strictness_instruction = ""
+    if strictness_mode == "strict":
+        strictness_instruction = "ZERO TOLERANCE MODE: Block ANY response that contains even a single claim not 100% corroborated by verified policies. Do not rewrite — set is_approved to false immediately.\\n\\n"
+    elif strictness_mode == "advisory":
+        strictness_instruction = "ADVISORY MODE: Identify all factual discrepancies and unsupported claims, but set is_approved to true regardless. Include detailed claim_evaluations for logging and telemetry only. The response should be delivered to the customer with flagged annotations.\\n\\n"
+
     judge_prompt = f"""You are a ruthless compliance auditor and factual accuracy Judge Guardrail for {company_name}.
 You must inspect the Draft Response against the verified Company Policies with absolute zero tolerance for discrepancies.
 
-CRITICAL AUDIT DIRECTIVE:
+{strictness_instruction}CRITICAL AUDIT DIRECTIVE:
 Extract every numeric value, price, timeframe, and policy constraint from the Draft. Compare it strictly against the Verified Company Policies. If a statement contradicts or is unsupported by the Policies (e.g., $4.99 vs $9.99, or 60 days vs 30 days), you MUST set 'is_approved' to false, flag the specific claim in 'claim_evaluations', and provide the accurate 'corrected_text'.
 
 Verified Company Policies:
@@ -443,7 +449,8 @@ async def chat(request: ChatRequest, verified_id: str = Depends(verify_workspace
         pipeline_res = run_gemini_dual_agent(
             query=request.message,
             workspace_id=workspace_id,
-            custom_key=raw_key
+            custom_key=raw_key,
+            strictness_mode=request.strictness_mode
         )
 
         is_approved = pipeline_res["is_approved"]
@@ -498,6 +505,7 @@ async def chat(request: ChatRequest, verified_id: str = Depends(verify_workspace
             corrected_text=pipeline_res["corrected_text"],
             overall_reasoning=pipeline_res["overall_reasoning"],
             claim_evaluations=pipeline_res["claim_evaluations"],
+            strictness_mode=request.strictness_mode,
             # Explicit Dual-Agent & UI compatibility fields
             originalQuery=pipeline_res["originalQuery"],
             makerDraft=pipeline_res["makerDraft"],

@@ -3,7 +3,8 @@ import MetricTile from './MetricTile';
 import DriftChart from './DriftChart';
 import ClaimBreakdownChart from './ClaimBreakdownChart';
 import NeuCard from '../ui/NeuCard';
-import { ShieldCheck, Layers, Zap, Timer, CheckCircle2, AlertTriangle, Ban, Info, FlaskConical } from 'lucide-react';
+import { ShieldCheck, Layers, Zap, Timer, CheckCircle2, AlertTriangle, Ban, Info, FlaskConical, Download } from 'lucide-react';
+import { API_BASE } from '../../services/api';
 
 export default function MetricsDashboard() {
   const { metrics, loading, currentWorkspace } = useMetrics();
@@ -38,6 +39,22 @@ export default function MetricsDashboard() {
     driftData: Array.isArray(metrics?.driftData) ? metrics.driftData : []
   };
 
+  const handleExportAudit = async () => {
+    try {
+      const response = await fetch(`${API_BASE}/audit/export?workspace_id=${encodeURIComponent(currentWorkspace || 'default')}`);
+      const data = await response.json();
+      const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `veritrust_audit_${currentWorkspace || 'default'}_${new Date().toISOString().slice(0, 10)}.json`;
+      a.click();
+      URL.revokeObjectURL(url);
+    } catch (err) {
+      console.error('Export failed:', err);
+    }
+  };
+
   return (
     <div className="space-y-5 sm:space-y-6 w-full overflow-x-hidden pb-6">
       {/* Page Title */}
@@ -49,6 +66,15 @@ export default function MetricsDashboard() {
           </p>
         </div>
         <div className="flex flex-wrap items-center gap-2 text-xs font-black">
+          <button
+            type="button"
+            onClick={handleExportAudit}
+            className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-white/80 hover:bg-white text-indigo-700 font-black border border-indigo-200/90 shadow-xs hover:shadow-md transition-all cursor-pointer"
+            title="Download Enterprise Compliance Audit Certificate JSON"
+          >
+            <Download size={13} className="text-indigo-600" />
+            <span>Export Audit Certificate</span>
+          </button>
           <div className="self-start sm:self-auto flex items-center gap-2 text-purple-900 bg-purple-50/90 px-3.5 py-1.5 rounded-xl border border-purple-200/80 shadow-xs">
             <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse shadow-sm" />
             Active Telemetry Stream

@@ -6,6 +6,7 @@ import KnowledgeBaseView from './components/knowledge/KnowledgeBaseView';
 import ComparisonView from './components/comparison/ComparisonView';
 import IntegrationView from './components/integration/IntegrationView';
 import ReviewQueueView from './components/review/ReviewQueueView';
+import StressTestView from './components/stress/StressTestView';
 import PrivacyPolicy from './components/pages/PrivacyPolicy';
 import TermsConditions from './components/pages/TermsConditions';
 import NotFound from './components/pages/NotFound';
@@ -29,6 +30,7 @@ export default function App() {
                   <Route path="/" element={<Navigate to="/chat" replace />} />
                   <Route path="/chat" element={<ErrorBoundary fallbackTitle="Chat Error"><ChatView /></ErrorBoundary>} />
                   <Route path="/comparison" element={<ErrorBoundary fallbackTitle="Comparison Error"><ComparisonView /></ErrorBoundary>} />
+                  <Route path="/stress-test" element={<ErrorBoundary fallbackTitle="Stress Test Error"><StressTestView /></ErrorBoundary>} />
                   <Route path="/review" element={<ErrorBoundary fallbackTitle="Review Queue Error"><ReviewQueueView /></ErrorBoundary>} />
                   <Route path="/metrics" element={<ErrorBoundary fallbackTitle="Metrics Error"><MetricsDashboard /></ErrorBoundary>} />
                   <Route path="/knowledge" element={<ErrorBoundary fallbackTitle="Knowledge Base Error"><KnowledgeBaseView /></ErrorBoundary>} />

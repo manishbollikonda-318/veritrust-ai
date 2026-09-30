@@ -4,6 +4,7 @@ import { useWorkspace } from '../../context/WorkspaceContext';
 import { useSidebar } from '../../context/SidebarContext';
 import { openDataSourceDisclosure } from '../ui/DataSourceDisclosureModal';
 import NeuButton from '../ui/NeuButton';
+import StrictnessSelector from '../ui/StrictnessSelector';
 import { useConnectionStatus } from '../../hooks/useConnectionStatus';
 import { useLLMHealth } from '../../hooks/useLLMHealth';
 
@@ -22,6 +23,22 @@ export default function Header() {
   const [deleteError, setDeleteError] = useState('');
   const [isDeleting, setIsDeleting] = useState(false);
   const [workspaceToDelete, setWorkspaceToDelete] = useState<string | null>(null);
+
+  const [strictnessMode, setStrictnessMode] = useState<'strict' | 'balanced' | 'advisory'>(() => {
+    if (typeof localStorage !== 'undefined') {
+      const saved = localStorage.getItem('veritrust_strictness_mode');
+      if (saved === 'strict' || saved === 'balanced' || saved === 'advisory') return saved;
+    }
+    return 'balanced';
+  });
+
+  const handleStrictnessChange = (mode: 'strict' | 'balanced' | 'advisory') => {
+    setStrictnessMode(mode);
+    if (typeof localStorage !== 'undefined') {
+      localStorage.setItem('veritrust_strictness_mode', mode);
+      window.dispatchEvent(new Event('strictness_mode_changed'));
+    }
+  };
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -145,6 +162,13 @@ export default function Header() {
             <span className="hidden lg:inline">Demo Info</span>
           </NeuButton>
 
+          {/* Guardrail Strictness Selector — md+ */}
+          <StrictnessSelector
+            value={strictnessMode}
+            onChange={handleStrictnessChange}
+            className="hidden md:flex"
+          />
+
           {/* Workspace switcher */}
           <div className="relative" ref={dropdownRef}>
             <button
@@ -247,6 +271,13 @@ export default function Header() {
           <Sparkles size={10} />
           Demo Info
         </button>
+
+        {/* Mobile Strictness Selector */}
+        <StrictnessSelector
+          value={strictnessMode}
+          onChange={handleStrictnessChange}
+          className="shrink-0"
+        />
       </div>
 
       {/* Delete Workspace Modal */}

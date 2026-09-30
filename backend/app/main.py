@@ -17,7 +17,7 @@ from fastapi.staticfiles import StaticFiles
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.security.api_key import APIKeyHeader
 from app.config import settings
-from app.routes import chat, metrics, knowledge, review, workspaces
+from app.routes import chat, metrics, knowledge, review, workspaces, audit_export, stress_test
 import app.knowledge.loader as loader
 
 # Setup logging
@@ -138,6 +138,8 @@ app.include_router(chat.router, prefix="/api", tags=["Chat"])
 app.include_router(metrics.router, prefix="/api", tags=["Metrics"])
 app.include_router(knowledge.router, prefix="/api", tags=["Knowledge Base"])
 app.include_router(review.router, prefix="/api", tags=["Human Review"])
+app.include_router(audit_export.router, prefix="/api", tags=["Audit Export"])
+app.include_router(stress_test.router, prefix="/api", tags=["Stress Test"])
 
 # Mount at root level to gracefully tolerate clients calling without /api prefix
 app.include_router(workspaces.router, tags=["Workspaces (Root)"])
@@ -145,6 +147,8 @@ app.include_router(chat.router, tags=["Chat (Root)"])
 app.include_router(metrics.router, tags=["Metrics (Root)"])
 app.include_router(knowledge.router, tags=["Knowledge Base (Root)"])
 app.include_router(review.router, tags=["Human Review (Root)"])
+app.include_router(audit_export.router, tags=["Audit Export (Root)"])
+app.include_router(stress_test.router, tags=["Stress Test (Root)"])
 
 
 # Admin security verification helper

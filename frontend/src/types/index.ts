@@ -73,6 +73,7 @@ export interface Message {
   estimatedCostUsd?: number;
   deterministicChecksRun?: number;
   generationMethod?: string;
+  strictnessMode?: 'strict' | 'balanced' | 'advisory';
 }
 
 export interface DriftDataPoint {
@@ -166,6 +167,29 @@ export interface WorkspaceCreateInput {
   initial_policy_content?: string;
   llm_provider?: 'shared_default' | 'gemini' | 'openai' | 'anthropic' | 'ollama';
   api_key?: string;
+}
+
+export interface StressTestProbeResult {
+  probe_id: number;
+  workspace_id: string;
+  industry: string;
+  probe_query: string;
+  hallucinated_draft: string;
+  intercepted: boolean;
+  claims_flagged: number;
+  latency_ms: number;
+  judge_reasoning: string;
+}
+
+export interface StressTestResponse {
+  total_probes: number;
+  intercepted: number;
+  missed: number;
+  interception_rate: number;
+  avg_latency_ms: number;
+  compliance_grade: string;
+  results: StressTestProbeResult[];
+  timestamp: string;
 }
 
 

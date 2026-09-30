@@ -9,7 +9,22 @@ import { api } from '../../services/api';
 import { ComparisonResponse } from '../../types';
 import { useWorkspace } from '../../context/WorkspaceContext';
 
-const COMPARISON_PRESETS = [
+const HEALTHCARE_PRESETS = [
+  {
+    label: '💊 Prescription Refill SLA (2 vs 5 days)',
+    query: 'How quickly are prescription refill requests processed for maintenance medications?'
+  },
+  {
+    label: '📞 Telehealth Cancellation Fee ($25 vs $50)',
+    query: 'What happens if I cancel my telehealth appointment with less than 2 hours notice?'
+  },
+  {
+    label: '🏥 Triage SLA (24/7 vs Business Hours)',
+    query: 'Is the emergency triage nurse line available on weekends and holidays?'
+  }
+];
+
+const RETAIL_PRESETS = [
   {
     label: '🎯 Return Window (60 vs 30 Days)',
     query: 'How long do I have to return an item if I bought a laptop?'
@@ -24,6 +39,36 @@ const COMPARISON_PRESETS = [
   }
 ];
 
+const FINTECH_PRESETS = [
+  {
+    label: '💳 ACH Limit Fabrication ($25K vs $10K)',
+    query: 'What is the maximum daily ACH transfer limit for standard accounts?'
+  },
+  {
+    label: '⏰ Wire Cutoff Time (6PM vs 4PM EST)',
+    query: 'What is the daily cut-off time for domestic wire transfers?'
+  },
+  {
+    label: '🔒 Fraud Dispute Window (365 vs 60 days)',
+    query: 'How long do I have to dispute an unauthorized debit card charge?'
+  }
+];
+
+const CUSTOM_PRESETS = [
+  {
+    label: '📋 Policy Compliance Check',
+    query: 'What are the main terms and conditions in our company policy?'
+  },
+  {
+    label: '⚠️ Hallucination Stress Test',
+    query: 'Can you confirm we offer unlimited free returns with no questions asked?'
+  },
+  {
+    label: '🔍 Edge Case Query',
+    query: 'What specific exceptions or limitations apply to our standard policies?'
+  }
+];
+
 export default function ComparisonView() {
   const { currentWorkspace } = useWorkspace();
   const [query, setQuery] = useState('');
@@ -31,6 +76,24 @@ export default function ComparisonView() {
   const [result, setResult] = useState<ComparisonResponse | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [highlightDiff, setHighlightDiff] = useState(true);
+
+  const getActivePresets = () => {
+    switch (currentWorkspace) {
+      case 'default': return HEALTHCARE_PRESETS;
+      case 'novamart': return RETAIL_PRESETS;
+      case 'apex-financial': return FINTECH_PRESETS;
+      default: return CUSTOM_PRESETS;
+    }
+  };
+
+  const getIndustryLabel = () => {
+    switch (currentWorkspace) {
+      case 'default': return '🏥 Healthcare Presets';
+      case 'novamart': return '🛒 Retail Presets';
+      case 'apex-financial': return '💳 Fintech Presets';
+      default: return '⚙️ Custom Presets';
+    }
+  };
 
   const handleRunComparison = async (textToRun: string) => {
     const q = textToRun || query;
@@ -57,10 +120,10 @@ export default function ComparisonView() {
         <div className="flex flex-wrap items-center gap-2">
           <span className="text-xs font-black text-slate-800 uppercase tracking-wider flex items-center gap-1.5 shrink-0">
             <Sparkles size={14} className="text-indigo-600" />
-            Comparison Presets:
+            {getIndustryLabel()}:
           </span>
           <div className="flex flex-wrap gap-2">
-            {COMPARISON_PRESETS.map((p, idx) => (
+            {getActivePresets().map((p, idx) => (
               <button
                 key={idx}
                 onClick={() => handleRunComparison(p.query)}
