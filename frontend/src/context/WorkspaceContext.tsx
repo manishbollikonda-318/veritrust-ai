@@ -34,7 +34,8 @@ const DEFAULT_WORKSPACE_FALLBACK: Workspace = {
 
 export const WorkspaceProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [currentWorkspace, setCurrentWorkspace] = useState<string>(() => {
-    return localStorage.getItem('veritrust_workspace') || 'default';
+    const saved = localStorage.getItem('veritrust_workspace') || 'default';
+    return saved === 'acme-health' ? 'default' : saved;
   });
   const [workspaces, setWorkspaces] = useState<Workspace[]>([DEFAULT_WORKSPACE_FALLBACK]);
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
@@ -56,8 +57,9 @@ export const WorkspaceProvider: React.FC<{ children: React.ReactNode }> = ({ chi
   }, []);
 
   const handleSetWorkspace = (id: string) => {
-    setCurrentWorkspace(id);
-    localStorage.setItem('veritrust_workspace', id);
+    const targetId = id === 'acme-health' ? 'default' : id;
+    setCurrentWorkspace(targetId);
+    localStorage.setItem('veritrust_workspace', targetId);
     // Increment version to trigger reset in dependent components
     setWorkspaceVersion(v => v + 1);
   };
@@ -114,7 +116,7 @@ export const WorkspaceProvider: React.FC<{ children: React.ReactNode }> = ({ chi
     setWorkspaceVersion(v => v + 1);
   };
 
-  const isDemoWorkspace = currentWorkspace === 'default' || currentWorkspace === 'acme-health';
+  const isDemoWorkspace = currentWorkspace === 'default';
   const activeWorkspace = workspaces.find(w => w.id === currentWorkspace) || workspaces[0];
 
   return (

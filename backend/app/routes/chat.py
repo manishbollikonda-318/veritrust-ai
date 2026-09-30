@@ -673,6 +673,22 @@ async def get_history(session_id: str):
     return conversations.get(session_id, [])
 
 
+@router.post("/chat/clear/{session_id}")
+@router.delete("/chat/history/{session_id}")
+async def clear_session_chat(session_id: str):
+    """Clear conversation history for a specific workspace session."""
+    if session_id in conversations:
+        conversations[session_id] = []
+    # Also check hyphen / underscore variants
+    alt1 = session_id.replace('-', '_')
+    alt2 = session_id.replace('_', '-')
+    if alt1 in conversations:
+        conversations[alt1] = []
+    if alt2 in conversations:
+        conversations[alt2] = []
+    return {"message": f"Cleared chat history for {session_id}"}
+
+
 @router.post("/chat/reset")
 async def reset_chat():
     """Reset all conversations and metrics."""

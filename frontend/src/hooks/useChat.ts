@@ -15,26 +15,11 @@ export function useChat() {
   const [selectedClaim, setSelectedClaim] = useState<Claim | null>(null);
   const [demoMode, setDemoMode] = useState<boolean>(true);
 
-  // Reset all chat state when workspace changes (via version increment)
+  // Reset and clear chat state whenever workspace changes so user starts fresh each time in all companies
   useEffect(() => {
     setMessages([]);
     setSelectedMessage(null);
     setSelectedClaim(null);
-
-    api.getMessages(currentWorkspace).then((msgs) => {
-      setMessages(msgs);
-      const firstWithClaims = msgs.find(m => m.claims && m.claims.length > 0);
-      if (firstWithClaims) {
-        setSelectedMessage(firstWithClaims);
-        if (firstWithClaims.claims && firstWithClaims.claims.length > 0) {
-          const flagged = firstWithClaims.claims.find(c => c.verdict !== 'Verified') || firstWithClaims.claims[0];
-          setSelectedClaim(flagged);
-        }
-      } else {
-        setSelectedMessage(null);
-        setSelectedClaim(null);
-      }
-    });
   }, [currentWorkspace, workspaceVersion]);
 
   const sendMessage = async (content: string) => {
@@ -87,10 +72,16 @@ export function useChat() {
     if (msg) setSelectedMessage(msg);
   };
 
-  const clearChat = () => {
+  const clearChat = async () => {
     setMessages([]);
     setSelectedMessage(null);
     setSelectedClaim(null);
+    try {
+      await api.clearChat(currentWorkspace);
+    } catch (e) {
+      console.warn('Error clearing backend session:', e);
+    }
+    showToast('info', 'Chat Cleared', 'Conversation session reset. Ready for a new query.');
   };
 
   return {

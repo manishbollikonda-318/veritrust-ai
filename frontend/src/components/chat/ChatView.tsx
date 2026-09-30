@@ -6,7 +6,7 @@ import ChatInput from './ChatInput';
 import JudgePanel from '../judge/JudgePanel';
 import NeuCard from '../ui/NeuCard';
 import NeuButton from '../ui/NeuButton';
-import { Sparkles, Trash2, Shield, Info, Crosshair, Zap, ChevronUp, AlertTriangle } from 'lucide-react';
+import { Sparkles, Trash2, Shield, Info, Crosshair, Zap, ChevronUp, AlertTriangle, RotateCcw } from 'lucide-react';
 
 const STAGED_SCENARIOS = [
   {
@@ -187,11 +187,12 @@ export default function ChatView() {
               onClick={clearChat}
               variant="subtle"
               size="sm"
-              className="!p-2.5 hover:-translate-y-0.5 hover:text-critical transition-all shadow-xs"
-              title="Clear conversation"
-              aria-label="Clear conversation"
+              className="flex items-center gap-1.5 px-3 py-1.5 hover:-translate-y-0.5 hover:text-rose-600 transition-all shadow-xs text-xs font-bold text-slate-800"
+              title="Clear current session and start a new conversation"
+              aria-label="Clear conversation and start new"
             >
-              <Trash2 size={14} aria-hidden="true" />
+              <RotateCcw size={13} className="text-indigo-600" aria-hidden="true" />
+              <span>Clear &amp; Start New</span>
             </NeuButton>
           </div>
         </div>
@@ -310,20 +311,22 @@ export default function ChatView() {
         {/* Message Feed */}
         <div className="flex-1 overflow-y-auto mb-4 pr-3 space-y-4">
           {messages.length === 0 ? (
-            <div className="h-full flex flex-col items-center justify-center text-center p-8 text-ink-subtle space-y-3">
-              <div className="w-14 h-14 rounded-3xl bg-indigo-100/60 shadow-[4px_4px_10px_rgba(165,183,212,0.4),-4px_-4px_10px_rgba(255,255,255,0.9)] flex items-center justify-center text-accent">
-                <Info size={28} />
+            <div className="h-full flex flex-col items-center justify-center text-center p-8 space-y-3">
+              <div className="w-16 h-16 rounded-3xl bg-indigo-100/80 shadow-[4px_4px_10px_rgba(165,183,212,0.4),-4px_-4px_10px_rgba(255,255,255,0.9)] flex items-center justify-center text-indigo-600 mb-1 border border-indigo-200/50">
+                <Sparkles size={32} />
               </div>
-              <p className="text-sm font-bold text-ink-muted">
+              <h3 className="text-base sm:text-lg font-black text-slate-900">
+                New Session Ready for {activeWorkspace?.name || 'Company'}
+              </h3>
+              <p className="text-xs sm:text-sm max-w-lg text-slate-800 font-bold leading-relaxed">
                 {currentWorkspace === 'default'
-                  ? 'No messages in current session.'
-                  : `Ready to audit queries for ${activeWorkspace?.name || currentWorkspace}`}
+                  ? 'Click any staged scenario above to test factual verification, toggle Attack Mode to try custom adversarial queries, or type any question below.'
+                  : `Ask any question regarding ${activeWorkspace?.name || 'this company'}'s indexed policies or select a quick test above. The Maker Agent and Judge Guardrail will evaluate every atomic claim in real time.`}
               </p>
-              <p className="text-xs max-w-md text-ink-subtle font-medium">
-                {currentWorkspace === 'default'
-                  ? 'Click any staged scenario above, activate Attack Mode to try your own adversarial queries, or type a question below.'
-                  : `Ask questions about ${activeWorkspace?.name || 'this company'}'s indexed policies or click the quick tests above to watch VeriTrust AI verify claims in real time.`}
-              </p>
+              <div className="pt-2 flex items-center gap-2 text-xs font-bold text-indigo-800 bg-indigo-50/80 px-3.5 py-1.5 rounded-xl border border-indigo-200">
+                <Shield size={14} className="text-indigo-600 shrink-0" />
+                <span>Dual-Agent Guardrail Active &amp; Isolated to {activeWorkspace?.name || currentWorkspace}</span>
+              </div>
             </div>
           ) : (
             messages.map((msg) => (

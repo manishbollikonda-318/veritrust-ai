@@ -163,11 +163,13 @@ export default function Header() {
 
             {showWorkspaceDropdown && (
               <div className="absolute right-0 top-full mt-1.5 w-60 bg-white/90 backdrop-blur-2xl rounded-xl shadow-[0_20px_40px_-10px_rgba(15,23,42,0.15)] border border-white/80 py-1.5 z-40 animate-in fade-in-0 zoom-in-95 duration-150">
-                {workspaces.map((w) => (
+                {workspaces
+                  .filter((w, idx, self) => w.id !== 'acme-health' && idx === self.findIndex(t => t.name === w.name || t.id === w.id))
+                  .map((w) => (
                   <div key={w.id} className="flex items-center gap-2 px-3 py-2">
                     <button
                       onClick={() => { setCurrentWorkspace(w.id); setShowWorkspaceDropdown(false); }}
-                      className={`flex-1 flex items-center gap-2 text-left px-2 py-1.5 rounded-lg text-xs font-medium transition-colors ${currentWorkspace === w.id ? 'bg-indigo-50 text-indigo-700' : 'text-slate-700 hover:bg-slate-50'}`}
+                      className={`flex-1 flex items-center gap-2 text-left px-2 py-1.5 rounded-lg text-xs font-bold transition-colors ${currentWorkspace === w.id ? 'bg-indigo-50 text-indigo-700' : 'text-slate-800 hover:bg-slate-50'}`}
                     >
                       <span className="truncate">{w.name}</span>
                       {w.is_demo && (

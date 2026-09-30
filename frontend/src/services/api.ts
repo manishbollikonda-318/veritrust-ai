@@ -259,6 +259,17 @@ export const api = {
     return { userMessage, botMessage };
   },
 
+  async clearChat(workspaceId: string = 'default'): Promise<void> {
+    try {
+      await fetch(`${API_BASE}/chat/clear/${encodeURIComponent(workspaceId)}`, {
+        method: 'POST',
+        headers: getAuthHeaders(workspaceId)
+      });
+    } catch (e) {
+      console.warn('Could not clear backend chat history:', e);
+    }
+  },
+
   async getMetrics(workspaceId?: string): Promise<MetricData> {
     const url = `${API_BASE}/metrics${workspaceId && workspaceId !== 'all' ? `?workspace_id=${encodeURIComponent(workspaceId)}` : ''}`;
     const data = await fetchJson<any>(url, {
@@ -404,23 +415,34 @@ export const api = {
       });
       if (Array.isArray(data) && data.length > 0) {
         const map = new Map<string, Workspace>();
-        data.forEach(w => map.set(w.id, w));
-        customWorkspaces.forEach(w => {
-          if (!map.has(w.id)) map.set(w.id, w);
+        data.filter(w => w.id !== 'acme-health').forEach(w => {
+          if (!map.has(w.name) && !map.has(w.id)) {
+            map.set(w.name, w);
+          }
         });
+        customWorkspaces.filter(w => w.id !== 'acme-health').forEach(w => {
+          if (!map.has(w.name) && !map.has(w.id)) {
+            map.set(w.name, w);
+          }
+        });
+        const finalWorkspaces = Array.from(map.values());
         // Cache all workspaces including tokens from backend
         try {
-          localStorage.setItem('veritrust_all_workspaces', JSON.stringify(data));
+          localStorage.setItem('veritrust_all_workspaces', JSON.stringify(finalWorkspaces));
         } catch {}
-        return Array.from(map.values());
+        return finalWorkspaces;
       }
     } catch {
       // Fallback to local
     }
 
     const map = new Map<string, Workspace>();
-    defaultWorkspaces.forEach(w => map.set(w.id, w));
-    customWorkspaces.forEach(w => map.set(w.id, w));
+    defaultWorkspaces.filter(w => w.id !== 'acme-health').forEach(w => {
+      if (!map.has(w.name)) map.set(w.name, w);
+    });
+    customWorkspaces.filter(w => w.id !== 'acme-health').forEach(w => {
+      if (!map.has(w.name)) map.set(w.name, w);
+    });
     return Array.from(map.values());
   },
 

@@ -39,7 +39,7 @@ class WorkspaceService:
         self._seed_default_workspaces()
 
     def _seed_default_workspaces(self):
-        """Seed initial benchmark workspaces (NovaMart demo + Healthcare demo) and load custom workspaces from SQLite."""
+        """Seed initial benchmark workspace and load custom workspaces from SQLite."""
         self._workspaces["default"] = {
             "id": "default",
             "name": "Acme Health & Pharma (Demo)",
@@ -50,28 +50,30 @@ class WorkspaceService:
             "created_at": "2026-09-27T00:00:00Z"
         }
 
-        self._workspaces["acme-health"] = {
-            "id": "acme-health",
-            "name": "Acme Health & Pharma (Demo)",
-            "industry": "Healthcare & Telehealth",
-            "description": "Clinical and pharmaceutical benchmark with prescription refills and HIPAA compliance policies",
-            "is_demo": True,
-            "llm_provider": "shared_default",
-            "created_at": "2026-09-27T01:00:00Z"
-        }
-
         # Load any custom workspaces stored in SQLite
         try:
             persisted = vector_store.sqlite.load_workspaces()
             for w in persisted:
-                self._workspaces[w["id"]] = w
+                if w.get("id") != "acme-health":
+                    self._workspaces[w["id"]] = w
         except Exception as e:
             print(f"Notice loading custom workspaces from SQLite: {e}")
 
     def list_workspaces(self) -> List[WorkspaceModel]:
-        """List all active company workspaces with live document counts and masked API keys."""
+        """List all active company workspaces with live document counts and masked API keys (strictly deduplicated)."""
         result: List[WorkspaceModel] = []
+        seen_ids = set()
+        seen_names = set()
+
         for ws_id, data in self._workspaces.items():
+            if ws_id == "acme-health":
+                continue
+            name = data.get("name", ws_id)
+            if ws_id in seen_ids or name in seen_names:
+                continue
+            seen_ids.add(ws_id)
+            seen_names.add(name)
+
             doc_count = len(vector_store.get_raw_docs(ws_id))
             raw_key = self.get_raw_api_key(ws_id)
             has_key = bool(raw_key)
@@ -80,7 +82,7 @@ class WorkspaceService:
             result.append(
                 WorkspaceModel(
                     id=ws_id,
-                    name=data["name"],
+                    name=name,
                     industry=data.get("industry", "General"),
                     description=data.get("description", ""),
                     is_demo=data.get("is_demo", False),
