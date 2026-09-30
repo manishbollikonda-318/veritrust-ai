@@ -22,13 +22,13 @@ const WorkspaceContext = createContext<WorkspaceContextType | undefined>(undefin
 
 const DEFAULT_WORKSPACE_FALLBACK: Workspace = {
   id: 'default',
-  name: 'Acme Health (Demo)',
+  name: 'Acme Health & Pharma (Demo)',
   industry: 'Healthcare & Telehealth',
-  description: 'Acme Health policy benchmark with return, shipping, and clinical policies',
+  description: 'Clinical and pharmaceutical benchmark with prescription refills, lab orders, and HIPAA compliance policies',
   is_demo: true,
   llm_provider: 'shared_default',
   has_custom_api_key: false,
-  document_count: 5,
+  document_count: 3,
   created_at: '2026-09-27T00:00:00Z'
 };
 
@@ -116,8 +116,8 @@ export const WorkspaceProvider: React.FC<{ children: React.ReactNode }> = ({ chi
     setWorkspaceVersion(v => v + 1);
   };
 
-  const isDemoWorkspace = currentWorkspace === 'default';
   const activeWorkspace = workspaces.find(w => w.id === currentWorkspace) || workspaces[0];
+  const isDemoWorkspace = Boolean(activeWorkspace?.is_demo || currentWorkspace === 'default' || currentWorkspace === 'novamart' || currentWorkspace === 'apex-financial');
 
   return (
     <WorkspaceContext.Provider

@@ -39,22 +39,42 @@ class WorkspaceService:
         self._seed_default_workspaces()
 
     def _seed_default_workspaces(self):
-        """Seed initial benchmark workspace and load custom workspaces from SQLite."""
+        """Seed initial benchmark workspaces (Healthcare, E-Commerce, Fintech) and load custom workspaces from SQLite."""
         self._workspaces["default"] = {
             "id": "default",
             "name": "Acme Health & Pharma (Demo)",
             "industry": "Healthcare & Telehealth",
-            "description": "Clinical and pharmaceutical benchmark with prescription refills and HIPAA compliance policies",
+            "description": "Clinical and pharmaceutical benchmark with prescription refills, lab orders, and HIPAA compliance policies",
             "is_demo": True,
             "llm_provider": "shared_default",
             "created_at": "2026-09-27T00:00:00Z"
+        }
+
+        self._workspaces["novamart"] = {
+            "id": "novamart",
+            "name": "NovaMart Retail (Demo)",
+            "industry": "E-Commerce & Retail",
+            "description": "Consumer retail benchmark with 30-day returns, warranty, and price-matching rules",
+            "is_demo": True,
+            "llm_provider": "shared_default",
+            "created_at": "2026-09-27T01:00:00Z"
+        }
+
+        self._workspaces["apex-financial"] = {
+            "id": "apex-financial",
+            "name": "Apex NeoBank (Demo)",
+            "industry": "Fintech & Banking",
+            "description": "Financial services benchmark with fund transfer limits, fraud protection, and FDIC insurance",
+            "is_demo": True,
+            "llm_provider": "shared_default",
+            "created_at": "2026-09-27T02:00:00Z"
         }
 
         # Load any custom workspaces stored in SQLite
         try:
             persisted = vector_store.sqlite.load_workspaces()
             for w in persisted:
-                if w.get("id") != "acme-health":
+                if w.get("id") not in ("acme-health", "default", "novamart", "apex-financial"):
                     self._workspaces[w["id"]] = w
         except Exception as e:
             print(f"Notice loading custom workspaces from SQLite: {e}")
@@ -100,7 +120,7 @@ class WorkspaceService:
 
     def get_workspace(self, ws_id: str) -> Optional[WorkspaceModel]:
         """Retrieve a single workspace by ID with hyphen/underscore alias support."""
-        if not ws_id:
+        if not ws_id or ws_id == "acme-health":
             ws_id = "default"
         data = (
             self._workspaces.get(ws_id)

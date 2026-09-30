@@ -389,7 +389,18 @@ export const api = {
         id: 'default',
         name: 'Acme Health & Pharma (Demo)',
         industry: 'Healthcare & Telehealth',
-        description: 'Clinical compliance benchmark dataset',
+        description: 'Clinical compliance benchmark dataset with prescription refills, lab orders, and HIPAA compliance policies',
+        is_demo: true,
+        llm_provider: 'shared_default',
+        has_custom_api_key: false,
+        document_count: 3,
+        created_at: new Date().toISOString()
+      },
+      {
+        id: 'novamart',
+        name: 'NovaMart Retail (Demo)',
+        industry: 'E-Commerce & Retail',
+        description: 'Consumer retail benchmark with 30-day returns, warranty, and price-matching rules',
         is_demo: true,
         llm_provider: 'shared_default',
         has_custom_api_key: false,
@@ -397,14 +408,14 @@ export const api = {
         created_at: new Date().toISOString()
       },
       {
-        id: 'tech-corp',
-        name: 'TechCorp Software (Demo)',
-        industry: 'Software & SaaS',
-        description: 'B2B SaaS policies and SLAs',
+        id: 'apex-financial',
+        name: 'Apex NeoBank (Demo)',
+        industry: 'Fintech & Banking',
+        description: 'Financial services benchmark with fund transfer limits, fraud protection, and FDIC insurance',
         is_demo: true,
         llm_provider: 'shared_default',
         has_custom_api_key: false,
-        document_count: 2,
+        document_count: 3,
         created_at: new Date().toISOString()
       }
     ];

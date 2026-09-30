@@ -1,0 +1,7 @@
+Apex NeoBank — Funds Transfer Limits & Settlement Windows
+
+Outbound ACH Transfer Limits: Standard consumer accounts have an outbound ACH transfer limit of $10,000 per business day and $50,000 per rolling 30-day period. Standard ACH transfers settle within 1 to 3 business days. Priority tier accounts enjoy an elevated daily outbound limit of $50,000 with next-day settlement. Inbound ACH deposits are free and clear within 1 business day.
+
+Domestic Wire Transfers: Domestic wire transfers submitted before 4:00 PM EST on banking business days are executed same-day. A standard wire transfer fee of $15 applies; wire fees are fully waived for accounts maintaining an average daily balance exceeding $25,000. Outbound international wires are not supported.
+
+Instant Peer-to-Peer Payments: Apex Instant P2P payments between registered Apex NeoBank account holders are immediate, operational 24/7/365, and completely free of transaction fees. Daily P2P outbound transfers are capped at $2,500 per day.

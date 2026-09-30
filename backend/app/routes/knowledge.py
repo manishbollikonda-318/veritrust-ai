@@ -36,7 +36,7 @@ async def verify_workspace_token(
     if not workspace_id:
         workspace_id = "default"
     
-    if workspace_id in ("default", "acme-health"):
+    if workspace_id in ("default", "acme-health", "novamart", "apex-financial"):
         return workspace_id  # Demo workspaces don't require tokens
     if not x_workspace_token or not workspace_service.validate_token(workspace_id, x_workspace_token):
         raise HTTPException(

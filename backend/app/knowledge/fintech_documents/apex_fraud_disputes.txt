@@ -1,0 +1,7 @@
+Apex NeoBank — Card Fraud Protection & Dispute Resolution Policy
+
+Zero Liability Protection: Apex NeoBank provides $0 Zero Liability protection for all unauthorized debit card purchases and electronic fund withdrawals, provided the account holder reports the suspicious activity within 60 calendar days of the account statement date on which the transaction appeared.
+
+Provisional Credit Timeline: For reported fraudulent card transactions, Apex NeoBank issues provisional credit to the customer's account within 10 business days while our fraud operations team completes the merchant dispute investigation. If the investigation confirms fraud, provisional credit becomes permanent.
+
+Dispute Investigation Windows: Under federal Regulation E compliance guidelines, routine charge disputes are resolved within 45 to 90 calendar days. Written notification detailing the investigation findings and final ruling is delivered via secure email within 3 business days of case closure.

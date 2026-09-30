@@ -418,7 +418,7 @@ class MakerAgent:
         """Generate a draft response grounded in the workspace's retrieved company docs.
         Returns (draft_text, generation_method)."""
         # 1. NovaMart demo benchmark: preserve staged scenario triggers
-        if demo_mode and (workspace_id == "default" or not workspace_id):
+        if demo_mode and (workspace_id in ("novamart", "default") or not workspace_id):
             scenario_key = self._match_demo_scenario(query)
             if scenario_key:
                 return DEMO_RESPONSES[scenario_key]["draft"], "staged_demo_script"

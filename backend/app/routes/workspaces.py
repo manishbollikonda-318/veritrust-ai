@@ -16,7 +16,7 @@ async def verify_workspace_token(
     x_workspace_token: Optional[str] = Header(default=None, alias="X-Workspace-Token")
 ) -> str:
     """Verify workspace access token for mutating operations."""
-    if workspace_id in ("default", "acme-health"):
+    if workspace_id in ("default", "acme-health", "novamart", "apex-financial"):
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Cannot modify demo workspaces"
