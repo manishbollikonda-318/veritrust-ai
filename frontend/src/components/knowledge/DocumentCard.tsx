@@ -16,13 +16,12 @@ export default function DocumentCard({ document, onEdit, onDelete, isReadOnly = 
 
   return (
     <NeuCard
-      variant="maker"
-      className="p-6 flex flex-col justify-between transition-all min-h-[320px] relative overflow-hidden hover:shadow-2xl hover:-translate-y-0.5 duration-300"
+      className="p-6 flex flex-col justify-between transition-all bg-gradient-to-br from-[#F7F9FD] via-[#EFF3FA] to-[#E5EDF7] shadow-neu-maker min-h-[320px] relative overflow-hidden border border-indigo-100/60"
     >
       <div>
         <div className="flex items-start justify-between gap-3 mb-4">
-          <div className="flex items-start gap-3 flex-1 min-w-0">
-            <div className="p-3 bg-gradient-to-br from-indigo-500 to-blue-600 text-white rounded-2xl shadow-sm shrink-0 mt-0.5">
+          <div className="flex items-center gap-3">
+            <div className="p-3 bg-gradient-to-br from-indigo-500 to-blue-600 text-white rounded-2xl shadow-sm shrink-0">
               <FileText size={22} />
             </div>
             <div className="min-w-0 flex-1">
@@ -36,8 +35,8 @@ export default function DocumentCard({ document, onEdit, onDelete, isReadOnly = 
                   </span>
                 )}
               </div>
-              <div className="flex items-center gap-2.5 text-xs text-indigo-700 font-bold mt-1.5 flex-wrap">
-                <span className="flex items-center gap-1 truncate max-w-[220px]" title={document.filename}>
+              <div className="flex items-center gap-3 text-xs text-indigo-700 font-bold mt-1">
+                <span className="flex items-center gap-1 truncate max-w-[200px]" title={document.filename}>
                   <Database size={12} className="text-indigo-400 shrink-0" />
                   <span className="truncate">{document.filename || 'Source Doc'}</span>
                 </span>
@@ -79,13 +78,13 @@ export default function DocumentCard({ document, onEdit, onDelete, isReadOnly = 
           )}
         </div>
 
-        <div className="bg-gradient-to-br from-indigo-500/[0.09] via-blue-500/[0.06] to-cyan-500/[0.09] backdrop-blur-md p-4 rounded-2xl text-xs text-slate-900 leading-relaxed font-sans max-h-48 overflow-y-auto border border-indigo-200/70 shadow-[inset_0_1.5px_2px_rgba(255,255,255,0.8),0_2px_10px_rgba(79,70,229,0.05)] transition-all">
+        <div className="bg-gradient-to-br from-[#F0F4FC] to-[#E3EBF7] shadow-neu-maker-pressed p-4 rounded-xl text-xs text-slate-800 leading-relaxed font-sans max-h-48 overflow-y-auto border border-indigo-100/50">
           {expanded ? (
-            <div className="whitespace-pre-line space-y-2 font-semibold text-slate-900 leading-relaxed">
+            <div className="whitespace-pre-line space-y-2 font-medium">
               {document.content || document.snippet}
             </div>
           ) : (
-            <p className="line-clamp-4 italic text-slate-900 font-semibold leading-relaxed">
+            <p className="line-clamp-4 italic text-slate-700 font-medium">
               "{document.snippet || document.content?.slice(0, 180)}"
             </p>
           )}
