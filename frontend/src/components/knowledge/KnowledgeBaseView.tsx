@@ -380,7 +380,13 @@ export default function KnowledgeBaseView() {
           <p className="text-sm font-bold text-slate-700">Loading ground-truth policy documents...</p>
         </div>
       ) : (
-        <div className={`grid gap-6 ${filtered.length === 1 ? 'grid-cols-1 max-w-2xl' : filtered.length === 2 ? 'grid-cols-1 md:grid-cols-2 max-w-4xl' : 'grid-cols-1 md:grid-cols-2 xl:grid-cols-3'}`}>
+        <div className={`grid gap-6 w-full ${
+          filtered.length === 1
+            ? 'grid-cols-1 max-w-4xl'
+            : filtered.length === 2
+            ? 'grid-cols-1 lg:grid-cols-2 max-w-6xl'
+            : 'grid-cols-1 md:grid-cols-2 xl:grid-cols-3'
+        }`}>
           {filtered.map(doc => (
             <DocumentCard
               key={doc.id || doc.filename}
@@ -456,7 +462,7 @@ export default function KnowledgeBaseView() {
 
             <form onSubmit={handleSaveDocument} className="space-y-5">
               <div>
-                <label className="block text-xs font-black text-slate-800 uppercase tracking-wider mb-1.5">
+                <label className="block text-xs font-black text-slate-900 uppercase tracking-wider mb-1.5">
                   Document Title
                 </label>
                 <input
@@ -465,12 +471,12 @@ export default function KnowledgeBaseView() {
                   placeholder="e.g. Return Policy 2026, Warranty Terms, SLA Standards"
                   value={docTitle}
                   onChange={(e) => setDocTitle(e.target.value)}
-                  className="w-full text-sm px-4 py-3 rounded-xl bg-gradient-to-br from-[#EEF4FD] to-[#E2ECF8] shadow-neu-maker-pressed border border-indigo-100/80 focus:outline-none focus:ring-2 focus:ring-indigo-500 font-semibold text-slate-900"
+                  className="w-full text-sm sm:text-base px-4 py-3 rounded-xl bg-gradient-to-br from-[#EEF4FD] to-[#E2ECF8] shadow-neu-maker-pressed border border-indigo-200 focus:outline-none focus:ring-2 focus:ring-indigo-500 font-bold text-slate-900"
                 />
               </div>
 
               <div>
-                <label className="block text-xs font-black text-slate-800 uppercase tracking-wider mb-1.5">
+                <label className="block text-xs font-black text-slate-900 uppercase tracking-wider mb-1.5">
                   Filename (optional)
                 </label>
                 <input
@@ -478,17 +484,17 @@ export default function KnowledgeBaseView() {
                   placeholder="e.g. return_policy.txt"
                   value={docFilename}
                   onChange={(e) => setDocFilename(e.target.value)}
-                  className="w-full text-xs px-4 py-2.5 rounded-xl bg-gradient-to-br from-[#EEF4FD] to-[#E2ECF8] shadow-neu-maker-pressed border border-indigo-100/80 focus:outline-none focus:ring-2 focus:ring-indigo-500 font-mono text-slate-800 font-bold"
+                  className="w-full text-xs sm:text-sm px-4 py-2.5 rounded-xl bg-gradient-to-br from-[#EEF4FD] to-[#E2ECF8] shadow-neu-maker-pressed border border-indigo-200 focus:outline-none focus:ring-2 focus:ring-indigo-500 font-mono text-slate-900 font-bold"
                 />
               </div>
 
               <div>
                 <div className="flex items-center justify-between mb-1.5">
-                  <label className="block text-xs font-black text-slate-800 uppercase tracking-wider">
+                  <label className="block text-xs font-black text-slate-900 uppercase tracking-wider">
                     Verified Policy Content / Clauses
                   </label>
-                  <label className="inline-flex items-center gap-1 text-xs font-bold text-indigo-600 hover:text-indigo-800 cursor-pointer">
-                    <Upload size={12} />
+                  <label className="inline-flex items-center gap-1.5 text-xs font-black text-indigo-700 hover:text-indigo-900 bg-indigo-50 hover:bg-indigo-100 px-2.5 py-1 rounded-lg border border-indigo-200 cursor-pointer">
+                    <Upload size={13} />
                     <span>Upload .txt/.md file</span>
                     <input
                       type="file"
@@ -500,19 +506,23 @@ export default function KnowledgeBaseView() {
                 </div>
                 <textarea
                   required
-                  rows={8}
+                  rows={9}
                   placeholder="Paste complete verified policy text, return windows (e.g. 30 days), fee structures ($15), exceptions, or SLAs..."
                   value={docContent}
                   onChange={(e) => setDocContent(e.target.value)}
-                  className="w-full text-xs sm:text-sm p-4 rounded-xl bg-gradient-to-br from-[#EEF4FD] to-[#E2ECF8] shadow-neu-maker-pressed border border-indigo-100/80 focus:outline-none focus:ring-2 focus:ring-indigo-500 font-mono text-slate-900 leading-relaxed font-semibold"
+                  className="w-full text-xs sm:text-sm p-4 rounded-xl bg-gradient-to-br from-[#EEF4FD] to-[#E2ECF8] shadow-neu-maker-pressed border border-indigo-200 focus:outline-none focus:ring-2 focus:ring-indigo-500 font-mono text-slate-950 leading-relaxed font-bold min-h-[220px]"
                 />
+                <div className="flex items-center justify-between text-xs text-slate-700 font-extrabold mt-1 px-1">
+                  <span>{docContent.length} characters</span>
+                  <span>{docContent.split('\n').filter(Boolean).length} policy clauses</span>
+                </div>
               </div>
 
               <div className="pt-4 border-t border-indigo-200/60 flex items-center justify-end gap-3">
                 <button
                   type="button"
                   onClick={() => setIsModalOpen(false)}
-                  className="px-4 py-2 text-xs font-bold text-slate-600 hover:text-slate-800 cursor-pointer"
+                  className="px-4 py-2 text-xs font-bold text-slate-700 hover:text-slate-900 cursor-pointer"
                 >
                   Cancel
                 </button>

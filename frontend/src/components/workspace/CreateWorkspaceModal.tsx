@@ -238,37 +238,37 @@ export default function CreateWorkspaceModal() {
               </div>
 
               <div>
-                <label className="block text-xs font-bold text-slate-700 mb-1">
-                  Policy Document Title <span className="text-slate-400 font-normal">(Optional)</span>
+                <label className="block text-xs font-black text-slate-900 uppercase tracking-wider mb-1">
+                  Policy Document Title <span className="text-slate-500 font-bold">(Optional)</span>
                 </label>
                 <input
                   type="text"
                   placeholder="e.g. Customer Terms of Service, Return Window & Warranty Policy"
                   value={policyTitle}
                   onChange={(e) => setPolicyTitle(e.target.value)}
-                  className="w-full text-xs font-medium px-3.5 py-2 rounded-xl border border-slate-200 bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500 text-slate-900"
+                  className="w-full text-xs sm:text-sm font-bold px-3.5 py-2.5 rounded-xl border border-slate-300 bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500 text-slate-900"
                 />
               </div>
 
               <div>
                 <div className="flex items-center justify-between mb-1">
-                  <label className="block text-xs font-bold text-slate-700">
+                  <label className="block text-xs font-black text-slate-900 uppercase tracking-wider">
                     Policy Rules &amp; Factual Guidelines <span className="text-rose-500">*</span>
                   </label>
-                  <span className="text-xs text-slate-400 font-medium">
+                  <span className="text-xs text-slate-700 font-extrabold">
                     {policyContent.length} characters
                   </span>
                 </div>
                 <textarea
-                  rows={7}
+                  rows={8}
                   required
                   placeholder={`Type or paste your company's actual rules, prices, terms, or guidelines here.\n\nFor example:\n1. Return & Refund Policy: Customers have 30 days from delivery for a 100% full refund.\n2. Warranty: Hardware covered for 12 months. Accessories covered for 90 days.\n3. Pricing: Standard rate is $20/month. No setup fees.\n4. Support Hours: Monday to Friday 9:00 AM to 5:00 PM EST.\n\nThe Judge Agent will cross-check all AI drafts against the exact rules you provide here.`}
                   value={policyContent}
                   onChange={(e) => setPolicyContent(e.target.value)}
-                  className="w-full text-xs font-mono p-3.5 rounded-xl border border-slate-200 bg-slate-50 focus:outline-none focus:ring-2 focus:ring-indigo-500 text-slate-900 leading-relaxed shadow-inner"
+                  className="w-full text-xs sm:text-sm font-sans font-bold p-4 rounded-xl border border-slate-300 bg-slate-50 focus:outline-none focus:ring-2 focus:ring-indigo-500 text-slate-950 leading-relaxed shadow-inner min-h-[190px]"
                 />
-                <div className="flex items-center gap-1.5 mt-1.5 text-xs text-slate-500 font-medium">
-                  <HelpCircle size={13} className="text-indigo-500 shrink-0" />
+                <div className="flex items-center gap-1.5 mt-1.5 text-xs text-slate-700 font-bold">
+                  <HelpCircle size={14} className="text-indigo-600 shrink-0" />
                   <span>
                     You can type as many or as few rules as you want. The multi-agent pipeline immediately indexes them into this company's private vector collection.
                   </span>

@@ -28,7 +28,7 @@ export default function ClaimCard({ claim }: ClaimCardProps) {
           <span className="text-xs font-black uppercase tracking-wider text-positive-deep block mb-1">
             Claim Under Evaluation
           </span>
-          <h4 className="font-extrabold text-ink text-sm sm:text-base leading-snug break-words whitespace-normal">
+          <h4 className="font-black text-slate-900 text-sm sm:text-base leading-snug break-words whitespace-normal">
             {claim.text}
           </h4>
         </div>
@@ -60,7 +60,7 @@ export default function ClaimCard({ claim }: ClaimCardProps) {
       {/* Confidence bar */}
       {claim.confidence !== undefined && (
         <div className="mb-3 flex items-center gap-2">
-          <div className="text-xs font-bold text-positive-deep w-24 shrink-0">Confidence:</div>
+          <div className="text-xs font-black text-slate-900 w-24 shrink-0">Confidence:</div>
           <div className="flex-1 bg-emerald-200/60 rounded-full h-2 overflow-hidden shadow-inner">
             <div
               className={`h-full rounded-full transition-all duration-500 shadow-xs ${
@@ -73,28 +73,28 @@ export default function ClaimCard({ claim }: ClaimCardProps) {
               style={{ width: `${Math.round(claim.confidence * 100)}%` }}
             />
           </div>
-          <span className="text-xs font-black text-ink w-10 text-right">
+          <span className="text-xs font-black text-slate-900 w-10 text-right">
             {Math.round(claim.confidence * 100)}%
           </span>
         </div>
       )}
 
-      {/* Source document */}
+      {/* Source document / Policy Ground Truth Box */}
       {claim.sourceSentence && (
         <div className="mb-3">
           <div className="flex items-center justify-between gap-2 mb-1">
             <p className="text-xs font-black text-positive-deep uppercase tracking-wider flex items-center gap-1">
-              <BookOpen size={11} className="text-positive" />
+              <BookOpen size={12} className="text-emerald-700" />
               Source KB Ground Truth
             </p>
             {claim.sourceDocument && (
-              <span className="text-xs font-bold px-2 py-0.5 rounded-full bg-teal-100 text-positive-deep border border-teal-300/60 flex items-center gap-1 shadow-xs">
-                <FileText size={9} />
+              <span className="text-xs font-black px-2 py-0.5 rounded-full bg-teal-100 text-teal-950 border border-teal-300 flex items-center gap-1 shadow-xs">
+                <FileText size={10} />
                 {claim.sourceDocument}
               </span>
             )}
           </div>
-          <div className="border-l-4 border-teal-500 pl-3 py-2 text-xs sm:text-sm text-ink font-medium italic bg-white/70 backdrop-blur-md rounded-r-xl break-words leading-relaxed whitespace-normal border border-white/80 shadow-xs">
+          <div className="border-l-4 border-teal-600 pl-3.5 py-2.5 text-xs sm:text-sm text-slate-950 font-bold italic bg-white/85 backdrop-blur-md rounded-r-xl break-words leading-relaxed whitespace-normal border border-teal-200/80 shadow-xs">
             "{claim.sourceSentence}"
           </div>
         </div>
@@ -104,13 +104,13 @@ export default function ClaimCard({ claim }: ClaimCardProps) {
       <div className="mb-3">
         <p className="text-xs font-black text-positive-deep uppercase tracking-wider mb-1 flex items-center gap-1">
           {claim.verdict === 'Verified' ? (
-            <ShieldCheck size={11} className="text-positive" />
+            <ShieldCheck size={12} className="text-emerald-700" />
           ) : (
-            <AlertTriangle size={11} className="text-caution" />
+            <AlertTriangle size={12} className="text-amber-700" />
           )}
           Judge Verification Reasoning
         </p>
-        <p className="text-xs sm:text-sm text-ink font-semibold bg-white/70 backdrop-blur-md p-3.5 rounded-xl break-words leading-relaxed whitespace-normal border border-emerald-200/70 shadow-xs">
+        <p className="text-xs sm:text-sm text-slate-950 font-bold bg-white/85 backdrop-blur-md p-3.5 rounded-xl break-words leading-relaxed whitespace-normal border border-emerald-300/80 shadow-xs">
           {claim.reasoning}
         </p>
       </div>
