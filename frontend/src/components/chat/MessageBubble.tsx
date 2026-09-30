@@ -45,17 +45,13 @@ export default function MessageBubble({
                   className={`text-[11px] font-bold px-2.5 py-0.5 rounded-full border inline-flex items-center gap-1 shadow-2xs ${
                     message.generationMethod.startsWith('llm_live')
                       ? 'bg-emerald-50 text-emerald-800 border-emerald-300'
-                      : message.generationMethod === 'staged_demo_script'
-                      ? 'bg-blue-50 text-blue-800 border-blue-300'
-                      : 'bg-amber-50 text-amber-900 border-amber-300'
+                      : 'bg-blue-50 text-blue-800 border-blue-300'
                   }`}
                   title={`Generation Pipeline: ${message.generationMethod}`}
                 >
                   {message.generationMethod.startsWith('llm_live')
                     ? `🤖 Live LLM (${message.generationMethod.replace('llm_live:', '')})`
-                    : message.generationMethod === 'staged_demo_script'
-                    ? '📜 Staged Demo Benchmark'
-                    : '⚠️ Offline Grounded Fallback'}
+                    : '📜 Staged Demo Benchmark'}
                 </span>
               )}
               {message.latencyMs && (

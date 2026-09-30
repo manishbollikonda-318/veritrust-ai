@@ -22,9 +22,9 @@ const WorkspaceContext = createContext<WorkspaceContextType | undefined>(undefin
 
 const DEFAULT_WORKSPACE_FALLBACK: Workspace = {
   id: 'default',
-  name: 'NovaMart Retail (Demo)',
-  industry: 'Retail & E-Commerce',
-  description: 'Default retail benchmark with 5 sample policies',
+  name: 'Acme Health (Demo)',
+  industry: 'Healthcare & Telehealth',
+  description: 'Acme Health policy benchmark with return, shipping, and clinical policies',
   is_demo: true,
   llm_provider: 'shared_default',
   has_custom_api_key: false,

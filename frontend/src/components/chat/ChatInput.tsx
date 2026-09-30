@@ -13,7 +13,6 @@ const MAX_CHAR_COUNT = 500;
 
 export default function ChatInput({ onSend, disabled, workspaceName }: ChatInputProps) {
   const [input, setInput] = useState('');
-  const [isCooldown, setIsCooldown] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -30,16 +29,10 @@ export default function ChatInput({ onSend, disabled, workspaceName }: ChatInput
       return;
     }
 
-    if (!disabled && !isCooldown) {
+    if (!disabled) {
       setError(null);
-      setIsCooldown(true);
       onSend(trimmed);
       setInput('');
-
-      // 600ms cooldown to prevent accidental rapid double submission spam
-      setTimeout(() => {
-        setIsCooldown(false);
-      }, 600);
     }
   };
 
@@ -51,12 +44,12 @@ export default function ChatInput({ onSend, disabled, workspaceName }: ChatInput
     }
   };
 
-  const isActionDisabled = disabled || isCooldown || !input.trim();
+  const isActionDisabled = disabled || !input.trim();
+  const cleanWorkspaceName = workspaceName
+    ? workspaceName.replace(/\s*\(Demo\)\s*/i, '').trim()
+    : 'Acme Health';
 
   return (
-    /* Issue 10: the composer is centred and width-capped so the submit button
-       stays visually attached to the field instead of drifting to the far edge
-       of a very wide feed. */
     <div className="mt-auto w-full max-w-3xl mx-auto space-y-1.5">
       {error && (
         <div role="alert" className="flex items-center gap-1.5 text-xs text-critical font-semibold px-2 animate-fade-in">
@@ -70,10 +63,7 @@ export default function ChatInput({ onSend, disabled, workspaceName }: ChatInput
           <NeuInput
             value={input}
             onChange={handleChange}
-            placeholder={workspaceName
-              ? `Ask anything about ${workspaceName} policies, returns, or procedures...`
-              : "Ask anything about company policies, returns, or procedures..."
-            }
+            placeholder={`Ask anything about ${cleanWorkspaceName} policies, returns, or procedures...`}
             disabled={disabled}
             className="w-full pr-20"
             aria-label="Customer query input"

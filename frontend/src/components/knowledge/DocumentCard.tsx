@@ -54,6 +54,7 @@ export default function DocumentCard({ document, onEdit, onDelete, isReadOnly = 
                 <button
                   type="button"
                   title="Edit document"
+                  aria-label="Edit document"
                   onClick={() => onEdit(document)}
                   className="p-1.5 text-slate-500 hover:text-indigo-600 hover:bg-white/80 rounded-lg transition-colors cursor-pointer"
                 >
@@ -64,6 +65,7 @@ export default function DocumentCard({ document, onEdit, onDelete, isReadOnly = 
                 <button
                   type="button"
                   title="Delete document"
+                  aria-label="Delete document"
                   onClick={() => onDelete(document)}
                   className="p-1.5 text-slate-500 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition-colors cursor-pointer"
                 >

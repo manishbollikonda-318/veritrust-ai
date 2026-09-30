@@ -60,8 +60,8 @@ export default function JudgePanel({ message, claim: initialClaim, onSelectClaim
             <p className="text-xs font-bold text-positive-deep">Autonomous claim-level verification</p>
           </div>
         </div>
-        <NeuButton onClick={onClose} className="!p-2 !rounded-full text-ink-subtle hover:text-ink">
-          <X size={16} />
+        <NeuButton onClick={onClose} className="!p-2 !rounded-full text-ink-subtle hover:text-ink" aria-label="Close panel">
+          <X size={16} aria-hidden="true" />
         </NeuButton>
       </div>
 
@@ -173,6 +173,33 @@ export default function JudgePanel({ message, claim: initialClaim, onSelectClaim
                 </div>
                 <p className="text-xs text-ink-muted font-medium">
                   {step.action || (step.is_safe ? 'Verified safe' : 'Flagged discrepancy')}
+                </p>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Structured Output Claim Evaluations */}
+      {message?.claim_evaluations && message.claim_evaluations.length > 0 && (
+        <div className="mb-6 p-4 rounded-2xl glass-card border border-indigo-100 shadow-sm">
+          <h4 className="text-xs font-black text-ink uppercase tracking-wider mb-3">
+            Structured Output Evaluations
+          </h4>
+          <div className="space-y-3">
+            {message.claim_evaluations.map((evalItem, idx) => (
+              <div key={idx} className={`p-3 rounded-xl border ${evalItem.ground_truth_matched ? 'border-emerald-200 bg-emerald-50/50' : 'border-rose-200 bg-rose-50/50'}`}>
+                <div className="flex items-start justify-between gap-3 mb-1.5">
+                  <p className="text-sm font-bold text-ink leading-snug">
+                    {evalItem.claim}
+                  </p>
+                  <span className={`text-[10px] font-black uppercase px-2 py-0.5 rounded-full whitespace-nowrap ${evalItem.ground_truth_matched ? 'bg-emerald-100 text-emerald-800' : 'bg-rose-100 text-rose-800'}`}>
+                    {evalItem.ground_truth_matched ? 'Matched' : 'Contradicted'}
+                  </span>
+                </div>
+                <p className="text-xs font-medium text-ink-subtle">
+                  <span className="font-bold text-ink mr-1">Reasoning:</span>
+                  {evalItem.reasoning}
                 </p>
               </div>
             ))}

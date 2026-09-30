@@ -292,7 +292,7 @@ export default function KnowledgeBaseView() {
                 </span>
               </div>
               <p className="text-slate-600 font-medium leading-relaxed">
-                "NovaMart" is a fictional retail company created specifically for this demonstration. The return, shipping, and warranty policies below are original synthetic samples — not real retailer data.
+                "Acme Health" is a fictional healthcare company created specifically for this demonstration. The return, shipping, and warranty policies below are original synthetic samples — not real provider data.
               </p>
             </div>
           </div>
@@ -424,6 +424,7 @@ export default function KnowledgeBaseView() {
               </div>
               <button
                 type="button"
+                aria-label="Close modal"
                 onClick={() => setIsModalOpen(false)}
                 className="p-2 text-slate-500 hover:text-slate-800 rounded-xl cursor-pointer"
               >

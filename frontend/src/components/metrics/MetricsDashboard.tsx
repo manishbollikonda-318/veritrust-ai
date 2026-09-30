@@ -56,7 +56,7 @@ export default function MetricsDashboard() {
           {isSimulatedBaseline && isDefaultWorkspace && (
             <div className="flex items-center gap-1.5 text-amber-900 bg-amber-50/90 px-3.5 py-1.5 rounded-xl border border-amber-200/80 shadow-xs">
               <FlaskConical className="w-3.5 h-3.5" />
-              <span>Simulated Baseline — NovaMart Demo Data</span>
+              <span>Simulated Baseline — Acme Health Demo Data</span>
             </div>
           )}
           {!isSimulatedBaseline && isDefaultWorkspace && (

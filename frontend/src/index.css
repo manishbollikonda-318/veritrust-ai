@@ -12,16 +12,16 @@
      Components must use these tokens instead of raw slate/indigo/rose/... shades
      so the whole UI stays within a single, predictable type-colour system. */
   --color-ink: #0F172A;          /* headings, primary copy            */
-  --color-ink-muted: #475569;    /* body copy, descriptions           */
-  --color-ink-subtle: #64748B;   /* meta, captions, disabled          */
-  --color-accent: #4F46E5;       /* primary interactive accent        */
-  --color-accent-strong: #3730A3;/* accent text on light surfaces     */
+  --color-ink-muted: #334155;    /* body copy, descriptions (slate-700, 7.5:1 contrast) */
+  --color-ink-subtle: #475569;   /* meta, captions (slate-600, 5.5:1 contrast) */
+  --color-accent: #4338CA;       /* primary interactive accent (indigo-700, 6.2:1 contrast) */
+  --color-accent-strong: #312E81;/* accent text on light surfaces (indigo-900) */
   --color-positive: #047857;     /* verified / success                */
-  --color-positive-deep: #065F46;/* success text on tinted surfaces   */
+  --color-positive-deep: #064E3B;/* success text on tinted surfaces   */
   --color-caution: #B45309;      /* unsupported / warning             */
-  --color-caution-deep: #92400E; /* warning text on tinted surfaces   */
+  --color-caution-deep: #78350F; /* warning text on tinted surfaces   */
   --color-critical: #BE123C;     /* contradiction / destructive       */
-  --color-critical-deep: #9F1239;/* destructive text on tinted surfaces */
+  --color-critical-deep: #881337;/* destructive text on tinted surfaces */
   --color-onaccent: #FFFFFF;
 }
 

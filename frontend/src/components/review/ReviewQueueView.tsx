@@ -336,6 +336,7 @@ export default function ReviewQueueView() {
                           </h4>
                           <button
                             onClick={() => setActiveOverrideId(null)}
+                            aria-label="Close override form"
                             className="text-slate-400 hover:text-slate-600 cursor-pointer"
                           >
                             <XCircle size={16} />

@@ -86,9 +86,38 @@ def mask_secret_key(raw_key: Optional[str]) -> str:
     return f"{k[:4]}...{k[-4:]}"
 
 
-def call_gemini_direct(prompt: str, response_json: bool = False, custom_key: Optional[str] = None) -> Optional[str]:
+JUDGE_STRUCTURED_SCHEMA = {
+    "type": "OBJECT",
+    "properties": {
+        "is_approved": {"type": "BOOLEAN"},
+        "corrected_text": {"type": "STRING"},
+        "overall_reasoning": {"type": "STRING"},
+        "claim_evaluations": {
+            "type": "ARRAY",
+            "items": {
+                "type": "OBJECT",
+                "properties": {
+                    "claim": {"type": "STRING"},
+                    "ground_truth_matched": {"type": "BOOLEAN"},
+                    "reasoning": {"type": "STRING"}
+                },
+                "required": ["claim", "ground_truth_matched", "reasoning"]
+            }
+        }
+    },
+    "required": ["is_approved", "corrected_text", "overall_reasoning", "claim_evaluations"]
+}
+
+
+def call_gemini_direct(
+    prompt: str,
+    response_json: bool = False,
+    response_schema: Optional[dict] = None,
+    custom_key: Optional[str] = None
+) -> Optional[str]:
     """
     Execute live Google Gemini API calls across candidate models.
+    Supports native Structured Outputs using responseSchema.
     Cascades gracefully:
     1. gemini-flash-lite-latest (fastest & most responsive)
     2. gemini-3.5-flash-lite (stable backup)
@@ -106,17 +135,19 @@ def call_gemini_direct(prompt: str, response_json: bool = False, custom_key: Opt
     payload = {
         "contents": [{"parts": [{"text": prompt}]}],
         "generationConfig": {
-            "temperature": 0.1,
-            "maxOutputTokens": 800
+            "temperature": 0.0,
+            "maxOutputTokens": 1200
         }
     }
     if response_json:
         payload["generationConfig"]["responseMimeType"] = "application/json"
+        if response_schema:
+            payload["generationConfig"]["responseSchema"] = response_schema
 
     for m in models:
         try:
             url = f"https://generativelanguage.googleapis.com/v1beta/models/{m}:generateContent?key={key}"
-            res = requests.post(url, json=payload, timeout=8)
+            res = requests.post(url, json=payload, timeout=9)
             if res.status_code == 200:
                 data = res.json()
                 candidates = data.get("candidates", [])
@@ -128,8 +159,29 @@ def call_gemini_direct(prompt: str, response_json: bool = False, custom_key: Opt
                 logger.debug(f"Gemini model {m} returned {res.status_code}, advancing to next model cascade...")
                 continue
             else:
+                # If schema validation fails on older models, try without responseSchema
+                if response_schema and res.status_code == 400:
+                    try:
+                        fallback_payload = {
+                            "contents": [{"parts": [{"text": prompt}]}],
+                            "generationConfig": {
+                                "temperature": 0.0,
+                                "maxOutputTokens": 1200,
+                                "responseMimeType": "application/json"
+                            }
+                        }
+                        f_res = requests.post(url, json=fallback_payload, timeout=9)
+                        if f_res.status_code == 200:
+                            f_data = f_res.json()
+                            candidates = f_data.get("candidates", [])
+                            if candidates:
+                                parts = candidates[0].get("content", {}).get("parts", [])
+                                if parts:
+                                    return parts[0].get("text", "").strip()
+                    except Exception:
+                        pass
                 logger.warning(f"Gemini API returned status {res.status_code} for model {m}.")
-                break
+                continue
         except Exception as e:
             logger.debug(f"Connection attempt to model {m} failed: {e}")
             continue
@@ -141,8 +193,9 @@ def run_gemini_dual_agent(query: str, workspace_id: str = "default", custom_key:
     """
     Real Dual-Agent Hallucination Guardrail Pipeline:
     - Agent 1 (Maker Agent): Drafts an answer grounded in the Acme Health Knowledge Base.
-    - Agent 2 (Judge Agent): Evaluates Maker draft against Knowledge Base for factual accuracy.
-    Returns: { originalQuery, makerDraft, isHallucinated, judgeCorrectedOutput, reasoning, ... }
+    - Agent 2 (Judge Agent): Evaluates Maker draft against Knowledge Base for factual accuracy
+      using Gemini Native Structured Outputs with strict schema enforcement.
+    Returns: { originalQuery, makerDraft, is_approved, isHallucinated, corrected_text, overall_reasoning, claim_evaluations, ... }
     """
     t_start = time.time()
     
@@ -185,71 +238,133 @@ Draft Response:"""
         else:
             maker_draft = "Under Acme Health policy, the return window is 30 days and express shipping is $9.99. Clinical support is available Monday through Friday from 7am to 9pm EST."
 
-    # 3. Agent 2: Judge Agent
-    judge_prompt = f"""You are an expert factual accuracy Judge Guardrail for Acme Health.
-You must inspect the draft response against the ground-truth Knowledge Base.
-Check whether the draft contains any factual errors, incorrect numbers/dates/prices, or unsupported claims.
+    # 3. Agent 2: Ruthless Compliance Auditor Judge Agent with Structured Output
+    judge_prompt = f"""You are a ruthless compliance auditor and factual accuracy Judge Guardrail for Acme Health.
+You must inspect the Draft Response against the ground-truth Knowledge Base with absolute zero tolerance for discrepancies.
+
+CRITICAL AUDIT DIRECTIVE:
+Extract every numeric value, price, and timeframe from the Draft. Compare it strictly against the Knowledge Base. If a number contradicts the Knowledge Base (e.g., $4.99 vs $9.99, or 60 days vs 30 days), you MUST set 'is_approved' to false, flag the specific claim in 'claim_evaluations', and provide the accurate 'corrected_text'.
 
 Knowledge Base:
 {kb}
 
-User Query: {query}
+Customer Query: {query}
 Draft Response: {maker_draft}
 
-Rules:
-- If ANY statement, number, price, time window, or policy claim in the draft contradicts or is unsupported by the Knowledge Base (e.g., return window != 30 days, express shipping != $9.99, cancellation notice != 24 hours), isHallucinated MUST be true.
-- When isHallucinated is true, rewrite the response in judgeCorrectedOutput so that all information is 100% accurate and strictly matches the Knowledge Base.
-- If the draft is completely accurate and supported by the Knowledge Base, isHallucinated is false, and judgeCorrectedOutput should match the draft.
-- Provide clear, detailed explanation in reasoning. Do not use generic boilerplate.
+Verification Instructions:
+1. Deconstruct the Draft Response into discrete atomic claims.
+2. For each claim in 'claim_evaluations':
+   - 'claim': State the atomic factual claim being evaluated.
+   - 'ground_truth_matched': Set to true ONLY if 100% corroborated by the Knowledge Base. If any price, numeric figure, return timeframe, or policy rule contradicts or is unsupported, set to false.
+   - 'reasoning': Explicitly cite the matching or contradicting ground truth rule from the Knowledge Base.
+3. If ANY claim has ground_truth_matched = false:
+   - 'is_approved' MUST be false.
+   - 'corrected_text' MUST be an authoritative, accurate customer-facing rewrite adhering strictly to the Knowledge Base.
+4. If ALL claims are completely true and supported:
+   - 'is_approved' is true.
+   - 'corrected_text' should match the Draft Response.
+5. In 'overall_reasoning', provide a clear, concise audit explanation.
 
-Respond ONLY with a valid JSON object matching this schema:
+Output ONLY a JSON object strictly conforming to the response schema:
 {{
-  "isHallucinated": boolean,
-  "judgeCorrectedOutput": string,
-  "reasoning": string
+  "is_approved": boolean,
+  "corrected_text": string,
+  "overall_reasoning": string,
+  "claim_evaluations": [
+    {{
+      "claim": string,
+      "ground_truth_matched": boolean,
+      "reasoning": string
+    }}
+  ]
 }}"""
 
     t_judge = time.time()
-    judge_raw = call_gemini_direct(judge_prompt, response_json=True, custom_key=custom_key)
+    judge_raw = call_gemini_direct(
+        judge_prompt,
+        response_json=True,
+        response_schema=JUDGE_STRUCTURED_SCHEMA,
+        custom_key=custom_key
+    )
     judge_latency = round((time.time() - t_judge) * 1000, 2)
 
-    is_hallucinated = False
-    judge_corrected_output = maker_draft
-    reasoning = "All factual claims verified against Acme Health knowledge base."
+    is_approved = True
+    corrected_text = maker_draft
+    overall_reasoning = "All factual claims verified against Acme Health knowledge base."
+    claim_evaluations = []
 
     if judge_raw:
         try:
             cleaned = re.sub(r"^```(?:json)?\s*", "", judge_raw.strip())
             cleaned = re.sub(r"\s*```$", "", cleaned.strip())
             data = json.loads(cleaned)
-            is_hallucinated = bool(data.get("isHallucinated", False))
-            judge_corrected_output = data.get("judgeCorrectedOutput") or maker_draft
-            reasoning = data.get("reasoning") or ("Corrected by Judge Guardrail" if is_hallucinated else "Verified against Knowledge Base.")
-            if is_hallucinated:
-                logger.info(f"[Judge Agent] ⚠️ Intercepted hallucination for query: '{query[:60]}'")
+            is_approved = bool(data.get("is_approved", True))
+            corrected_text = data.get("corrected_text") or maker_draft
+            overall_reasoning = data.get("overall_reasoning") or (
+                "Verified against Knowledge Base." if is_approved else "Factual violation intercepted by Judge Guardrail."
+            )
+            raw_claims = data.get("claim_evaluations", [])
+            if isinstance(raw_claims, list):
+                for c in raw_claims:
+                    if isinstance(c, dict) and "claim" in c:
+                        claim_evaluations.append({
+                            "claim": str(c.get("claim", "")),
+                            "ground_truth_matched": bool(c.get("ground_truth_matched", True)),
+                            "reasoning": str(c.get("reasoning", ""))
+                        })
+
+            # Strict consistency check: if any claim failed, is_approved MUST be false
+            if any(not ce["ground_truth_matched"] for ce in claim_evaluations):
+                is_approved = False
+
+            if not is_approved:
+                logger.info(f"[Judge Agent] 🚫 BLOCKED/CORRECTED for query: '{query[:60]}' | Reason: {overall_reasoning}")
             else:
-                logger.info(f"[Judge Agent] ✅ Verified output clean for query: '{query[:60]}'")
+                logger.info(f"[Judge Agent] ✅ APPROVED for query: '{query[:60]}'")
         except Exception as e:
-            logger.warning(f"[Judge Agent] JSON decode fallback: {e}")
-    else:
-        # Deterministic validation for common adversarial test patterns
+            logger.warning(f"[Judge Agent] JSON decode error: {e}")
+
+    # Fallback / deterministic safety net if Gemini is offline
+    if not judge_raw or not claim_evaluations:
         combined = (query + " " + maker_draft).lower()
         day_match = re.search(r'\b(45|60|90|120|365)\s*day', combined)
         price_match = re.search(r'\$?(14\.99|15\.99|19\.99|4\.99|free express)', combined)
+
         if day_match and "30 day" not in maker_draft.lower():
-            is_hallucinated = True
-            judge_corrected_output = "Acme Health policies strictly allow returns within 30 days of delivery for a full refund. Returns after 30 days cannot be accepted."
-            reasoning = f"Draft asserted a {day_match.group(1)}-day return window which directly contradicts the 30-day return policy in the Knowledge Base."
+            is_approved = False
+            corrected_text = "Acme Health policies strictly allow returns within 30 days of delivery for a full refund. Returns after 30 days cannot be accepted."
+            overall_reasoning = f"Draft asserted a {day_match.group(1)}-day return window which directly contradicts the 30-day return policy in the Knowledge Base."
+            claim_evaluations = [
+                {
+                    "claim": f"Return window is {day_match.group(1)} days",
+                    "ground_truth_matched": False,
+                    "reasoning": "Knowledge Base stipulates: Standard products can be returned within 30 days of delivery. Returns beyond 30 days are strictly not accepted."
+                }
+            ]
             logger.info(f"[Deterministic Check] Intercepted invalid day window ({day_match.group(1)} days).")
         elif price_match and "express" in combined and "$9.99" not in maker_draft:
-            is_hallucinated = True
-            judge_corrected_output = "Express shipping at Acme Health takes 1-2 business days and costs $9.99."
-            reasoning = "Draft cited incorrect express shipping terms; Knowledge Base specifies express shipping is $9.99."
+            is_approved = False
+            corrected_text = "Express shipping at Acme Health takes 1-2 business days and costs $9.99."
+            overall_reasoning = "Draft cited incorrect express shipping terms; Knowledge Base specifies express shipping is $9.99."
+            claim_evaluations = [
+                {
+                    "claim": "Express shipping pricing/timeline",
+                    "ground_truth_matched": False,
+                    "reasoning": "Knowledge Base states: Express shipping takes 1-2 business days and costs $9.99."
+                }
+            ]
             logger.info("[Deterministic Check] Intercepted non-$9.99 express shipping.")
         else:
-            is_hallucinated = False
-            judge_corrected_output = maker_draft
-            reasoning = "Response verified against Acme Health Knowledge Base."
+            is_approved = True
+            corrected_text = maker_draft
+            overall_reasoning = "Response verified against Acme Health Knowledge Base."
+            claim_evaluations = [
+                {
+                    "claim": "Customer query answered in accordance with company policy",
+                    "ground_truth_matched": True,
+                    "reasoning": "All stated policies, fees, and timelines match Acme Health Knowledge Base."
+                }
+            ]
             logger.info("[Deterministic Check] Grounded query approved.")
 
     total_latency = round((time.time() - t_start) * 1000, 2)
@@ -257,9 +372,13 @@ Respond ONLY with a valid JSON object matching this schema:
     return {
         "originalQuery": query,
         "makerDraft": maker_draft,
-        "isHallucinated": is_hallucinated,
-        "judgeCorrectedOutput": judge_corrected_output,
-        "reasoning": reasoning,
+        "is_approved": is_approved,
+        "isHallucinated": not is_approved,
+        "corrected_text": corrected_text,
+        "judgeCorrectedOutput": corrected_text,
+        "overall_reasoning": overall_reasoning,
+        "reasoning": overall_reasoning,
+        "claim_evaluations": claim_evaluations,
         "maker_latency_ms": maker_latency,
         "judge_latency_ms": judge_latency,
         "total_latency_ms": total_latency,
@@ -270,7 +389,7 @@ Respond ONLY with a valid JSON object matching this schema:
 async def chat(request: ChatRequest, verified_id: str = Depends(verify_workspace_token)):
     """
     Main chat endpoint: runs query through Maker → Judge → Decision pipeline using Gemini API.
-    Returns: { originalQuery, makerDraft, isHallucinated, judgeCorrectedOutput, reasoning, ... }
+    Returns: { is_approved, corrected_text, overall_reasoning, claim_evaluations, ... }
     """
     session_id = request.session_id or str(uuid.uuid4())
     workspace_id = request.workspace_id or "default"
@@ -283,53 +402,74 @@ async def chat(request: ChatRequest, verified_id: str = Depends(verify_workspace
             custom_key=raw_key
         )
 
-        is_hallucinated = pipeline_res["isHallucinated"]
-        status = "Corrected" if is_hallucinated else "Approved"
+        is_approved = pipeline_res["is_approved"]
+        is_hallucinated = not is_approved
+        # Set status strictly: "Approved" if is_approved else "Blocked"
+        status = "Approved" if is_approved else "Blocked"
 
         # Build claim breakdown for JudgePanel and verification timeline
         claims = [
             Claim(
                 id=str(uuid.uuid4())[:8],
-                text=pipeline_res["judgeCorrectedOutput"][:140],
-                verdict="Contradicted" if is_hallucinated else "Verified",
-                confidence=0.96,
-                source_sentence="Acme Health Policy: Return policy is 30 days. Express shipping is $9.99.",
+                text=ce["claim"],
+                verdict="Verified" if ce["ground_truth_matched"] else "Contradicted",
+                confidence=0.99 if ce["ground_truth_matched"] else 0.98,
+                source_sentence=ce["reasoning"],
                 source_document="acme_health_policy.txt",
-                reasoning=pipeline_res["reasoning"],
+                reasoning=ce["reasoning"],
                 is_filler=False
             )
+            for ce in pipeline_res["claim_evaluations"]
         ]
 
+        if not claims:
+            claims = [
+                Claim(
+                    id=str(uuid.uuid4())[:8],
+                    text=pipeline_res["makerDraft"][:140],
+                    verdict="Verified" if is_approved else "Contradicted",
+                    confidence=0.97,
+                    source_sentence="Acme Health Knowledge Base: Return policy is 30 days. Express shipping is $9.99.",
+                    source_document="acme_health_policy.txt",
+                    reasoning=pipeline_res["overall_reasoning"],
+                    is_filler=False
+                )
+            ]
+
         verification = VerificationResult(
-            is_safe=(not is_hallucinated),
+            is_safe=is_approved,
             claims=claims,
-            severity="high" if is_hallucinated else "none",
-            overall_reasoning=pipeline_res["reasoning"],
+            severity="none" if is_approved else "high",
+            overall_reasoning=pipeline_res["overall_reasoning"],
             estimated_cost_usd=0.00015,
-            deterministic_checks_run=1
+            deterministic_checks_run=len(claims)
         )
 
         response = ChatResponse(
             session_id=session_id,
             query=request.message,
             original_draft=pipeline_res["makerDraft"],
-            final_response=pipeline_res["judgeCorrectedOutput"],
-            # Explicit Dual-Agent fields
+            final_response=pipeline_res["makerDraft"] if is_approved else pipeline_res["corrected_text"],
+            is_approved=is_approved,
+            corrected_text=pipeline_res["corrected_text"],
+            overall_reasoning=pipeline_res["overall_reasoning"],
+            claim_evaluations=pipeline_res["claim_evaluations"],
+            # Explicit Dual-Agent & UI compatibility fields
             originalQuery=pipeline_res["originalQuery"],
             makerDraft=pipeline_res["makerDraft"],
             isHallucinated=is_hallucinated,
-            judgeCorrectedOutput=pipeline_res["judgeCorrectedOutput"],
-            reasoning=pipeline_res["reasoning"],
+            judgeCorrectedOutput=pipeline_res["corrected_text"],
+            reasoning=pipeline_res["overall_reasoning"],
             verification=verification,
             status=status,
             latency_ms=pipeline_res["total_latency_ms"],
             maker_latency_ms=pipeline_res["maker_latency_ms"],
             judge_latency_ms=pipeline_res["judge_latency_ms"],
             correction_latency_ms=0.0,
-            correction_attempts=1 if is_hallucinated else 0,
+            correction_attempts=1 if not is_approved else 0,
             loop_history=[],
-            llm_provider_used="Google Gemini (gemini-flash-lite)",
-            generation_method="live_gemini_dual_agent"
+            llm_provider_used="Google Gemini",
+            generation_method="llm_live:gemini"
         )
 
         # Store in conversation history

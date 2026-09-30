@@ -90,13 +90,13 @@ export default function DataSourceDisclosureModal() {
             {/* Short, honest body text (2-3 sentences) */}
             <div className="mt-3 space-y-2.5 text-xs sm:text-[13px] text-ink leading-relaxed font-medium">
               <p>
-                VeriTrust AI is shown here protecting <strong className="font-bold text-ink">NovaMart</strong>, a fictional retail company created specifically for this demonstration. Its return policy, shipping tiers, pricing, warranty, and customer service documents are original sample content written for this project — not real data from an actual retailer.
+                VeriTrust AI is shown here protecting <strong className="font-bold text-ink">Acme Health</strong>, a fictional healthcare company created specifically for this demonstration. Its return policy, shipping tiers, pricing, warranty, and customer service documents are original sample content written for this project — not real data from an actual healthcare provider.
               </p>
               <p>
-                The dual-agent verification system, claim extraction, and guardrail logic you are seeing are <strong className="font-bold text-accent-strong">fully functional</strong> and work identically with real enterprise documents. In production, NovaMart&apos;s sample policies would simply be replaced with your business&apos;s real knowledge base.
+                The dual-agent verification system, claim extraction, and guardrail logic you are seeing are <strong className="font-bold text-accent-strong">fully functional</strong> and work identically with real enterprise documents. In production, Acme Health&apos;s sample policies would simply be replaced with your business&apos;s real knowledge base.
               </p>
               <p>
-                The <strong className="font-bold text-ink">Review Queue</strong> tab shows <strong className="font-bold text-amber-strong">seeded sample escalations</strong> for NovaMart only — these represent realistic blocked/corrected interactions so you can immediately explore the human-in-the-loop workflow. Custom workspaces start with an empty review queue and populate only from real guardrail interceptions.
+                The <strong className="font-bold text-ink">Review Queue</strong> tab shows <strong className="font-bold text-amber-strong">seeded sample escalations</strong> for Acme Health only — these represent realistic blocked/corrected interactions so you can immediately explore the human-in-the-loop workflow. Custom workspaces start with an empty review queue and populate only from real guardrail interceptions.
               </p>
             </div>
 

@@ -83,8 +83,8 @@ export default function ComparisonView() {
             placeholder="Type any customer query to test Maker (Raw LLM) vs. Maker + Judge Guardrail..."
             className="flex-1 min-w-0"
           />
-          <NeuButton type="submit" disabled={!query.trim() || loading} className="!p-4 !rounded-2xl shrink-0">
-            <Send size={18} className={query.trim() ? 'text-indigo-600' : 'text-slate-400'} />
+          <NeuButton type="submit" disabled={!query.trim() || loading} className="!p-4 !rounded-2xl shrink-0" aria-label="Run comparison">
+            <Send size={18} aria-hidden="true" className={query.trim() ? 'text-indigo-600' : 'text-slate-400'} />
           </NeuButton>
         </form>
 

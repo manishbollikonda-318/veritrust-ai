@@ -39,6 +39,12 @@ export interface VerificationResult {
   deterministicChecksRun?: number;
 }
 
+export interface ClaimEvaluation {
+  claim: string;
+  ground_truth_matched: boolean;
+  reasoning: string;
+}
+
 export interface Message {
   id: string;
   role: 'user' | 'assistant';
@@ -52,6 +58,9 @@ export interface Message {
   isHallucinated?: boolean;
   judgeCorrectedOutput?: string;
   reasoning?: string;
+  is_approved?: boolean;
+  corrected_text?: string;
+  claim_evaluations?: ClaimEvaluation[];
   claims?: Claim[];
   overallReasoning?: string;
   severity?: 'none' | 'low' | 'high';

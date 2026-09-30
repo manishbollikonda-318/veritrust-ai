@@ -73,6 +73,19 @@ class StandaloneVerifyRequest(BaseModel):
         return sanitize_text(v)
 
 
+class ClaimEvaluation(BaseModel):
+    claim: str
+    ground_truth_matched: bool
+    reasoning: str
+
+
+class JudgeStructuredOutput(BaseModel):
+    is_approved: bool
+    corrected_text: str
+    overall_reasoning: str
+    claim_evaluations: List[ClaimEvaluation] = []
+
+
 class ChatResponse(BaseModel):
     id: str = Field(default_factory=lambda: str(uuid.uuid4()))
     session_id: str = ""
@@ -82,6 +95,12 @@ class ChatResponse(BaseModel):
     final_response: str = ""
     
     # Dual-Agent core schema fields
+    is_approved: Optional[bool] = None
+    corrected_text: Optional[str] = None
+    overall_reasoning: Optional[str] = None
+    claim_evaluations: Optional[List[ClaimEvaluation]] = None
+
+    # Legacy & UI compatibility fields
     originalQuery: Optional[str] = None
     makerDraft: Optional[str] = None
     isHallucinated: Optional[bool] = None

@@ -34,8 +34,8 @@ export default function CookieBanner() {
             <ShieldCheck size={18} className="text-accent" />
             <span>Compliance & Telemetry Consent</span>
           </div>
-          <button onClick={handleDismiss} className="text-ink-subtle hover:text-ink-muted">
-            <X size={16} />
+          <button onClick={handleDismiss} className="text-ink-subtle hover:text-ink-muted" aria-label="Dismiss banner">
+            <X size={16} aria-hidden="true" />
           </button>
         </div>
         <p className="text-xs text-ink-muted leading-relaxed mb-4">

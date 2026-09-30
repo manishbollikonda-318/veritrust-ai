@@ -42,9 +42,9 @@ class WorkspaceService:
         """Seed initial benchmark workspaces (NovaMart demo + Healthcare demo) and load custom workspaces from SQLite."""
         self._workspaces["default"] = {
             "id": "default",
-            "name": "NovaMart Retail (Demo)",
-            "industry": "Retail & E-Commerce",
-            "description": "Default retail benchmark with 5 synthetic sample policies (return, shipping, pricing, warranty, hours)",
+            "name": "Acme Health & Pharma (Demo)",
+            "industry": "Healthcare & Telehealth",
+            "description": "Clinical and pharmaceutical benchmark with prescription refills and HIPAA compliance policies",
             "is_demo": True,
             "llm_provider": "shared_default",
             "created_at": "2026-09-27T00:00:00Z"

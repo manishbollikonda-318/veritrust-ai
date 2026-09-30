@@ -139,6 +139,7 @@ export default function Header() {
             onClick={() => openDataSourceDisclosure()}
             className="hidden md:flex"
             title="Read Data Source & Synthetic Baseline Disclosure"
+            aria-label="Demo Information"
           >
             <Sparkles size={11} className="text-accent shrink-0" aria-hidden="true" />
             <span className="hidden lg:inline">Demo Info</span>
@@ -205,6 +206,7 @@ export default function Header() {
             onClick={openCreateModal}
             className="text-accent-strong"
             title="Onboard a new company workspace"
+            aria-label="New company workspace"
           >
             <Plus size={12} aria-hidden="true" />
             <span className="hidden sm:inline text-xs">New</span>
