@@ -173,7 +173,4 @@ cd veritrust-ai
 ```
 
 ### URLs:
-- **Frontend Dashboard**: [`http://127.0.0.1:5173`](http://127.0.0.1:5173)
-- **Backend API & Swagger Docs**: [`http://127.0.0.1:8000/docs`](http://127.0.0.1:8000/docs)
-- **Human Review Queue**: [`http://127.0.0.1:5173/review`](http://127.0.0.1:5173/review)
-- **Storefront Simulator**: [`http://127.0.0.1:5173/integration`](http://127.0.0.1:5173/integration)
+- ** https://veritrust-ai-gdgoc.onrender.com **
