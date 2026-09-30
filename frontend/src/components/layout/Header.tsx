@@ -86,14 +86,14 @@ export default function Header() {
 
   return (
     <header className="w-full sticky top-0 z-30 bg-white/50 backdrop-blur-2xl border-b border-white/70 shadow-[0_4px_24px_rgba(15,23,42,0.05)]">
-      {/* ── Row 1: Brand + Controls ─────────────────────────────────── */}
-      <div className="flex items-center justify-between gap-2 px-3 sm:px-5 h-14 sm:h-16">
+      {/* ── Row 1: Brand + Primary Workspace Controls ──────────────── */}
+      <div className="flex items-center justify-between gap-3 px-3 sm:px-5 h-13 sm:h-14">
         {/* Left: sidebar toggles + title */}
-        <div className="flex items-center gap-1.5 sm:gap-2 min-w-0 flex-1">
+        <div className="flex items-center gap-1.5 sm:gap-2.5 min-w-0">
           {/* Mobile hamburger */}
           <button
             onClick={toggleMobile}
-            className="p-2 -ml-1 text-ink-muted hover:text-accent hover:bg-white/70 rounded-xl transition-colors md:hidden shrink-0"
+            className="p-1.5 -ml-1 text-ink-muted hover:text-accent hover:bg-white/70 rounded-xl transition-colors md:hidden shrink-0"
             title="Open Navigation"
             aria-label="Open Navigation Menu"
           >
@@ -103,7 +103,7 @@ export default function Header() {
           {/* Desktop collapse toggle */}
           <button
             onClick={toggleSidebar}
-            className="hidden md:flex p-2 text-ink-muted hover:text-accent hover:bg-white/70 rounded-xl transition-colors shrink-0"
+            className="hidden md:flex p-1.5 text-ink-muted hover:text-accent hover:bg-white/70 rounded-xl transition-colors shrink-0"
             title={isCollapsed ? 'Expand Sidebar' : 'Collapse Sidebar'}
             aria-label={isCollapsed ? 'Expand Sidebar' : 'Collapse Sidebar'}
             aria-expanded={!isCollapsed}
@@ -113,84 +113,41 @@ export default function Header() {
           </button>
 
           {/* Title */}
-          <h2 className="text-sm sm:text-lg lg:text-xl font-black text-ink tracking-tight leading-none truncate shrink-0 max-w-[130px] sm:max-w-none">
+          <h2 className="text-base sm:text-lg lg:text-xl font-black text-ink tracking-tight leading-none shrink-0">
             VeriTrust Guardrail
           </h2>
 
-          {/* Engine badge — lg+ only */}
-          <span className="hidden lg:inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-extrabold bg-white/45 backdrop-blur-xl text-accent-strong border border-indigo-200/70 shadow-[0_2px_8px_rgba(99,102,241,0.12),inset_0_1px_1px_rgba(255,255,255,0.9)] shrink-0">
+          {/* Engine badge */}
+          <span className="hidden sm:inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-black bg-white/60 backdrop-blur-xl text-accent-strong border border-indigo-200/80 shadow-xs shrink-0">
             <Cpu size={11} className="text-accent" aria-hidden="true" />
             Maker &amp; Judge Engine
           </span>
         </div>
 
-        {/* Right: status chips + workspace + add */}
-        <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
-          {/* API status — md+ */}
-          <div className="hidden md:flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl bg-white/45 hover:bg-white/60 backdrop-blur-xl border border-white/70 shadow-[0_2px_10px_rgba(15,23,42,0.04),inset_0_1px_1px_rgba(255,255,255,0.9)] text-xs font-bold transition-all">
-            {isConnected === null ? (
-              <><Activity size={11} className="text-amber-500 animate-pulse" /><span className="text-amber-700">Connecting</span></>
-            ) : isConnected ? (
-              <><Wifi size={11} className="text-emerald-500" /><span className="text-emerald-700">API</span><span className="text-[10px] font-mono text-emerald-600">{latency}ms</span></>
-            ) : (
-              <><WifiOff size={11} className="text-rose-500" /><span className="text-rose-700">Offline</span></>
-            )}
-          </div>
-
-          {/* LLM chip — lg+ */}
-          {!llmLoading && activeProvider && (
-            <div className="hidden lg:flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl bg-white/45 hover:bg-white/60 backdrop-blur-xl border border-white/70 shadow-[0_2px_10px_rgba(15,23,42,0.04),inset_0_1px_1px_rgba(255,255,255,0.9)] text-xs font-bold max-w-[200px] transition-all">
-              {activeProvider.available ? (
-                <><Zap size={11} className="text-emerald-500 shrink-0" /><span className="text-emerald-700 truncate">{activeProvider.name}</span><span className="text-[10px] font-mono text-emerald-600 bg-emerald-50 px-1 rounded truncate max-w-[90px]">{activeProvider.model}</span></>
-              ) : (
-                <><Server size={11} className="text-amber-500 shrink-0" /><span className="text-amber-700 truncate">{activeProvider.name}</span><span className="text-[10px] font-mono text-amber-600 bg-amber-50 px-1 rounded">Unavailable</span></>
-              )}
-            </div>
-          )}
-
-          {/* Demo Info — md+ */}
-          <NeuButton
-            type="button"
-            variant="neutral"
-            size="sm"
-            onClick={() => openDataSourceDisclosure()}
-            className="hidden md:flex"
-            title="Read Data Source & Synthetic Baseline Disclosure"
-            aria-label="Demo Information"
-          >
-            <Sparkles size={11} className="text-accent shrink-0" aria-hidden="true" />
-            <span className="hidden lg:inline">Demo Info</span>
-          </NeuButton>
-
-          {/* Guardrail Strictness Selector — md+ */}
-          <StrictnessSelector
-            value={strictnessMode}
-            onChange={handleStrictnessChange}
-            className="hidden md:flex"
-          />
-
+        {/* Right: Workspace Switcher + New Company */}
+        <div className="flex items-center gap-2 shrink-0">
           {/* Workspace switcher */}
           <div className="relative" ref={dropdownRef}>
             <button
               onClick={() => setShowWorkspaceDropdown(!showWorkspaceDropdown)}
-              className="bg-white/45 hover:bg-white/70 backdrop-blur-xl shadow-[0_2px_10px_rgba(15,23,42,0.04),inset_0_1px_1px_rgba(255,255,255,0.9)] border border-white/75 px-2.5 sm:px-3 py-1.5 rounded-xl flex items-center gap-1.5 max-w-[150px] sm:max-w-[210px] transition-all"
+              className="bg-white/60 hover:bg-white/80 backdrop-blur-xl shadow-[0_2px_10px_rgba(15,23,42,0.04),inset_0_1px_1px_rgba(255,255,255,0.9)] border border-white/80 px-2.5 sm:px-3 py-1.5 rounded-xl flex items-center gap-1.5 max-w-[170px] sm:max-w-[220px] transition-all cursor-pointer"
               aria-label="Active Enterprise Workspace"
               aria-expanded={showWorkspaceDropdown}
               aria-haspopup="listbox"
             >
-              <Building2 size={12} className="text-accent shrink-0" aria-hidden="true" />
+              <Building2 size={13} className="text-accent shrink-0" aria-hidden="true" />
               <span className="text-xs font-bold text-ink truncate flex-1">
                 {currentWs?.name || 'Select Workspace'}
               </span>
-              <ChevronDown size={11} className={`text-slate-500 shrink-0 transition-transform ${showWorkspaceDropdown ? 'rotate-180' : ''}`} />
+              <ChevronDown size={12} className={`text-slate-500 shrink-0 transition-transform ${showWorkspaceDropdown ? 'rotate-180' : ''}`} />
             </button>
 
             {showWorkspaceDropdown && (
-              <div className="absolute right-0 top-full mt-1.5 w-60 bg-white/90 backdrop-blur-2xl rounded-xl shadow-[0_20px_40px_-10px_rgba(15,23,42,0.15)] border border-white/80 py-1.5 z-40 animate-in fade-in-0 zoom-in-95 duration-150">
+              <div className="absolute right-0 top-full mt-1.5 w-64 bg-white/95 backdrop-blur-2xl rounded-xl shadow-[0_20px_40px_-10px_rgba(15,23,42,0.18)] border border-white/90 py-1.5 z-40 animate-in fade-in-0 zoom-in-95 duration-150">
                 {workspaces
                   .filter((w, idx, self) => w.id !== 'acme-health' && idx === self.findIndex(t => t.name === w.name || t.id === w.id))
                   .map((w) => (
-                  <div key={w.id} className="flex items-center gap-2 px-3 py-2">
+                  <div key={w.id} className="flex items-center gap-2 px-3 py-1.5">
                     <button
                       onClick={() => { setCurrentWorkspace(w.id); setShowWorkspaceDropdown(false); }}
                       className={`flex-1 flex items-center gap-2 text-left px-2 py-1.5 rounded-lg text-xs font-bold transition-colors ${currentWorkspace === w.id ? 'bg-indigo-50 text-indigo-700' : 'text-slate-800 hover:bg-slate-50'}`}
@@ -203,7 +160,7 @@ export default function Header() {
                     {!w.is_demo && (
                       <button
                         onClick={() => handleOpenDeleteModal(w.id)}
-                        className="p-1.5 text-slate-400 hover:text-rose-500 hover:bg-rose-50 rounded-lg transition-colors shrink-0"
+                        className="p-1.5 text-slate-400 hover:text-rose-500 hover:bg-rose-50 rounded-lg transition-colors shrink-0 cursor-pointer"
                         title="Delete workspace"
                         aria-label={`Delete ${w.name}`}
                       >
@@ -215,9 +172,9 @@ export default function Header() {
                 <hr className="my-1.5 border-slate-200" />
                 <button
                   onClick={() => { openCreateModal(); setShowWorkspaceDropdown(false); }}
-                  className="w-full flex items-center gap-2 px-3 py-2 text-left text-xs font-medium text-accent-strong hover:bg-slate-50 rounded-lg transition-colors"
+                  className="w-full flex items-center gap-2 px-3 py-2 text-left text-xs font-bold text-accent-strong hover:bg-slate-50 rounded-lg transition-colors cursor-pointer"
                 >
-                  <Plus size={12} className="shrink-0" />
+                  <Plus size={13} className="shrink-0" />
                   <span>Add New Company...</span>
                 </button>
               </div>
@@ -230,54 +187,66 @@ export default function Header() {
             variant="subtle"
             size="sm"
             onClick={openCreateModal}
-            className="text-accent-strong"
+            className="text-accent-strong shrink-0"
             title="Onboard a new company workspace"
             aria-label="New company workspace"
           >
-            <Plus size={12} aria-hidden="true" />
-            <span className="hidden sm:inline text-xs">New</span>
+            <Plus size={13} aria-hidden="true" />
+            <span className="hidden sm:inline text-xs font-bold">New</span>
           </NeuButton>
         </div>
       </div>
 
-      {/* ── Row 2: Status chips — mobile only, horizontal scroll, no scrollbar ─── */}
-      <div className="md:hidden flex items-center gap-2 px-3 pb-2 overflow-x-auto scrollbar-none">
-        {/* API status */}
-        <div className="flex items-center gap-1 px-2 py-1 rounded-lg bg-white/70 border border-slate-200/60 text-[11px] font-bold shrink-0">
-          {isConnected === null ? (
-            <><Activity size={10} className="text-amber-500 animate-pulse" /><span className="text-amber-700">Connecting</span></>
-          ) : isConnected ? (
-            <><Wifi size={10} className="text-emerald-500" /><span className="text-emerald-700">API {latency}ms</span></>
-          ) : (
-            <><WifiOff size={10} className="text-rose-500" /><span className="text-rose-700">Offline</span></>
-          )}
+      {/* ── Row 2: Secondary Toolbar (Strictness Mode & Telemetry Status) ── */}
+      <div className="flex items-center justify-between gap-3 px-3 sm:px-5 py-1.5 border-t border-slate-200/50 bg-white/25 backdrop-blur-md overflow-x-auto scrollbar-none">
+        {/* Left: Guardrail Strictness Selector */}
+        <div className="flex items-center gap-2 shrink-0">
+          <span className="text-[11px] font-black uppercase tracking-wider text-slate-500 hidden md:inline">
+            Guardrail Strictness:
+          </span>
+          <StrictnessSelector
+            value={strictnessMode}
+            onChange={handleStrictnessChange}
+            className="shrink-0"
+          />
         </div>
 
-        {/* LLM status */}
-        {!llmLoading && activeProvider && (
-          <div className="flex items-center gap-1 px-2 py-1 rounded-lg bg-white/70 border border-slate-200/60 text-[11px] font-bold shrink-0">
-            {activeProvider.available
-              ? <><Zap size={10} className="text-emerald-500" /><span className="text-emerald-700">{activeProvider.name}</span></>
-              : <><Server size={10} className="text-amber-500" /><span className="text-amber-700">Unavailable</span></>
-            }
+        {/* Right: Telemetry & Demo Info Chips */}
+        <div className="flex items-center gap-2 shrink-0">
+          {/* API status chip */}
+          <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-white/60 border border-white/80 text-[11px] font-bold shadow-xs shrink-0">
+            {isConnected === null ? (
+              <><Activity size={10} className="text-amber-500 animate-pulse" /><span className="text-amber-700">Connecting</span></>
+            ) : isConnected ? (
+              <><Wifi size={10} className="text-emerald-500" /><span className="text-emerald-700">API</span><span className="text-[10px] font-mono text-emerald-600">{latency}ms</span></>
+            ) : (
+              <><WifiOff size={10} className="text-rose-500" /><span className="text-rose-700">Offline</span></>
+            )}
           </div>
-        )}
 
-        {/* Demo Info */}
-        <button
-          onClick={() => openDataSourceDisclosure()}
-          className="flex items-center gap-1 px-2 py-1 rounded-lg bg-white/70 border border-slate-200/60 text-[11px] font-bold text-accent shrink-0"
-        >
-          <Sparkles size={10} />
-          Demo Info
-        </button>
+          {/* LLM Pipeline chip */}
+          {!llmLoading && activeProvider && (
+            <div className="hidden sm:flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-white/60 border border-white/80 text-[11px] font-bold shadow-xs shrink-0 max-w-[190px]">
+              {activeProvider.available ? (
+                <><Zap size={10} className="text-emerald-500 shrink-0" /><span className="text-emerald-700 truncate">{activeProvider.name}</span><span className="text-[10px] font-mono text-emerald-600 bg-emerald-50 px-1 rounded truncate max-w-[80px]">{activeProvider.model}</span></>
+              ) : (
+                <><Server size={10} className="text-amber-500 shrink-0" /><span className="text-amber-700 truncate">{activeProvider.name}</span><span className="text-[10px] font-mono text-amber-600 bg-amber-50 px-1 rounded">Offline</span></>
+              )}
+            </div>
+          )}
 
-        {/* Mobile Strictness Selector */}
-        <StrictnessSelector
-          value={strictnessMode}
-          onChange={handleStrictnessChange}
-          className="shrink-0"
-        />
+          {/* Demo Info modal toggle */}
+          <button
+            type="button"
+            onClick={() => openDataSourceDisclosure()}
+            className="flex items-center gap-1 px-2.5 py-1 rounded-lg bg-white/60 hover:bg-white/80 border border-white/80 text-[11px] font-bold text-accent shadow-xs transition-colors shrink-0 cursor-pointer"
+            title="Read Data Source & Synthetic Baseline Disclosure"
+            aria-label="Demo Information"
+          >
+            <Sparkles size={11} />
+            <span>Demo Info</span>
+          </button>
+        </div>
       </div>
 
       {/* Delete Workspace Modal */}
