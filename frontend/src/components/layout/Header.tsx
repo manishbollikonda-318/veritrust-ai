@@ -197,56 +197,58 @@ export default function Header() {
         </div>
       </div>
 
-      {/* ── Row 2: Secondary Toolbar (Curved Glassmorphic Strictness & Telemetry Bar) ── */}
-      <div className="flex items-center justify-between gap-3 px-3 sm:px-5 py-2 border-t border-white/60 bg-gradient-to-r from-white/35 via-white/45 to-white/35 backdrop-blur-xl overflow-x-auto scrollbar-none">
-        {/* Left: Curved Glass Capsule for Strictness Selector */}
-        <div className="flex items-center gap-1.5 p-1 rounded-full bg-white/50 backdrop-blur-2xl border border-white/85 shadow-[0_4px_18px_rgba(15,23,42,0.05),inset_0_1px_2px_rgba(255,255,255,0.95)] shrink-0">
-          <div className="hidden sm:flex items-center gap-1.5 pl-3 pr-1 text-[11px] font-black uppercase tracking-wider text-slate-600 select-none">
-            <span className="w-1.5 h-1.5 rounded-full bg-indigo-500 animate-pulse" />
-            <span>Strictness:</span>
-          </div>
-          <StrictnessSelector
-            value={strictnessMode}
-            onChange={handleStrictnessChange}
-            className="shrink-0"
-          />
-        </div>
-
-        {/* Right: Curved Glass Capsule for Telemetry & Demo Info */}
-        <div className="flex items-center gap-1.5 p-1 rounded-full bg-white/50 backdrop-blur-2xl border border-white/85 shadow-[0_4px_18px_rgba(15,23,42,0.05),inset_0_1px_2px_rgba(255,255,255,0.95)] shrink-0">
-          {/* API status chip */}
-          <div className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-white/70 border border-white/85 text-[11px] font-bold text-slate-800 shadow-xs shrink-0">
-            {isConnected === null ? (
-              <><Activity size={11} className="text-amber-500 animate-pulse" /><span className="text-amber-700">Connecting</span></>
-            ) : isConnected ? (
-              <><Wifi size={11} className="text-emerald-500" /><span className="text-emerald-700 font-black">API</span><span className="text-[10px] font-mono text-emerald-600 font-bold">{latency}ms</span></>
-            ) : (
-              <><WifiOff size={11} className="text-rose-500" /><span className="text-rose-700">Offline</span></>
-            )}
+      {/* ── Row 2: Secondary Toolbar (Curved Glassmorphic Floating Capsule Bar) ── */}
+      <div className="px-3 sm:px-5 pb-2.5 pt-1">
+        <div className="w-full flex items-center justify-between gap-3 px-3 sm:px-4 py-1.5 rounded-2xl sm:rounded-full bg-white/45 backdrop-blur-2xl border border-white/80 shadow-[0_4px_20px_rgba(15,23,42,0.05),inset_0_1px_2px_rgba(255,255,255,0.95)] overflow-x-auto scrollbar-none">
+          {/* Left: Strictness Selector */}
+          <div className="flex items-center gap-1.5 shrink-0">
+            <div className="hidden sm:flex items-center gap-1.5 pl-1.5 pr-1 text-[11px] font-black uppercase tracking-wider text-slate-600 select-none">
+              <span className="w-1.5 h-1.5 rounded-full bg-indigo-500 animate-pulse" />
+              <span>Strictness:</span>
+            </div>
+            <StrictnessSelector
+              value={strictnessMode}
+              onChange={handleStrictnessChange}
+              className="shrink-0"
+            />
           </div>
 
-          {/* LLM Pipeline chip */}
-          {!llmLoading && activeProvider && (
-            <div className="hidden sm:flex items-center gap-1.5 px-3 py-1 rounded-full bg-white/70 border border-white/85 text-[11px] font-bold text-slate-800 shadow-xs shrink-0 max-w-[210px]">
-              {activeProvider.available ? (
-                <><Zap size={11} className="text-emerald-500 shrink-0" /><span className="text-emerald-800 font-black truncate">{activeProvider.name}</span><span className="text-[10px] font-mono text-emerald-700 bg-emerald-50 px-1.5 py-0.5 rounded-full truncate max-w-[85px] border border-emerald-200/60 font-semibold">{activeProvider.model}</span></>
+          {/* Right: Telemetry & Demo Info */}
+          <div className="flex items-center gap-1.5 shrink-0">
+            {/* API status chip */}
+            <div className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-white/70 border border-white/85 text-[11px] font-bold text-slate-800 shadow-xs shrink-0">
+              {isConnected === null ? (
+                <><Activity size={11} className="text-amber-500 animate-pulse" /><span className="text-amber-700">Connecting</span></>
+              ) : isConnected ? (
+                <><Wifi size={11} className="text-emerald-500" /><span className="text-emerald-700 font-black">API</span><span className="text-[10px] font-mono text-emerald-600 font-bold">{latency}ms</span></>
               ) : (
-                <><Server size={11} className="text-amber-500 shrink-0" /><span className="text-amber-800 truncate">{activeProvider.name}</span><span className="text-[10px] font-mono text-amber-700 bg-amber-50 px-1.5 py-0.5 rounded-full">Offline</span></>
+                <><WifiOff size={11} className="text-rose-500" /><span className="text-rose-700">Offline</span></>
               )}
             </div>
-          )}
 
-          {/* Demo Info modal toggle */}
-          <button
-            type="button"
-            onClick={() => openDataSourceDisclosure()}
-            className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-indigo-50/90 hover:bg-white border border-indigo-200/80 text-[11px] font-black text-indigo-700 shadow-xs hover:shadow-sm transition-all shrink-0 cursor-pointer"
-            title="Read Data Source & Synthetic Baseline Disclosure"
-            aria-label="Demo Information"
-          >
-            <Sparkles size={11} className="text-indigo-600" />
-            <span>Demo Info</span>
-          </button>
+            {/* LLM Pipeline chip */}
+            {!llmLoading && activeProvider && (
+              <div className="hidden sm:flex items-center gap-1.5 px-3 py-1 rounded-full bg-white/70 border border-white/85 text-[11px] font-bold text-slate-800 shadow-xs shrink-0 max-w-[210px]">
+                {activeProvider.available ? (
+                  <><Zap size={11} className="text-emerald-500 shrink-0" /><span className="text-emerald-800 font-black truncate">{activeProvider.name}</span><span className="text-[10px] font-mono text-emerald-700 bg-emerald-50 px-1.5 py-0.5 rounded-full truncate max-w-[85px] border border-emerald-200/60 font-semibold">{activeProvider.model}</span></>
+                ) : (
+                  <><Server size={11} className="text-amber-500 shrink-0" /><span className="text-amber-800 truncate">{activeProvider.name}</span><span className="text-[10px] font-mono text-amber-700 bg-amber-50 px-1.5 py-0.5 rounded-full">Offline</span></>
+                )}
+              </div>
+            )}
+
+            {/* Demo Info modal toggle */}
+            <button
+              type="button"
+              onClick={() => openDataSourceDisclosure()}
+              className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-indigo-50/90 hover:bg-white border border-indigo-200/80 text-[11px] font-black text-indigo-700 shadow-xs hover:shadow-sm transition-all shrink-0 cursor-pointer"
+              title="Read Data Source & Synthetic Baseline Disclosure"
+              aria-label="Demo Information"
+            >
+              <Sparkles size={11} className="text-indigo-600" />
+              <span>Demo Info</span>
+            </button>
+          </div>
         </div>
       </div>
 
