@@ -197,13 +197,14 @@ export default function Header() {
         </div>
       </div>
 
-      {/* ── Row 2: Secondary Toolbar (Strictness Mode & Telemetry Status) ── */}
-      <div className="flex items-center justify-between gap-3 px-3 sm:px-5 py-1.5 border-t border-slate-200/50 bg-white/25 backdrop-blur-md overflow-x-auto scrollbar-none">
-        {/* Left: Guardrail Strictness Selector */}
-        <div className="flex items-center gap-2 shrink-0">
-          <span className="text-[11px] font-black uppercase tracking-wider text-slate-500 hidden md:inline">
-            Guardrail Strictness:
-          </span>
+      {/* ── Row 2: Secondary Toolbar (Curved Glassmorphic Strictness & Telemetry Bar) ── */}
+      <div className="flex items-center justify-between gap-3 px-3 sm:px-5 py-2 border-t border-white/60 bg-gradient-to-r from-white/35 via-white/45 to-white/35 backdrop-blur-xl overflow-x-auto scrollbar-none">
+        {/* Left: Curved Glass Capsule for Strictness Selector */}
+        <div className="flex items-center gap-1.5 p-1 rounded-full bg-white/50 backdrop-blur-2xl border border-white/85 shadow-[0_4px_18px_rgba(15,23,42,0.05),inset_0_1px_2px_rgba(255,255,255,0.95)] shrink-0">
+          <div className="hidden sm:flex items-center gap-1.5 pl-3 pr-1 text-[11px] font-black uppercase tracking-wider text-slate-600 select-none">
+            <span className="w-1.5 h-1.5 rounded-full bg-indigo-500 animate-pulse" />
+            <span>Strictness:</span>
+          </div>
           <StrictnessSelector
             value={strictnessMode}
             onChange={handleStrictnessChange}
@@ -211,26 +212,26 @@ export default function Header() {
           />
         </div>
 
-        {/* Right: Telemetry & Demo Info Chips */}
-        <div className="flex items-center gap-2 shrink-0">
+        {/* Right: Curved Glass Capsule for Telemetry & Demo Info */}
+        <div className="flex items-center gap-1.5 p-1 rounded-full bg-white/50 backdrop-blur-2xl border border-white/85 shadow-[0_4px_18px_rgba(15,23,42,0.05),inset_0_1px_2px_rgba(255,255,255,0.95)] shrink-0">
           {/* API status chip */}
-          <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-white/60 border border-white/80 text-[11px] font-bold shadow-xs shrink-0">
+          <div className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-white/70 border border-white/85 text-[11px] font-bold text-slate-800 shadow-xs shrink-0">
             {isConnected === null ? (
-              <><Activity size={10} className="text-amber-500 animate-pulse" /><span className="text-amber-700">Connecting</span></>
+              <><Activity size={11} className="text-amber-500 animate-pulse" /><span className="text-amber-700">Connecting</span></>
             ) : isConnected ? (
-              <><Wifi size={10} className="text-emerald-500" /><span className="text-emerald-700">API</span><span className="text-[10px] font-mono text-emerald-600">{latency}ms</span></>
+              <><Wifi size={11} className="text-emerald-500" /><span className="text-emerald-700 font-black">API</span><span className="text-[10px] font-mono text-emerald-600 font-bold">{latency}ms</span></>
             ) : (
-              <><WifiOff size={10} className="text-rose-500" /><span className="text-rose-700">Offline</span></>
+              <><WifiOff size={11} className="text-rose-500" /><span className="text-rose-700">Offline</span></>
             )}
           </div>
 
           {/* LLM Pipeline chip */}
           {!llmLoading && activeProvider && (
-            <div className="hidden sm:flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-white/60 border border-white/80 text-[11px] font-bold shadow-xs shrink-0 max-w-[190px]">
+            <div className="hidden sm:flex items-center gap-1.5 px-3 py-1 rounded-full bg-white/70 border border-white/85 text-[11px] font-bold text-slate-800 shadow-xs shrink-0 max-w-[210px]">
               {activeProvider.available ? (
-                <><Zap size={10} className="text-emerald-500 shrink-0" /><span className="text-emerald-700 truncate">{activeProvider.name}</span><span className="text-[10px] font-mono text-emerald-600 bg-emerald-50 px-1 rounded truncate max-w-[80px]">{activeProvider.model}</span></>
+                <><Zap size={11} className="text-emerald-500 shrink-0" /><span className="text-emerald-800 font-black truncate">{activeProvider.name}</span><span className="text-[10px] font-mono text-emerald-700 bg-emerald-50 px-1.5 py-0.5 rounded-full truncate max-w-[85px] border border-emerald-200/60 font-semibold">{activeProvider.model}</span></>
               ) : (
-                <><Server size={10} className="text-amber-500 shrink-0" /><span className="text-amber-700 truncate">{activeProvider.name}</span><span className="text-[10px] font-mono text-amber-600 bg-amber-50 px-1 rounded">Offline</span></>
+                <><Server size={11} className="text-amber-500 shrink-0" /><span className="text-amber-800 truncate">{activeProvider.name}</span><span className="text-[10px] font-mono text-amber-700 bg-amber-50 px-1.5 py-0.5 rounded-full">Offline</span></>
               )}
             </div>
           )}
@@ -239,11 +240,11 @@ export default function Header() {
           <button
             type="button"
             onClick={() => openDataSourceDisclosure()}
-            className="flex items-center gap-1 px-2.5 py-1 rounded-lg bg-white/60 hover:bg-white/80 border border-white/80 text-[11px] font-bold text-accent shadow-xs transition-colors shrink-0 cursor-pointer"
+            className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-indigo-50/90 hover:bg-white border border-indigo-200/80 text-[11px] font-black text-indigo-700 shadow-xs hover:shadow-sm transition-all shrink-0 cursor-pointer"
             title="Read Data Source & Synthetic Baseline Disclosure"
             aria-label="Demo Information"
           >
-            <Sparkles size={11} />
+            <Sparkles size={11} className="text-indigo-600" />
             <span>Demo Info</span>
           </button>
         </div>
