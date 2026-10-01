@@ -177,3 +177,11 @@ cd veritrust-ai
 
 - ### PREVIEW:
 
+- <img width="1280" height="832" alt="de10ebc3-ba61-49fb-a774-8ece926f1fec" src="https://github.com/user-attachments/assets/226759eb-ba9e-4cd2-b728-586e83dc48bc" />
+
+
+-<img width="1280" height="832" alt="ad236874-1f8b-49fa-a214-7ededc95967c" src="https://github.com/user-attachments/assets/a2344353-3cab-45d3-8569-5cf1c3a2a183" />
+
+
+
+
