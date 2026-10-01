@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Message, Claim } from '../types';
-import { api } from '../services/api';
+import { api, loadStoredMessages, saveStoredMessages, clearStoredMessages } from '../services/api';
 import { useWorkspace } from '../context/WorkspaceContext';
 import { useToast } from '../context/ToastContext';
 import { useAudit } from '../context/AuditContext';
@@ -9,17 +9,33 @@ export function useChat() {
   const { currentWorkspace, workspaceVersion } = useWorkspace();
   const { showToast } = useToast();
   const { addPendingAudit } = useAudit();
-  const [messages, setMessages] = useState<Message[]>([]);
+
+  // Initialize messages from persistent storage for this device & workspace
+  const [messages, setMessages] = useState<Message[]>(() => {
+    return loadStoredMessages(currentWorkspace);
+  });
   const [loading, setLoading] = useState(false);
   const [selectedMessage, setSelectedMessage] = useState<Message | null>(null);
   const [selectedClaim, setSelectedClaim] = useState<Claim | null>(null);
   const [demoMode, setDemoMode] = useState<boolean>(true);
 
-  // Reset and clear chat state whenever workspace changes so user starts fresh each time in all companies
+  // When workspace changes or on mount/refresh, load that workspace's saved messages for this user/device
   useEffect(() => {
-    setMessages([]);
-    setSelectedMessage(null);
-    setSelectedClaim(null);
+    const stored = loadStoredMessages(currentWorkspace);
+    setMessages(stored);
+    if (stored.length > 0) {
+      const lastBot = [...stored].reverse().find(m => m.role === 'assistant');
+      setSelectedMessage(lastBot || null);
+      if (lastBot?.claims && lastBot.claims.length > 0) {
+        const flagged = lastBot.claims.find(c => c.verdict !== 'Verified') || lastBot.claims[0];
+        setSelectedClaim(flagged);
+      } else {
+        setSelectedClaim(null);
+      }
+    } else {
+      setSelectedMessage(null);
+      setSelectedClaim(null);
+    }
   }, [currentWorkspace, workspaceVersion]);
 
   const sendMessage = async (content: string) => {
@@ -28,7 +44,11 @@ export function useChat() {
 
     try {
       const { userMessage, botMessage } = await api.sendMessage(content, demoMode, currentWorkspace);
-      setMessages(prev => [...prev, userMessage, botMessage]);
+      setMessages(prev => {
+        const updated = [...prev, userMessage, botMessage];
+        saveStoredMessages(currentWorkspace, updated);
+        return updated;
+      });
       setSelectedMessage(botMessage);
       if (botMessage.claims && botMessage.claims.length > 0) {
         const flagged = botMessage.claims.find(c => c.verdict !== 'Verified') || botMessage.claims[0];
@@ -73,6 +93,7 @@ export function useChat() {
   };
 
   const clearChat = async () => {
+    clearStoredMessages(currentWorkspace);
     setMessages([]);
     setSelectedMessage(null);
     setSelectedClaim(null);

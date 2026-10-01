@@ -50,6 +50,71 @@ function getWorkspaceToken(workspaceId: string): string | null {
   return null;
 }
 
+// User/Device Identification: guarantees every user/device has their own strictly isolated session
+export function getDeviceId(): string {
+  if (typeof window === 'undefined' || !window.localStorage) {
+    return 'default_device';
+  }
+  try {
+    let deviceId = localStorage.getItem('veritrust_device_id');
+    if (!deviceId) {
+      if (typeof crypto !== 'undefined' && crypto.randomUUID) {
+        deviceId = 'usr_' + crypto.randomUUID().replace(/-/g, '').substring(0, 16);
+      } else {
+        deviceId = 'usr_' + Math.random().toString(36).substring(2, 10) + Date.now().toString(36);
+      }
+      localStorage.setItem('veritrust_device_id', deviceId);
+    }
+    return deviceId;
+  } catch {
+    return 'default_device';
+  }
+}
+
+export function getUserSessionId(workspaceId: string = 'default'): string {
+  const deviceId = getDeviceId();
+  return `${deviceId}_${workspaceId || 'default'}`;
+}
+
+export function getChatStorageKey(workspaceId: string = 'default'): string {
+  const deviceId = getDeviceId();
+  return `veritrust_chat_history_${deviceId}_${workspaceId || 'default'}`;
+}
+
+export function loadStoredMessages(workspaceId: string = 'default'): Message[] {
+  if (typeof window === 'undefined' || !window.localStorage) return [];
+  try {
+    const raw = localStorage.getItem(getChatStorageKey(workspaceId));
+    if (raw) {
+      const parsed = JSON.parse(raw);
+      if (Array.isArray(parsed)) {
+        return parsed;
+      }
+    }
+  } catch (e) {
+    console.warn('Failed to load stored messages:', e);
+  }
+  return [];
+}
+
+export function saveStoredMessages(workspaceId: string = 'default', messages: Message[]): void {
+  if (typeof window === 'undefined' || !window.localStorage) return;
+  try {
+    localStorage.setItem(getChatStorageKey(workspaceId), JSON.stringify(messages));
+  } catch (e) {
+    console.warn('Failed to save stored messages:', e);
+  }
+}
+
+export function clearStoredMessages(workspaceId: string = 'default'): void {
+  if (typeof window === 'undefined' || !window.localStorage) return;
+  try {
+    localStorage.removeItem(getChatStorageKey(workspaceId));
+  } catch (e) {
+    console.warn('Failed to clear stored messages:', e);
+  }
+}
+
 // Build headers with workspace token for non-demo workspaces
 function getAuthHeaders(workspaceId: string = 'default'): Record<string, string> {
   const isDemo = workspaceId === 'default' || workspaceId === 'acme-health';
@@ -132,7 +197,8 @@ async function fetchJson<T = any>(url: string, options?: RequestInit): Promise<T
 
 export const api = {
   async getMessages(workspaceId: string = 'default'): Promise<Message[]> {
-    const res = await fetch(`${API_BASE}/chat/history/${encodeURIComponent(workspaceId)}`, {
+    const sessionId = getUserSessionId(workspaceId);
+    const res = await fetch(`${API_BASE}/chat/history/${encodeURIComponent(sessionId)}`, {
       headers: getAuthHeaders(workspaceId)
     });
     const text = await res.text();
@@ -182,10 +248,11 @@ export const api = {
     };
 
     const currentStrictness = (typeof localStorage !== 'undefined' && localStorage.getItem('veritrust_strictness_mode')) || 'balanced';
+    const sessionId = getUserSessionId(workspaceId);
     const chatPayload = {
       message: content,
       demo_mode: demoMode,
-      session_id: workspaceId || 'default',
+      session_id: sessionId,
       workspace_id: workspaceId || 'default',
       strictness_mode: currentStrictness
     };
@@ -263,8 +330,9 @@ export const api = {
   },
 
   async clearChat(workspaceId: string = 'default'): Promise<void> {
+    const sessionId = getUserSessionId(workspaceId);
     try {
-      await fetch(`${API_BASE}/chat/clear/${encodeURIComponent(workspaceId)}`, {
+      await fetch(`${API_BASE}/chat/clear/${encodeURIComponent(sessionId)}`, {
         method: 'POST',
         headers: getAuthHeaders(workspaceId)
       });
